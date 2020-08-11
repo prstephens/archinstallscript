@@ -2,6 +2,9 @@
 
 echo "Paul's Arch Configurator"
 
+# Update pacman mirroe list
+reflector -c GB --latest 25 --age 24 --protocol https --completion-percent 100 --sort rate --save /etc/pacman.d/mirrorlist
+
 # Set date time
 ln -sf /usr/share/zoneinfo/Europe/London /etc/localtime
 hwclock --systohc
@@ -22,15 +25,20 @@ mkinitcpio -P
 passwd
 
 # Install bootloader
-grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=arch
+mkdir /boot/grub
+grub-install --target=i386-pc /dev/md126
 grub-mkconfig -o /boot/grub/grub.cfg
 
 # Create new user
 useradd -m -G wheel -s /usr/bin/bash paul
-sed --in-place 's/^#\s*\(%wheel\s\+ALL=(ALL)\s\+NOPASSWD:\s\+ALL\)/\1/' /etc/sudoers
+sed -i 's/# %wheel ALL=(ALL) ALL/%wheel ALL=(ALL) ALL/' /etc/sudoers
 echo "Set password for new user paul"
 passwd paul
 
+# Install yay
+git clone https://aur.archlinux.org/yay.git
+$ cd yay
+$ makepkg -si
 
 # Enable services
 systemctl enable NetworkManager.service
