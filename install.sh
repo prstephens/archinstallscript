@@ -21,7 +21,7 @@ pacman-key --populate archlinux
 pacman-key --refresh-keys
 
 # Mount the partitions
-mount /dev/md126p4 /mnt
+mount /dev/md/RAIDVOL1_0p4 /mnt
 
 # Install Arch Linux
 echo "Starting install.."
