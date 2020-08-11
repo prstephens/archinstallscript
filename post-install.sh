@@ -19,26 +19,27 @@ echo "archpc" >> /etc/hostname
 echo "127.0.1.1 archpc.localdomain  archpc" >> /etc/hosts
 
 # Generate initramfs
-mkinitcpio -P
+echo "HOOKS in mkinitcpio.conf need mdadm_udev added"
+mkinitcpio -p
 
 # Set root password
+echo "Set root password"
 passwd
 
 # Install bootloader
-mkdir /boot/grub
 grub-install --target=i386-pc /dev/md/RAIDVOL1_0
 grub-mkconfig -o /boot/grub/grub.cfg
 
 # Create new user
-useradd -m -G wheel -s /usr/bin/bash paul
+useradd -m -G wheel paul
 sed -i 's/# %wheel ALL=(ALL) ALL/%wheel ALL=(ALL) ALL/' /etc/sudoers
 echo "Set password for new user paul"
 passwd paul
 
 # Install yay
 git clone https://aur.archlinux.org/yay.git
-$ cd yay
-$ makepkg -si
+cd yay
+makepkg -si
 
 # Enable services
 systemctl enable NetworkManager.service
