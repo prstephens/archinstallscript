@@ -26,7 +26,7 @@ mount /dev/md126p4 /mnt
 # Install Arch Linux
 echo "Starting install.."
 echo "Installing Arch Linux with Zen Kernal, GRUB2 as bootloader" 
-pacstrap /mnt base base-devel mdadm networkmanager reflector linux-zen linux-zen-headers linux-firmware grub os-prober intel-ucode dosfstools mtools xorg xorg-server xorg-xinit xrvt-unicode nano sudo git nvidia-dkms
+pacstrap /mnt base base-devel mdadm networkmanager reflector linux-zen linux-zen-headers linux-firmware grub os-prober intel-ucode dosfstools mtools xorg xorg-server xorg-xinit nano sudo git nvidia-dkms
 
 # Generate fstab
 genfstab -U /mnt >> /mnt/etc/fstab
