@@ -26,7 +26,7 @@ passwd
 
 # Install bootloader
 mkdir /boot/grub
-grub-install --target=i386-pc /dev/md126
+grub-install --target=i386-pc /dev/md/RAIDVOL1_0
 grub-mkconfig -o /boot/grub/grub.cfg
 
 # Create new user
