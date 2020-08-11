@@ -27,7 +27,8 @@ echo "Set root password"
 passwd
 
 # Install bootloader
-grub-install --target=i386-pc /dev/md/RAIDVOL1_0
+echo "Installing grub..."
+grub-install --target=i386-pc --recheck /dev/md/RAIDVOL1_0
 grub-mkconfig -o /boot/grub/grub.cfg
 
 # Create new user
