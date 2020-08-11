@@ -24,7 +24,7 @@ echo "127.0.1.1 archpc.localdomain  archpc" >> /etc/hosts
 # Generate initramfs
 echo "HOOKS in mkinitcpio.conf need mdadm_udev added for RAID detection..."
 
-HOOKS=(base udev autodetect modconf block mdadm_udev filesystems keyboard fsck)
+HOOKS="base udev autodetect modconf block mdadm_udev filesystems keyboard fsck"
 sed -i "s/^HOOKS=(.*)$/HOOKS=($HOOKS)/" /etc/mkinitcpio.conf
 
 mkinitcpio -p
