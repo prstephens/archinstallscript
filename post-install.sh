@@ -1,6 +1,6 @@
 #! /bin/bash
 
-echo "Paul's Arch Configurator"
+echo "Paul's Arch Configurator - Post Installer"
 
 # Update pacman mirroe list
 reflector -c GB --latest 25 --age 24 --protocol https --completion-percent 100 --sort rate --save /etc/pacman.d/mirrorlist
@@ -14,12 +14,19 @@ sed -i '/en_GB.UTF-8 UTF-8/s/^#//g' /etc/locale.gen
 locale-gen
 echo "LANG=en_GB.UTF-8" >> /etc/locale.conf
 
+# Set the console keymap
+echo "KEYMAP=uk" >> /etc/vconsole.conf
+
 # Set hostname
 echo "archpc" >> /etc/hostname
 echo "127.0.1.1 archpc.localdomain  archpc" >> /etc/hosts
 
 # Generate initramfs
-echo "HOOKS in mkinitcpio.conf need mdadm_udev added"
+echo "HOOKS in mkinitcpio.conf need mdadm_udev added for RAID detection..."
+
+HOOKS=(base udev autodetect modconf block mdadm_udev filesystems keyboard fsck)
+sed -i "s/^HOOKS=(.*)$/HOOKS=($HOOKS)/" /etc/mkinitcpio.conf
+
 mkinitcpio -p
 
 # Set root password
