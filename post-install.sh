@@ -2,54 +2,26 @@
 
 echo "Paul's Arch Configurator - Post Installer"
 
-# Update pacman mirroe list
-reflector -c GB --latest 25 --age 24 --protocol https --completion-percent 100 --sort rate --save /etc/pacman.d/mirrorlist
+function install_deepin()
+{
+    # Deepin and VS Code
+    sudo pacman -S deepin deepin-extra code
 
-# Set date time
-ln -sf /usr/share/zoneinfo/Europe/London /etc/localtime
-hwclock --systohc
+    # Deepin Arch update notifier
+    yay -S deepin-dock-plugin-arch-update
 
-# Set locale to en_US.UTF-8 UTF-8
-sed -i '/en_GB.UTF-8 UTF-8/s/^#//g' /etc/locale.gen
-locale-gen
-echo "LANG=en_GB.UTF-8" >> /etc/locale.conf
+    # chrome
+    yay -S google-chrome
+}
 
-# Set the console keymap
-echo "KEYMAP=uk" >> /etc/vconsole.conf
-
-# Set hostname
-echo "archpc" >> /etc/hostname
-echo "127.0.1.1 archpc.localdomain  archpc" >> /etc/hosts
-
-# Generate initramfs
-echo "HOOKS in mkinitcpio.conf need mdadm_udev added for RAID detection..."
-
-HOOKS="base udev autodetect modconf block mdadm_udev filesystems keyboard fsck"
-sed -i "s/^HOOKS=(.*)$/HOOKS=($HOOKS)/" /etc/mkinitcpio.conf
-
-mkinitcpio -p
-
-# Set root password
-echo "Set root password"
-passwd
-
-# Install bootloader
-echo "Installing grub..."
-grub-install --target=i386-pc --recheck /dev/md/RAIDVOL1_0
-grub-mkconfig -o /boot/grub/grub.cfg
-
-# Create new user
-useradd -m -G wheel paul
-sed -i 's/# %wheel ALL=(ALL) ALL/%wheel ALL=(ALL) ALL/' /etc/sudoers
-echo "Set password for new user paul"
-passwd paul
-
-# Install yay
-git clone https://aur.archlinux.org/yay.git
-cd yay
+echo "Installing yay..."
+cd /home/paul/yay
 makepkg -si
 
-# Enable services
-systemctl enable NetworkManager.service
+read -p 'Do you want to install Deepin DE and other awesome apps? [y/N]: ' installdeepin
+if  [ $installdeepin = 'y' ] && ! [ $installdeepin = 'Y' ]
+then 
+    install_deepin
+fi
 
-echo "Configuration done. You can now exit chroot."
+echo "Post install complete. Enjoy!"
