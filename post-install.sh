@@ -20,6 +20,8 @@ function install_deepin()
 echo "Installing yay..."
 cd /home/paul/yay
 makepkg -si
+cd ..
+rm -rfd yay
 
 # turn off flipping on NVIDIA
 echo "Turning off Nvidia flipping..."

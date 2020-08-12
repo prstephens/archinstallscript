@@ -69,5 +69,6 @@ head -n -5 /home/paul/.xinitrc >> /home/paul/.xinitrc
 echo "Enabling services..."
 systemctl enable NetworkManager.service
 systemctl enable systemd-swap
+systemctl enable bluetooth.service
 
 echo "Configuration done. You can now exit chroot."
