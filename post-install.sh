@@ -21,6 +21,10 @@ echo "Installing yay..."
 cd /home/paul/yay
 makepkg -si
 
+# turn off flipping on NVIDIA
+echo "Turning off Nvidia flipping..."
+nvidia-settings -a AllowFlipping=0
+
 read -p 'Do you want to install Deepin DE and other awesome apps? [y/N]: ' installdeepin
 if  [ $installdeepin = 'y' ] && ! [ $installdeepin = 'Y' ]
 then 
