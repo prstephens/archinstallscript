@@ -12,6 +12,9 @@ function install_deepin()
 
     # chrome
     yay -S google-chrome
+
+    # xinitrc config
+    echo "exec startdde" >> /home/paul/.xinitrc
 }
 
 echo "Installing yay..."
