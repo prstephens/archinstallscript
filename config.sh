@@ -42,7 +42,7 @@ sed -i 's/GRUB_GFXMODE=auto/GRUB_GFXMODE=1920x1080/' /etc/default/grub
 
 grub-mkconfig -o /boot/grub/grub.cfg
 
-sed -i 's/Windows 10 (on /dev/md126p1)/Windows 10/' /etc/default/grub
+sed -i 's/Windows 10 (on /dev/md126p1)/Windows 10/' /boot/grub/grub.cfg
 
 # Create new user
 useradd -m -G wheel paul
@@ -62,8 +62,7 @@ chmod a+x /home/paul/post-install.sh
 
 # Create user xinit config file 
 echo "Creating .xinitrc file..."
-cp /etc/X11/xinit/xinitrc /home/paul/.xinitrc
-head -n -5 /home/paul/.xinitrc >> /home/paul/.xinitrc
+head -n -5 /etc/X11/xinit/xinitrc >> /home/paul/.xinitrc
 
 # Enable services
 echo "Enabling services..."

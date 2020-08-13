@@ -23,10 +23,6 @@ makepkg -si
 cd ..
 rm -rfd yay
 
-# turn off flipping on NVIDIA
-echo "Turning off Nvidia flipping..."
-nvidia-settings -a AllowFlipping=0
-
 read -p 'Do you want to install Deepin DE and other awesome apps? [y/N]: ' installdeepin
 if  [ $installdeepin = 'y' ] && ! [ $installdeepin = 'Y' ]
 then 
