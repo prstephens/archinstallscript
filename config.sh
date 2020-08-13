@@ -2,7 +2,7 @@
 
 echo "Paul's Arch Configurator - Post Installer"
 
-echo "Updating pacman mirros to awesomeness..."
+echo "Updating pacman mirrors to awesomeness..."
 # Update pacman mirror list
 reflector -c GB --latest 25 --age 24 --protocol https --completion-percent 100 --sort rate --save /etc/pacman.d/mirrorlist
 
