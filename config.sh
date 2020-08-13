@@ -2,9 +2,11 @@
 
 echo "Paul's Arch Configurator - Post Installer"
 
-# Update pacman mirroe list
+echo "Updating pacman mirros to awesomeness..."
+# Update pacman mirror list
 reflector -c GB --latest 25 --age 24 --protocol https --completion-percent 100 --sort rate --save /etc/pacman.d/mirrorlist
 
+echo "Setting up spacetime continuum..."
 # Set date time
 ln -sf /usr/share/zoneinfo/Europe/London /etc/localtime
 hwclock --systohc
