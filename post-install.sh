@@ -6,7 +6,7 @@ function install_deepin()
 {
     # Deepin and VS Code
     echo "Installing Deepin..."
-    sudo pacman -S deepin deepin-extra code
+    sudo pacman -S deepin deepin-extra
 
     # Deepin Arch update notifier
     echo "Installing Deepin update notifier plugin..."
@@ -14,10 +14,12 @@ function install_deepin()
 
     # xinitrc config
     echo "exec startdde" >> /home/paul/.xinitrc
+}
 
+function install_apps()
     # chrome
     echo "Installing Chrome..."
-    yay -S google-chrome
+    yay -S google-chrome code
 
      # Spotify
     echo "Installing Spotify..."
@@ -35,7 +37,7 @@ makepkg -si
 cd ..
 rm -rfd yay
 
-read -p 'Do you want to install Deepin DE and other awesome apps? [y/N]: ' installdeepin
+read -p 'Do you want to install Deepin DE? [y/N]: ' installdeepin
 if  [ $installdeepin = 'y' ] && ! [ $installdeepin = 'Y' ]
 then 
     install_deepin

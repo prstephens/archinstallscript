@@ -67,10 +67,20 @@ echo "Creating .xinitrc file..."
 head -n -5 /etc/X11/xinit/xinitrc >> /home/paul/.xinitrc
 chown paul:paul /home/paul/.xinitrc
 
+# Create swapfile
+echo "Creating swap file..."
+dd if=/dev/zero of=/swapfile bs=1M count=512 status=progress
+chmod 600 /swapfile
+mkswap /swapfile
+swapon /swapfile
+echo "vm.swappiness=10" >> /etc/sysctl.d/99-swappiness.conf
+
+# Add to file table
+echo "/swapfile none swap defaults 0 0" >> /etc/fstab
+
 # Enable services
 echo "Enabling services..."
 systemctl enable NetworkManager.service
-systemctl enable systemd-swap
 systemctl enable bluetooth.service
 
 echo "Configuration done. You can now exit chroot."

@@ -35,7 +35,7 @@ mount /dev/md/RAIDVOL1_0p4 /mnt
 # Install Arch Linux
 echo "Starting install.."
 echo "Installing Arch Linux with default kernal, GRUB2 as bootloader" 
-pacstrap /mnt base base-devel mdadm networkmanager reflector linux linux-headers linux-firmware grub os-prober intel-ucode ntfs-3g dosfstools mtools xorg xorg-server xorg-xinit nano sudo git nvidia nvidia-settings pacman-contrib systemd-swap bluez bluez-utils
+pacstrap /mnt base base-devel mdadm networkmanager reflector linux linux-headers linux-firmware grub os-prober intel-ucode ntfs-3g dosfstools mtools xorg xorg-server xorg-xinit nano sudo git nvidia nvidia-settings pacman-contrib bluez bluez-utils
 
 # Generate fstab
 genfstab -U /mnt >> /mnt/etc/fstab
