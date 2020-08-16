@@ -17,6 +17,7 @@ function install_deepin()
 }
 
 function install_apps()
+{
     # chrome
     echo "Installing Chrome..."
     yay -S google-chrome code
