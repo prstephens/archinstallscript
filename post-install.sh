@@ -2,7 +2,7 @@
 
 echo "Paul's Arch Configurator - Post Installer"
 
-function install_deepin()
+install_deepin()
 {
     # Deepin and VS Code
     echo "Installing Deepin..."
@@ -16,7 +16,7 @@ function install_deepin()
     echo "exec startdde" >> /home/paul/.xinitrc
 }
 
-function install_apps()
+install_apps()
 {
     # chrome
     echo "Installing Chrome..."
@@ -32,11 +32,14 @@ function install_apps()
     yay -S wps-office
 }
 
-echo "Installing yay..."
-cd /home/paul/yay
-makepkg -si
-cd ..
-rm -rfd yay
+if [ -d "/home/paul/yay" ]
+then
+  echo "Installing yay..."
+  cd /home/paul/yay
+  makepkg -si
+  cd ..
+  rm -rfd yay
+fi
 
 read -p 'Do you want to install Deepin DE? [y/N]: ' installdeepin
 if  [ $installdeepin = 'y' ] && ! [ $installdeepin = 'Y' ]
