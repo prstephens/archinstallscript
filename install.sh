@@ -26,13 +26,13 @@ performInstall()
 
     # Install Arch Linux
     echo "Starting install.."
-    echo "Installing Arch Linux with default kernal, GRUB2 as bootloader" 
-    pacstrap /mnt base base-devel mdadm networkmanager reflector linux linux-headers linux-firmware grub os-prober intel-ucode ntfs-3g dosfstools mtools xorg xorg-server xorg-xinit nano sudo git nvidia nvidia-settings pacman-contrib bluez bluez-utils
+    echo "Installing Arch Linux with default kernel, GRUB2 as bootloader" 
+    pacstrap /mnt base base-devel mdadm networkmanager reflector linux-zen linux-zen-headers linux-firmware grub os-prober intel-ucode ntfs-3g dosfstools mtools xorg xorg-server xorg-xinit nano sudo git nvidia-dkms nvidia-settings pacman-contrib bluez bluez-utils
 
     # Generate fstab
     genfstab -U /mnt >> /mnt/etc/fstab
 
-    # Copy post-install system cinfiguration script to new /root
+    # Copy post-install system configuration script to new /root
     cp -rfv config.sh /mnt/root
     chmod a+x /mnt/root/config.sh
 

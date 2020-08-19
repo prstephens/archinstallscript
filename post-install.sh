@@ -14,22 +14,22 @@ install_deepin()
 
     # xinitrc config
     echo "exec startdde" >> /home/paul/.xinitrc
+
+    # Fix Pulseaudio
+    rm -rfd /home/paul/.config/pulse
+    pacmd set-default-sink 1
 }
 
 install_apps()
 {
     # chrome
-    echo "Installing Chrome..."
-    yay -S google-chrome code
+    echo "Installing Chrome, VS Code and WPS Office..."
+    yay -S google-chrome code wps-office
 
      # Spotify
     echo "Installing Spotify..."
     gpg --keyserver pool.sks-keyservers.net --recv-keys 931FF8E79F0876134EDDBDCCA87FF9DF48BF1C90 2EBF997C15BDA244B6EBF5D84773BD5E130D1D45
     yay -S spotify
-
-    # WPS Office
-    echo "Installing WPS Office..."
-    yay -S wps-office
 }
 
 if [ -d "/home/paul/yay" ]
@@ -42,9 +42,15 @@ then
 fi
 
 read -p 'Do you want to install Deepin DE? [y/N]: ' installdeepin
-if  [ $installdeepin = 'y' ] && ! [ $installdeepin = 'Y' ]
+if  [ $installdeepin = 'y' ] && [ $installdeepin = 'Y' ]
 then 
     install_deepin
+fi
+
+read -p 'Do you want to install some apps? [y/N]: ' installapps
+if  [ $installapps = 'y' ] && [ $installapps = 'Y' ]
+then 
+    install_apps
 fi
 
 echo "Post install complete. Enjoy!"
