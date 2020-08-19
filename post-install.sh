@@ -17,7 +17,7 @@ install_deepin()
 
     # Fix Pulseaudio
     rm -rfd /home/paul/.config/pulse
-    pacmd set-default-sink 1
+    sudo echo "alsa_output.pci-0000_00_1f.3.analog-stereo" >> /etc/pulse/default.pa
 }
 
 install_apps()
