@@ -42,13 +42,13 @@ then
 fi
 
 read -p 'Do you want to install Deepin DE? [y/N]: ' installdeepin
-if  [ $installdeepin = 'y' ] && [ $installdeepin = 'Y' ]
+if  [ $installdeepin = 'y' ]
 then 
     install_deepin
 fi
 
 read -p 'Do you want to install some apps? [y/N]: ' installapps
-if  [ $installapps = 'y' ] && [ $installapps = 'Y' ]
+if  [ $installapps = 'y' ] 
 then 
     install_apps
 fi
