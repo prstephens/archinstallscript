@@ -78,6 +78,9 @@ echo "vm.swappiness=10" >> /etc/sysctl.d/99-swappiness.conf
 # Add to file table
 echo "/swapfile none swap defaults 0 0" >> /etc/fstab
 
+# Set correct sound card for PulseAudio
+sudo echo "set-default-sink output alsa_output.pci-0000_00_1f.3.analog-stereo" >> /etc/pulse/default.pa
+
 # Enable services
 echo "Enabling services..."
 systemctl enable NetworkManager.service

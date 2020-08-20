@@ -2,7 +2,7 @@
 
 echo "Paul's Arch Configurator - Post Installer"
 
-install_deepin()
+install_DE()
 {
     # Deepin and VS Code
     echo "Installing Deepin..."
@@ -15,9 +15,9 @@ install_deepin()
     # xinitrc config
     echo "exec startdde" >> /home/paul/.xinitrc
 
-    # Fix Pulseaudio
-    rm -rfd /home/paul/.config/pulse
-    sudo echo "set-default-sink output alsa_output.pci-0000_00_1f.3.analog-stereo" >> /etc/pulse/default.pa
+    # Install Plasma (as a backup)
+    echo "Installing Plasma..."
+    sudo pacman -S plasma
 }
 
 install_apps()
@@ -41,10 +41,10 @@ then
   rm -rfd yay
 fi
 
-read -p 'Do you want to install Deepin DE? [y/N]: ' installdeepin
-if  [ $installdeepin = 'y' ]
+read -p 'Do you want to install Deepin and Plasma DE? [y/N]: ' installDE
+if  [ $installDE = 'y' ]
 then 
-    install_deepin
+    install_DE
 fi
 
 read -p 'Do you want to install some apps? [y/N]: ' installapps

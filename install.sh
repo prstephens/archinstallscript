@@ -14,7 +14,7 @@ performInstall()
 
     # Setup the partitions
     read -p 'You are about to wipe /dev/md/RAIDVOL1_0p4? [y/N]: ' wipe
-    if [ $wipe = 'y' ] && ! [ $wipe = 'Y' ]
+    if [ $wipe = 'y' ]
     then
         mkfs.ext4 /dev/md/RAIDVOL1_0p4
     else
@@ -27,7 +27,7 @@ performInstall()
     # Install Arch Linux
     echo "Starting install.."
     echo "Installing Arch Linux with default kernel, GRUB2 as bootloader" 
-    pacstrap /mnt base base-devel mdadm networkmanager reflector linux-zen linux-zen-headers linux-firmware grub os-prober intel-ucode ntfs-3g dosfstools mtools xorg xorg-server xorg-xinit nano sudo git nvidia-dkms nvidia-settings pacman-contrib bluez bluez-utils
+    pacstrap /mnt base base-devel mdadm networkmanager reflector linux-zen linux-zen-headers linux-firmware grub os-prober intel-ucode ntfs-3g dosfstools mtools xorg xorg-server xorg-xinit nano sudo git nvidia-dkms nvidia-settings pacman-contrib bluez bluez-utils pulseaudio
 
     # Generate fstab
     genfstab -U /mnt >> /mnt/etc/fstab
