@@ -121,9 +121,6 @@ alias la='lsd -A'
 alias l='lsd -CF'
 alias c='clear'
 alias nano='sudo nano'
-
-#my scripts
-#alias backup='/home/pi/scripts/backup'
 alias tv='exp libreelec ssh root@libreelec.lan -p 22'
 alias ps='ps -elf | grep'
 alias in='yay -S'
@@ -132,7 +129,6 @@ alias firewall='sudo iptables -L -n -v --line-numbers'
 alias eb="sudo nano ~/.bashrc"
 alias loadbash=". ~/.bashrc"
 alias ct='colortail'
-alias log='colortail /var/log/syslog'
 alias weather='curl wttr.in/London'
 alias moon='curl wttr.in/moon'
 alias fuck='sudo $(history -p \!\!)'
@@ -143,6 +139,14 @@ alias rd='ssh pi@rainbowdash -i ~/keys/pi-prvt-ssh.txt'
 alias update='yay -Syu'
 alias remove-orphans='sudo pacman -Rns $(pacman -Qtdq)'
 alias fn='echo 0 | sudo tee /sys/module/hid_apple/parameters/fnmode'
+alias dotfiles='/usr/bin/git --git-dir=/home/paul/.dotfiles/ --work-tree=/home/paul'
+alias d='dotfiles'
+alias dfa='dotfiles add'
+alias dfc='dotfiles commit'
+alias dfp='dotfiles push'
+alias dfs='dotfiles status'
+alias systemctl='sudo systemctl'
+alias pacman='sudo pacman'
 
 # Show all logs in /var/log
 alias logs="sudo find /var/log -type f -exec file {} \; | grep 'text' | cut -d' ' -f1 | sed -e's/:$//g' | grep -v '[0-9]$' | xargs tail -f"
@@ -162,18 +166,6 @@ fi
 if [ -f /etc/bash_completion ] && ! shopt -oq posix; then
     . /etc/bash_completion
 fi
-
-
-alias dotfiles='/usr/bin/git --git-dir=/home/paul/.dotfiles/ --work-tree=/home/paul'
-alias d='dotfiles'
-alias dfa='dotfiles add'
-alias dfc='dotfiles commit'
-alias dfp='dotfiles push'
-alias dfs='dotfiles status'
-
-
-alias systemctl='sudo systemctl'
-alias pacman='sudo pacman'
 
 #run shit
 sink

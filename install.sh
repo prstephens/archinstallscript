@@ -27,7 +27,7 @@ performInstall()
     # Install Arch Linux
     echo "Starting install.."
     echo "Installing Arch Linux with default kernel, GRUB2 as bootloader" 
-    pacstrap /mnt base base-devel mdadm networkmanager reflector linux-zen linux-zen-headers linux-firmware grub os-prober intel-ucode ntfs-3g dosfstools mtools xorg xorg-server xorg-xinit nano sudo git nvidia-dkms nvidia-settings pacman-contrib bluez bluez-utils pulseaudio rxvt-unicode lsd
+    pacstrap /mnt base base-devel mdadm networkmanager reflector linux-zen linux-zen-headers linux-firmware grub os-prober intel-ucode ntfs-3g dosfstools mtools xorg xorg-server xorg-xinit nano sudo git nvidia-dkms nvidia-settings pacman-contrib bluez bluez-utils pulseaudio rxvt-unicode lsd unzip cups
 
     # Generate fstab
     genfstab -U /mnt >> /mnt/etc/fstab
@@ -66,6 +66,3 @@ arch-chroot /mnt /bin/bash
 echo "If config.sh was run succesfully, you will now have a fully working bootable Arch Linux system installed."
 echo "The only thing left is to reboot into the new system."
 echo "Login as you and then run post-install.sh to complete the installation"
-echo "Press any key to reboot or Ctrl+C to cancel..."
-read tmpvar
-reboot

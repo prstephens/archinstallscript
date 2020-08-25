@@ -16,10 +16,6 @@ install_DE()
     # xinitrc config
     echo "exec startdde" >> $HOME/.xinitrc
 
-    # Install Plasma (as a backup)
-    #echo "Installing Plasma..."
-    #sudo pacman -S plasma
-
     echo "Installing preload..."
     yay -S preload
     systemctl enable --now preload
@@ -53,16 +49,6 @@ fi
 git config --global credential.helper store
 git config --global user.email "pr.stephens@gmail.com"
 git config --global user.name "prstephens"
-
-# config files
-curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/.Xresources -o $HOME/.Xresources
-curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/.bashrc -o $HOME/.bashrc
-
-# setup 'dotfiles'
-#git clone --bare https://github.com/prstephens/.dotfiles.git $HOME/.dotfiles
-#alias dotfiles='/usr/bin/git --git-dir=/home/paul/.dotfiles/ --work-tree=/home/paul'
-#dotfiles config --local status.showUntrackedFiles no
-#dotfiles checkout
 
 read -p 'Do you want to install Deepin [y/N]: ' installDE
 if  [ $installDE = 'y' ]
