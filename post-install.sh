@@ -53,8 +53,8 @@ fi
 git config --global credential.helper store
 
 # config files
-#curl https://raw.githubusercontent.com/prstephens/dotfiles/master/.Xresources -o $HOME/.Xresources
-#curl https://raw.githubusercontent.com/prstephens/dotfiles/master/.bashrc -o $HOME/.bashrc
+curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/.Xresources -o $HOME/.Xresources
+curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/.bashrc -o $HOME/.bashrc
 
 # setup 'dotfiles'
 #git clone --bare https://github.com/prstephens/.dotfiles.git $HOME/.dotfiles
