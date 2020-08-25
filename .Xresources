@@ -1,0 +1,60 @@
+#define pallete0                  #373E4D
+#define pallete1                  #3B4252
+#define pallete2                  #434C5E
+#define pallete3                  #4C566A
+#define pallete4                  #FA5AA4
+#define pallete5                  #FA74B2
+#define pallete6                  #2BE491
+#define pallete7                  #44EB9F
+#define pallete8                  #FA946E
+#define pallete9                  #FAA687
+#define pallete10                 #63C5EA
+#define pallete11                 #7ACBEA
+#define pallete12                 #CF8EF4
+#define pallete13                 #D8A6F4
+#define pallete14                 #89CCF7
+#define pallete15                 #A1D5F7
+#define pallete16                 #EDFEFE
+
+*.foreground:                     pallete16
+*.background:                     pallete0
+*.cursorColor:                    pallete16
+!*fading:                          35
+!*fadeColor:                       pallete2
+
+*.color0:                         pallete0
+*.color1:                         pallete4
+*.color2:                         pallete6
+*.color3:                         pallete8
+*.color4:                         pallete10
+*.color5:                         pallete12
+*.color6:                         pallete14
+*.color7:                         pallete16
+
+*.color8:                         pallete3
+*.color9:                         pallete5
+*.color10:                        pallete7
+*.color11:                        pallete9
+*.color12:                        pallete11
+*.color13:                        pallete13
+*.color14:                        pallete15
+*.color15:                        pallete16
+
+! URxvt SETTINGS
+URxvt.geometry: 120x30+400+200
+URxvt.depth: 32
+URxvt.background: [95]pallete0
+URxvt.letterSpace: -1
+URxvt.scrollBar: false
+URxvt.internalBorder: 20
+URxvt.clipboard.autocopy: true
+URxvt.cursorBlink: 1
+URxvt.cursorUnderline: 1
+
+URxvt.urlLauncher:                google-chrome-stable
+URxvt.underlineURLs:              true
+URxvt.urlButton:                  1
+
+URxvt.keysym.Control-Shift-V: perl:pasta:paste
+URxvt.perl-ext-common: selection-to-clipboard,pasta
+URxvt.font: xft:Source Code Pro:size=12:antialias=true
