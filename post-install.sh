@@ -6,25 +6,33 @@ install_DE()
 {
     # Deepin and VS Code
     echo "Installing Deepin..."
-    sudo pacman -S deepin deepin-extra
+    read -p 'Please select deepin-anythin-dkms when prompted. Press any key to continue...' installDE
+    sudo pacman -S deepin deepin-extra redshift
 
     # Deepin Arch update notifier
     echo "Installing Deepin update notifier plugin..."
     yay -S deepin-dock-plugin-arch-update
 
     # xinitrc config
-    echo "exec startdde" >> /home/paul/.xinitrc
+    echo "exec startdde" >> $HOME/.xinitrc
 
     # Install Plasma (as a backup)
-    echo "Installing Plasma..."
-    sudo pacman -S plasma
+    #echo "Installing Plasma..."
+    #sudo pacman -S plasma
+
+    echo "Installing preload..."
+    yay -S preload
+    systemctl enable --now preload
+
+    echo "Installing fonts..."
+    yay -S nerd-fonts-complete otf-san-francisco
 }
 
 install_apps()
 {
     # chrome
-    echo "Installing Chrome, VS Code and WPS Office..."
-    yay -S google-chrome code wps-office
+    echo "Installing Chrome, VS Code WPS Office and Gimp..."
+    yay -S google-chrome code wps-office gimp
 
      # Spotify
     echo "Installing Spotify..."
@@ -35,11 +43,24 @@ install_apps()
 if [ -d "/home/paul/yay" ]
 then
   echo "Installing yay..."
-  cd /home/paul/yay
+  cd $HOME/yay
   makepkg -si
   cd ..
   rm -rfd yay
 fi
+
+# git credentials
+git config --global credential.helper store
+
+# config files
+#curl https://raw.githubusercontent.com/prstephens/dotfiles/master/.Xresources -o $HOME/.Xresources
+#curl https://raw.githubusercontent.com/prstephens/dotfiles/master/.bashrc -o $HOME/.bashrc
+
+# setup 'dotfiles'
+#git clone --bare https://github.com/prstephens/.dotfiles.git $HOME/.dotfiles
+#alias dotfiles='/usr/bin/git --git-dir=/home/paul/.dotfiles/ --work-tree=/home/paul'
+#dotfiles config --local status.showUntrackedFiles no
+#dotfiles checkout
 
 read -p 'Do you want to install Deepin and Plasma DE? [y/N]: ' installDE
 if  [ $installDE = 'y' ]
