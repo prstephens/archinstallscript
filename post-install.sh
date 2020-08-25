@@ -51,6 +51,8 @@ fi
 
 # git credentials
 git config --global credential.helper store
+git config --global user.email "pr.stephens@gmail.com"
+git config --global user.name "prstephens"
 
 # config files
 curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/.Xresources -o $HOME/.Xresources
