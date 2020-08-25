@@ -58,6 +58,7 @@ passwd paul
 echo "Getting some sweet config files..."
 curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/.Xresources -o /home/paul/.Xresources
 curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/.bashrc -o /home/paul/.bashrc
+curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/issue -o /etc/issue
 
 # Get yay ready 
 echo "Getting yay all ready for paul..."
