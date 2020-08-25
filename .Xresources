@@ -57,4 +57,4 @@ URxvt.urlButton:                  1
 
 URxvt.keysym.Control-Shift-V: perl:pasta:paste
 URxvt.perl-ext-common: selection-to-clipboard,pasta
-URxvt.font: xft:Source Code Pro:size=12:antialias=true
+URxvt.font: xft:Source Code Pro:size=10:antialias=true

@@ -62,7 +62,7 @@ curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/.bash
 #dotfiles config --local status.showUntrackedFiles no
 #dotfiles checkout
 
-read -p 'Do you want to install Deepin and Plasma DE? [y/N]: ' installDE
+read -p 'Do you want to install Deepin [y/N]: ' installDE
 if  [ $installDE = 'y' ]
 then 
     install_DE
