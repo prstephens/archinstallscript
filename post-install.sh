@@ -13,8 +13,9 @@ install_DE()
     echo "Installing Deepin update notifier plugin..."
     yay -S deepin-dock-plugin-arch-update
 
-    # xinitrc config
+    # xinit config
     echo "exec startdde" >> $HOME/.xinitrc
+    echo '[[ ! $DISPLAY && $XDG_VTNR -eq 1 ]] && exec startx' >> $HOME/.bash_profile
 
     echo "Installing fonts..."
     yay -S nerd-fonts-complete otf-san-francisco
