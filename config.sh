@@ -61,6 +61,9 @@ curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/.bash
 curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/issue -o /etc/issue
 curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/reflector.service -o /etc/systemd/system/reflector.service
 
+# Set keyboard FN keys to act normal!
+echo "options hid_apple fnmode=2" > /etc/modprobe.d/hid_apple.conf
+
 # Get yay ready 
 echo "Getting yay all ready for paul..."
 git clone https://aur.archlinux.org/yay.git /home/paul/yay
