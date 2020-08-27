@@ -56,10 +56,10 @@ passwd paul
 
 # config files
 echo "Getting some sweet config files..."
-curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/.Xresources -o /home/paul/.Xresources
-curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/.bashrc -o /home/paul/.bashrc
-curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/issue -o /etc/issue
-curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/reflector.service -o /etc/systemd/system/reflector.service
+curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/.Xresources -o /home/paul/.Xresources
+curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/.bashrc -o /home/paul/.bashrc
+curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/issue -o /etc/issue
+curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/reflector.service -o /etc/systemd/system/reflector.service
 
 # Set keyboard FN keys to act normal!
 echo "options hid_apple fnmode=2" > /etc/modprobe.d/hid_apple.conf
