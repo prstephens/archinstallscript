@@ -4,7 +4,7 @@ echo "Paul's Arch Configurator - Post Installer"
 
 echo "Updating pacman mirrors to awesomeness..."
 # Update pacman mirror list
-reflector -c GB --latest 25 --age 24 --protocol https --completion-percent 100 --sort rate --save /etc/pacman.d/mirrorlist
+reflector --verbose -c GB -l 25 --age 12 -p http -p https --sort rate --save /etc/pacman.d/mirrorlist
 
 echo "Setting up spacetime continuum..."
 # Set date time
@@ -59,6 +59,7 @@ echo "Getting some sweet config files..."
 curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/.Xresources -o /home/paul/.Xresources
 curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/.bashrc -o /home/paul/.bashrc
 curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/issue -o /etc/issue
+curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/reflector.service -o /etc/systemd/system/reflector.service
 
 # Get yay ready 
 echo "Getting yay all ready for paul..."
@@ -101,5 +102,7 @@ echo "Enabling services..."
 systemctl enable NetworkManager.service
 systemctl enable bluetooth.service
 systemctl enable org.cups.cupsd.service
+systemctl enable reflector
+systemctl enable reflector.timer
 
 echo "Configuration done. You can now exit chroot."

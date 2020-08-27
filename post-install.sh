@@ -6,8 +6,8 @@ install_DE()
 {
     # Deepin and VS Code
     echo "Installing Deepin..."
-    read -p 'Please select deepin-anythin-dkms when prompted. Press any key to continue...' installDE
-    sudo pacman -S deepin deepin-extra redshift
+    read -p 'Please select deepin-anything-dkms when prompted. Press any key to continue...' installDE
+    sudo pacman -S deepin deepin-extra redshift systemsettings
 
     # Deepin Arch update notifier
     echo "Installing Deepin update notifier plugin..."
@@ -16,10 +16,6 @@ install_DE()
     # xinitrc config
     echo "exec startdde" >> $HOME/.xinitrc
 
-    echo "Installing preload..."
-    yay -S preload
-    systemctl enable --now preload
-
     echo "Installing fonts..."
     yay -S nerd-fonts-complete otf-san-francisco
 }
@@ -27,7 +23,7 @@ install_DE()
 install_apps()
 {
     # chrome
-    echo "Installing Chrome, VS Code WPS Office and Gimp..."
+    echo "Installing Chrome, VS Code, WPS Office, Gimp..."
     yay -S google-chrome code wps-office gimp
 
      # Spotify
@@ -44,6 +40,10 @@ then
   cd ..
   rm -rfd yay
 fi
+
+echo "Installing preload..."
+yay -S preload
+systemctl enable --now preload
 
 # git credentials
 git config --global credential.helper store
