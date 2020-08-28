@@ -41,7 +41,7 @@
 *.color15:                        pallete16
 
 ! URxvt SETTINGS
-URxvt.geometry: 120x30+400+200
+URxvt.geometry: 120x30
 URxvt.depth: 32
 URxvt.background: [95]pallete0
 URxvt.letterSpace: -1

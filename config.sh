@@ -107,5 +107,6 @@ systemctl enable bluetooth.service
 systemctl enable org.cups.cupsd.service
 systemctl enable reflector
 systemctl enable reflector.timer
+systemctl enable fstrim.timer
 
 echo "Configuration done. You can now exit chroot."
