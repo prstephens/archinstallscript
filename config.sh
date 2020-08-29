@@ -60,6 +60,7 @@ curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet
 curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/.bashrc -o /home/paul/.bashrc
 curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/issue -o /etc/issue
 curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/reflector.service -o /etc/systemd/system/reflector.service
+curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/kwinrc -o /home/paul/.config/kwinrc
 
 # Set keyboard FN keys to act normal!
 echo "options hid_apple fnmode=2" > /etc/modprobe.d/hid_apple.conf
