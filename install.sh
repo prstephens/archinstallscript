@@ -13,21 +13,23 @@ performInstall()
     pacman-key --refresh-keys
 
     # Setup the partitions
-    read -p 'You are about to wipe /dev/md/RAIDVOL1_0p4? [y/N]: ' wipe
+    read -p 'You are about to wipe /dev/sdb2? [y/N]: ' wipe
     if [ $wipe = 'y' ]
     then
-        mkfs.ext4 /dev/md/RAIDVOL1_0p4
+        mkfs.ext4 /dev/sdb2
     else
         echo "Install stopped"
         exit
     fi
 
-    mount /dev/md/RAIDVOL1_0p4 /mnt
+    mkswap /dev/sdb1
+    swapon /dev/sdb1
+    mount /dev/sdb2 /mnt
 
     # Install Arch Linux
     echo "Starting install.."
     echo "Installing Arch Linux with default kernel, GRUB2 as bootloader" 
-    pacstrap /mnt base base-devel mdadm networkmanager reflector linux linux-firmware grub os-prober intel-ucode ntfs-3g dosfstools mtools xorg xorg-server xorg-xinit nano sudo git nvidia nvidia-settings pacman-contrib bluez bluez-utils pulseaudio rxvt-unicode lsd unzip cups hplip
+    pacstrap /mnt base base-devel networkmanager reflector linux-zen linuz-zen-headers linux-firmware grub efibootmgr os-prober intel-ucode ntfs-3g dosfstools mtools xorg xorg-server xorg-xinit nano sudo git nvidia-dkms nvidia-settings pacman-contrib bluez bluez-utils pulseaudio rxvt-unicode lsd unzip cups hplip
 
     # Generate fstab
     genfstab -U /mnt >> /mnt/etc/fstab
