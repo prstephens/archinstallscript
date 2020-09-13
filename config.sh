@@ -53,6 +53,7 @@ passwd paul
 # config files
 echo "Getting some sweet config files..."
 mkdir /home/paul/.config
+chown -R paul /home/paul/.config
 curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/.Xresources -o /home/paul/.Xresources
 curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/.bashrc -o /home/paul/.bashrc
 curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/issue -o /etc/issue
