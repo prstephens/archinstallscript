@@ -1,5 +1,5 @@
 #! /bin/bash
-
+clear
 echo "Paul's Arch Configurator - Post Installer"
 
 echo "Updating pacman mirrors to awesomeness..."
@@ -78,8 +78,7 @@ echo "Creating .xinitrc file..."
 head -n -5 /etc/X11/xinit/xinitrc >> /home/paul/.xinitrc
 chown paul:paul /home/paul/.xinitrc
 
-# Create swapfile
-echo "Creating swap file..."
+# swappiness config for swap
 echo "vm.swappiness=10" >> /etc/sysctl.d/99-swappiness.conf
 
 # Set correct sound card for PulseAudio

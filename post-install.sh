@@ -19,6 +19,9 @@ install_DE()
 
     echo "Installing fonts..."
     yay -S nerd-fonts-complete otf-san-francisco
+
+    echo "Installing glorious lightdm theme..."
+    yay -S lightdm-webkit2-theme-glorious
 }
 
 install_apps()
