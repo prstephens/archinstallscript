@@ -3,7 +3,6 @@ Backend=OpenGL
 Enabled=true
 GLCore=true
 OpenGLIsUnsafe=false
-OpenGLIsUnsafeCount=1
 WindowsBlockCompositing=false
 
 [Desktops]

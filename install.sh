@@ -1,7 +1,7 @@
 #! /bin/bash
 
-echo "Paul's Arch Installer"
 clear
+echo "Paul's Arch Installer"
 
 performInstall()
 {

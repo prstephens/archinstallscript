@@ -1,4 +1,5 @@
 #! /bin/bash
+
 clear
 echo "Paul's Arch Configurator - Post Installer"
 
@@ -42,7 +43,7 @@ unzip matter.zip
 rm matter.zip
 cd matter
 ./matter.py -i arch folder _ _ microsoft-windows -hl white -fg f0f0f0 -bg ff0d7b
-sed -i 's/Windows 10 (on \/dev\/sda1)/Windows 10/' /boot/grub/grub.cfg
+sed -i 's/Windows Boot Manager (on \/dev\/sda1)/Windows 10/' /boot/grub/grub.cfg
 
 # Create new user
 useradd -m -G wheel paul

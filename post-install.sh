@@ -1,5 +1,6 @@
 #! /bin/bash
 
+clear
 echo "Paul's Arch Configurator - Post Installer"
 
 install_DE()
@@ -22,13 +23,17 @@ install_DE()
 
     echo "Installing glorious lightdm theme..."
     yay -S lightdm-webkit2-theme-glorious
+    sudo sed -i 's/^#greeter-session=.*$/greeter-session=lightdm-webkit2-greeter/' /etc/lightdm/lightdm.conf
+    sudo sed -i 's/^debug_mode.*$/debug_mode=true/' /etc/lightdm/lightdm-webkit2-greeter.conf
+    sudo sed -i 's/^webkit_theme.*$/webkit_theme=glorious/' /etc/lightdm/lightdm-webkit2-greeter.conf
+    sudo systemctl enable lightdm
 }
 
 install_apps()
 {
     # chrome
     echo "Installing Chrome, VS Code, WPS Office, Gimp..."
-    yay -S google-chrome code wps-office gimp
+    yay -S google-chrome firefox code wps-office gimp
 
      # Spotify
     echo "Installing Spotify..."
@@ -47,7 +52,7 @@ fi
 
 echo "Installing preload..."
 yay -S preload
-systemctl enable --now preload
+sudo systemctl enable --now preload
 
 # git credentials
 git config --global credential.helper store
