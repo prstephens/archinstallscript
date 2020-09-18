@@ -29,21 +29,51 @@ echo "Set root password"
 passwd
 
 # Install bootloader
-echo "Installing grub..."
+# rEFInd
+echo "Installing rEFInd..."
+
+ROOTUUID=$(blkid -s UUID -o value /dev/sdb2)
+
 mkdir /boot/efi
+
+# mount windows EFI boot (on sda1)
 mount /dev/sda1 /boot/efi
-grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --recheck
-sed -i 's/GRUB_DEFAULT=0/GRUB_DEFAULT="Windows 10"/' /etc/default/grub
-sed -i 's/GRUB_GFXMODE=auto/GRUB_GFXMODE=1920x1080/' /etc/default/grub
-grub-mkconfig -o /boot/grub/grub.cfg
+refind-install
+
+cat <<EOT > "/boot/refind_linux.conf"
+"Boot with standard options"  "root=UUID=${ROOTUUID} rw loglevel=3 quiet initrd=boot\intel-ucode.img initrd=boot\initramfs-linux-zen.img"
+"Boot to single-user mode"    "root=UUID=${ROOTUUID} rw loglevel=3 quiet single"
+"Boot with minimal options"   "rw root=UUID=${ROOTUUID}"
+EOT
+
+# Morpheous theme for refind 
+mkdir /boot/efi/EFI/refind/themes
+cd /boot/efi/EFI/refind/themes
+git clone https://github.com/Yannis4444/Matrix-rEFInd.git
+
+cat <<EOT > "/boot/efi/EFI/refind/refind.conf"
+resolution 1920 1080
+timeout 5
+default_selection Microsoft
+include themes/Matrix-rEFInd/theme.conf
+EOT
+
+#GRUB - Old Skool
+#echo "Installing grub..."
+#mkdir /boot/efi
+#mount /dev/sda1 /boot/efi
+#grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --recheck
+#sed -i 's/GRUB_DEFAULT=0/GRUB_DEFAULT="Windows 10"/' /etc/default/grub
+#sed -i 's/GRUB_GFXMODE=auto/GRUB_GFXMODE=1920x1080/' /etc/default/grub
+#grub-mkconfig -o /boot/grub/grub.cfg
 
 # make grub look pretty
-curl -LO https://github.com/mateosss/matter/releases/latest/download/matter.zip
-unzip matter.zip
-rm matter.zip
-cd matter
-./matter.py -i arch folder _ _ microsoft-windows -hl white -fg f0f0f0 -bg ff0d7b
-sed -i 's/Windows Boot Manager (on \/dev\/sda1)/Windows 10/' /boot/grub/grub.cfg
+#curl -LO https://github.com/mateosss/matter/releases/latest/download/matter.zip
+#unzip matter.zip
+#rm matter.zip
+#cd matter
+#./matter.py -i arch folder _ _ microsoft-windows -hl white -fg f0f0f0 -bg ff0d7b
+#sed -i 's/Windows Boot Manager (on \/dev\/sda1)/Windows 10/' /boot/grub/grub.cfg
 
 # Create new user
 useradd -m -G wheel paul
