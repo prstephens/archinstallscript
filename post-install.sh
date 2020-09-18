@@ -5,9 +5,9 @@ echo "Paul's Arch Configurator - Post Installer"
 
 install_DE()
 {
-    # Deepin and VS Code
+    # Deepin
     echo "Installing Deepin..."
-    read -p 'Please select deepin-anything-dkms when prompted. Press any key to continue...' installDE
+    read -p 'NOTE: Please select deepin-anything-dkms when prompted. Press any key to continue...' installDE
     sudo pacman -S deepin deepin-extra redshift systemsettings
 
     # Deepin Arch update notifier
@@ -31,7 +31,6 @@ install_DE()
 
 install_apps()
 {
-    # chrome
     echo "Installing Chrome, VS Code, WPS Office, Gimp..."
     yay -S google-chrome firefox code wps-office gimp
 

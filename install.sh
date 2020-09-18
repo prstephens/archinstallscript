@@ -8,7 +8,7 @@ performInstall()
     # Set up time
     timedatectl set-ntp true
 
-    # Initate pacman keyring and servers
+    # Initiate pacman keyring and servers
     pacman -Sy reflector archlinux-keyring
     reflector --verbose -c GB -l 25 --age 12 -p http -p https --sort rate --save /etc/pacman.d/mirrorlist
 
@@ -28,8 +28,8 @@ performInstall()
 
     # Install Arch Linux
     echo "Starting install.."
-    echo "Installing Arch Linux with default kernel, GRUB2 as bootloader" 
-    pacstrap /mnt base base-devel networkmanager reflector linux-zen linux-zen-headers linux-firmware grub refind efibootmgr os-prober intel-ucode ntfs-3g dosfstools mtools xorg xorg-server xorg-xinit nano sudo git nvidia-dkms nvidia-settings pacman-contrib bluez bluez-utils pulseaudio rxvt-unicode lsd unzip cups hplip
+    echo "Installing Arch Linux with Zen kernel, rEFInd as bootloader" 
+    pacstrap /mnt base base-devel networkmanager reflector linux-zen linux-zen-headers linux-firmware refind intel-ucode ntfs-3g xorg xorg-server xorg-xinit nano sudo git nvidia-dkms nvidia-settings pacman-contrib bluez bluez-utils pulseaudio rxvt-unicode lsd unzip cups hplip
 
     # Generate fstab
     genfstab -U /mnt >> /mnt/etc/fstab
