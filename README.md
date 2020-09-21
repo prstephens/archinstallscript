@@ -1,5 +1,7 @@
-# archinstallscript
+# Arch Linux Install Script
 Script to install Arch Linux
 
-`curl -sL https://git.io/JUueK | bash`
+Note: this is NOT generic and for my own personal setup. 
+
+`curl -sL git.io/JUueK | bash`
 
