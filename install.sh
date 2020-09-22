@@ -85,8 +85,8 @@ configuration()
     arch-chroot /mnt mount /dev/sda1 /boot/efi
 
     # clean it up before install
-    arch-chroot /mnt [[ -f /boot/refind_linux.conf ]] && rm /boot/refind_linux.conf
-    arch-chroot /mnt [[ -d /boot/efi/EFI/refind ]] && rm -rdf /boot/efi/EFI/refind
+    [[ -f /mnt/boot/refind_linux.conf ]] && rm /mnt/boot/refind_linux.conf
+    [[ -d /mnt/boot/efi/EFI/refind ]] && rm -rdf /mnt/boot/efi/EFI/refind
 
     arch-chroot /mnt refind-install
 
