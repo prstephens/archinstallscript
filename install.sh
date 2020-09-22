@@ -134,7 +134,7 @@ EOT
     # Copy post-install file to /home/paul
     echo "Copy post-install file to /home/paul..."
     #arch-chroot /mnt cp -rfv /root/post-install.sh /home/paul/
-    arch-chroot /mnt chmod a+x /home/paul/post-install.sh
+    #arch-chroot /mnt chmod a+x /home/paul/post-install.sh
 
     # Create user xinit config file 
     echo "Creating .xinitrc file..."
@@ -164,6 +164,8 @@ EOT
     arch-chroot /mnt systemctl enable reflector
     arch-chroot /mnt systemctl enable reflector.timer
     arch-chroot /mnt systemctl enable fstrim.timer
+
+    echo "===== Installation Complete ====="
 }
 
 checkConnection() 
