@@ -1,4 +1,6 @@
-#! /bin/bash
+#!/usr/bin/env bash
+
+set -e
 
 clear
 
@@ -9,7 +11,6 @@ echo "  / ___ \| | | (__| | | |  | || | | \__ \ || (_| | | |  __/ |   "
 echo " /_/   \_\_|  \___|_| |_| |___|_| |_|___/\__\__,_|_|_|\___|_|   "
 echo "                                                                "
 echo " Version 2.0"
-
 
 performInstall()
 {
@@ -42,22 +43,135 @@ performInstall()
     # Generate fstab
     genfstab -U /mnt >> /mnt/etc/fstab
 
-    # Copy post-install system configuration script to new /root
-    cp -rfv config.sh /mnt/root
-    chmod a+x /mnt/root/config.sh
-
-    cp -rfv post-install.sh /mnt/root
+    #cp -rfv post-install.sh /mnt/root
 }
 
-# Check for Connection
+configuration()
+{
+    echo "Updating pacman mirrors to awesomeness..."
+    # Update pacman mirror list
+    arch-chroot /mnt reflector --verbose -c GB -l 25 --age 12 -p http -p https --sort rate --save /etc/pacman.d/mirrorlist
+
+    echo "Setting up spacetime continuum..."
+    # Set date time
+    arch-chroot /mnt ln -sf /usr/share/zoneinfo/Europe/London /etc/localtime
+    arch-chroot /mnt hwclock --systohc
+
+    # Set locale to en_US.UTF-8 UTF-8
+    arch-chroot /mnt sed -i '/en_GB.UTF-8 UTF-8/s/^#//g' /etc/locale.gen
+    arch-chroot /mnt locale-gen
+    echo "LANG=en_GB.UTF-8" >> /mnt/etc/locale.conf
+
+    # Set the console keymap
+    echo "KEYMAP=uk" >> /mnt/etc/vconsole.conf
+
+    # Set hostname
+    echo "archpc" >> /mnt/etc/hostname
+    echo "127.0.1.1 archpc.localdomain  archpc" >> /mnt/etc/hosts
+
+    # Set root password
+    echo "Set root password"
+    arch-chroot /mnt passwd
+
+    # Install bootloader
+    # rEFInd
+    echo "Installing rEFInd..."
+
+    arch-chroot /mnt ROOTUUID=$(blkid -s UUID -o value /dev/sdb2)
+
+    arch-chroot /mnt mkdir /boot/efi
+
+    # mount windows EFI boot (on sda1)
+    arch-chroot /mnt mount /dev/sda1 /boot/efi
+
+    # clean it up before install
+    arch-chroot /mnt [[ -f /boot/refind_linux.conf ]] && rm /boot/refind_linux.conf
+    arch-chroot /mnt [[ -d /boot/efi/EFI/refind ]] && rm -rdf /boot/efi/EFI/refind
+
+    arch-chroot /mnt refind-install
+
+    cat <<EOT > /mnt/boot/refind_linux.conf
+"Boot with standard options"  "root=UUID=${ROOTUUID} rw loglevel=3 quiet initrd=boot\intel-ucode.img initrd=boot\initramfs-linux-zen.img"
+"Boot to single-user mode"    "root=UUID=${ROOTUUID} rw loglevel=3 quiet single"
+"Boot with minimal options"   "rw root=UUID=${ROOTUUID}"
+EOT
+
+    # Morpheous theme for refind 
+    arch-chroot /mnt mkdir /boot/efi/EFI/refind/themes
+    arch-chroot /mnt git clone https://github.com/Yannis4444/Matrix-rEFInd.git /boot/efi/EFI/refind/themes/Matrix-rEFInd
+
+    cat <<EOT > /mnt/boot/efi/EFI/refind/refind.conf
+resolution 1920 1080
+timeout 5
+default_selection Microsoft
+include themes/Matrix-rEFInd/theme.conf
+EOT
+
+    # Create new user
+    arch-chroot /mnt useradd -m -G wheel paul
+    arch-chroot /mnt sed -i 's/# %wheel ALL=(ALL) ALL/%wheel ALL=(ALL) ALL/' /etc/sudoers
+    echo "Set password for new user paul"
+    arch-chroot /mnt passwd paul
+
+    # config files
+    echo "Getting some sweet config files..."
+    arch-chroot /mnt mkdir /home/paul/.config
+    arch-chroot /mnt chown -R paul /home/paul/.config
+    arch-chroot /mnt curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/.Xresources -o /home/paul/.Xresources
+    arch-chroot /mnt curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/.bashrc -o /home/paul/.bashrc
+    arch-chroot /mnt curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/issue -o /etc/issue
+    arch-chroot /mnt curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/reflector.service -o /etc/systemd/system/reflector.service
+    arch-chroot /mnt curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/kwinrc -o /home/paul/.config/kwinrc
+
+    # Set keyboard FN keys to act normal!
+    echo "options hid_apple fnmode=2" > /mnt/etc/modprobe.d/hid_apple.conf
+
+    # Get yay ready 
+    echo "Getting yay all ready for paul..."
+    arch-chroot /mnt git clone https://aur.archlinux.org/yay.git /home/paul/yay
+    arch-chroot /mnt chown -R paul /home/paul/yay/
+
+    # Copy post-install file to /home/paul
+    echo "Copy post-install file to /home/paul..."
+    #arch-chroot /mnt cp -rfv /root/post-install.sh /home/paul/
+    arch-chroot /mnt chmod a+x /home/paul/post-install.sh
+
+    # Create user xinit config file 
+    echo "Creating .xinitrc file..."
+    arch-chroot /mnt head -n -5 /etc/X11/xinit/xinitrc >> /home/paul/.xinitrc
+    arch-chroot /mnt chown paul:paul /home/paul/.xinitrc
+
+    # swappiness config for swap
+    echo "vm.swappiness=10" >> /mnt/etc/sysctl.d/99-swappiness.conf
+
+    # Set correct sound card for PulseAudio
+    sudo echo "set-default-sink output alsa_output.pci-0000_00_1f.3.analog-stereo" >> /mnt/etc/pulse/default.pa
+
+    # Copy Windows fonts over
+    echo "Copying Windows fonts..."
+    arch-chroot /mnt mkdir /usr/share/fonts/windowsfonts
+    arch-chroot /mnt mkdir /windows10
+    arch-chroot /mnt mount /dev/sda3 /windows10
+    arch-chroot /mnt cp /windows10/Windows/Fonts/* /usr/share/fonts/windowsfonts
+    arch-chroot /mnt fc-cache -f
+    arch-chroot /mnt umount /windows10
+
+    # Enable services
+    echo "Enabling services..."
+    arch-chroot /mnt systemctl enable NetworkManager.service
+    arch-chroot /mnt systemctl enable bluetooth.service
+    arch-chroot /mnt systemctl enable org.cups.cupsd.service
+    arch-chroot /mnt systemctl enable reflector
+    arch-chroot /mnt systemctl enable reflector.timer
+    arch-chroot /mnt systemctl enable fstrim.timer
+}
+
 checkConnection() 
 {
-    if [[ $(ping -q -w1 -c1 google.com &>/dev/null && echo online || echo offline) == "online" ]]; 
+    if [[ $(ping -q -w1 -c1 google.com &>/dev/null && echo online || echo offline) == "offline" ]]; 
     then
-        echo "You're connected to the interwebs... lets do this!"
-        performInstall
-    else
         echo "Oh dear. You need to be connected to the information highway..."
+        echo "Installation stopped"
         exit
     fi
 }
@@ -65,14 +179,5 @@ checkConnection()
 # START
 loadkeys uk
 checkConnection
-
-# Chroot into new system
-echo "After chrooting into newly installed OS, please run the config.sh by executing ./root/config.sh"
-echo "Press any key to chroot..."
-read tmpvar
-arch-chroot /mnt /bin/bash
-
-# Finish
-echo "If config.sh was run succesfully, you will now have a fully working bootable Arch Linux system installed."
-echo "The only thing left is to reboot into the new system."
-echo "Login as you and then run post-install.sh to complete the installation"
+performInstall
+configuration

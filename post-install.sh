@@ -40,7 +40,21 @@ install_apps()
     yay -S spotify
 }
 
-if [ -d "/home/paul/yay" ]
+install_qemu()
+{
+    echo "Installing QEMU/KVM"
+    sudo pacman -S libvirt virt-manager ovmf qemu
+
+    sudo systemctl enable --now libvirtd.service
+    sudo systemctl enable --now virtlogd.socket
+
+    # Enable Virtualization Technology for Directed I/O in rEFInd config as boot param
+    sudo sed -i.bak 's/linux-zen.img[^"]*/& intel_iommu=on/' /boot/refind_linux.conf
+
+    sudo usermod -a -G libvirt paul
+}
+
+if [[ -d home/paul/yay ]]
 then
   echo "Installing yay..."
   cd $HOME/yay
@@ -68,6 +82,12 @@ read -p 'Do you want to install some apps? [y/N]: ' installapps
 if  [ $installapps = 'y' ] 
 then 
     install_apps
+fi
+
+read -p 'Do you want to install QEMU/KVM? [y/N]: ' installqemu
+if  [ $installqemu = 'y' ] 
+then 
+    install_qemu
 fi
 
 echo "Post install complete. Enjoy!"
