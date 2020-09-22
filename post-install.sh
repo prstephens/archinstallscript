@@ -12,7 +12,7 @@ install_DE()
 
     # Deepin Arch update notifier
     echo "Installing Deepin update notifier plugin..."
-    yay -S deepin-dock-plugin-arch-update
+    yay -S deepin-dock-plugin-arch-update pacman-contrib
 
     # xinit config
     echo "exec startdde" >> $HOME/.xinitrc
