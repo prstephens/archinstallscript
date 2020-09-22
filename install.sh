@@ -149,12 +149,12 @@ EOT
 
     # Copy Windows fonts over
     echo "Copying Windows fonts..."
-    arch-chroot /mnt mkdir /usr/share/fonts/windowsfonts
-    arch-chroot /mnt mkdir /windows10
-    arch-chroot /mnt mount /dev/sda3 /windows10
-    arch-chroot /mnt cp /windows10/Windows/Fonts/* /usr/share/fonts/windowsfonts
-    arch-chroot /mnt fc-cache -f
-    arch-chroot /mnt umount /windows10
+    #arch-chroot /mnt mkdir /usr/share/fonts/windowsfonts
+    #arch-chroot /mnt mkdir /windows10
+    #arch-chroot /mnt mount /dev/sda3 /windows10
+    #arch-chroot /mnt cp /windows10/Windows/Fonts/* /usr/share/fonts/windowsfonts
+    #arch-chroot /mnt fc-cache -f
+    #arch-chroot /mnt umount /windows10
 
     # Enable services
     echo "Enabling services..."
