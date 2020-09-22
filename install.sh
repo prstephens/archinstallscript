@@ -77,7 +77,7 @@ configuration()
     # rEFInd
     echo "Installing rEFInd..."
 
-    arch-chroot /mnt ROOTUUID=$(blkid -s UUID -o value /dev/sdb2)
+    ROOTUUID=$(blkid -s UUID -o value /dev/sdb2)
 
     arch-chroot /mnt mkdir /boot/efi
 
