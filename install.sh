@@ -18,8 +18,8 @@ performInstall()
     timedatectl set-ntp true
 
     # Initiate pacman keyring and servers
-    pacman -Sy reflector archlinux-keyring
-    reflector --verbose -c GB -l 25 --age 12 -p http -p https --sort rate --save /etc/pacman.d/mirrorlist
+    #pacman -Sy reflector archlinux-keyring
+    #reflector --verbose -c GB -l 25 --age 12 -p http -p https --sort rate --save /etc/pacman.d/mirrorlist
 
     # Setup the partitions
     read -p 'You are about to wipe /dev/sdb2? [y/N]: ' wipe
