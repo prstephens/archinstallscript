@@ -138,7 +138,7 @@ EOT
 
     # Create user xinit config file 
     echo "Creating .xinitrc file..."
-    arch-chroot /mnt head -n -5 /etc/X11/xinit/xinitrc >> /home/paul/.xinitrc
+    head -n -5 /mnt/etc/X11/xinit/xinitrc >> /mnt/home/paul/.xinitrc
     arch-chroot /mnt chown paul:paul /home/paul/.xinitrc
 
     # swappiness config for swap
