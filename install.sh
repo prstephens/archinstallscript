@@ -17,10 +17,6 @@ performInstall()
     # Set up time
     timedatectl set-ntp true
 
-    # Initiate pacman keyring and servers
-    #pacman -Sy reflector archlinux-keyring
-    #reflector --verbose -c GB -l 25 --age 12 -p http -p https --sort rate --save /etc/pacman.d/mirrorlist
-
     # Setup the partitions
     read -p 'You are about to wipe /dev/sdb2? [y/N]: ' wipe
     if [ $wipe = 'y' ]
@@ -42,8 +38,6 @@ performInstall()
 
     # Generate fstab
     genfstab -U /mnt >> /mnt/etc/fstab
-
-    #cp -rfv post-install.sh /mnt/root
 }
 
 configuration()
@@ -85,7 +79,6 @@ configuration()
     arch-chroot /mnt mount /dev/sda1 /boot/efi
 
     # clean it up before install
-    [[ -f /mnt/boot/refind_linux.conf ]] && rm /mnt/boot/refind_linux.conf
     [[ -d /mnt/boot/efi/EFI/refind ]] && rm -rdf /mnt/boot/efi/EFI/refind
 
     arch-chroot /mnt refind-install
@@ -129,12 +122,13 @@ EOT
     # Get yay ready 
     echo "Getting yay all ready for paul..."
     arch-chroot /mnt git clone https://aur.archlinux.org/yay.git /home/paul/yay
-    arch-chroot /mnt chown -R paul /home/paul/yay/
+    arch-chroot /mnt chown -R paul:paul /home/paul/yay/
 
     # Copy post-install file to /home/paul
     echo "Copy post-install file to /home/paul..."
-    #arch-chroot /mnt cp -rfv /root/post-install.sh /home/paul/
-    #arch-chroot /mnt chmod a+x /home/paul/post-install.sh
+    curl -sL https://git.io/JUgkN > /mnt/home/paul/post-install.sh
+    arch-chroot /mnt chown paul:paul /home/paul/post-install.sh
+    arch-chroot /mnt chmod a+x /home/paul/post-install.sh
 
     # Create user xinit config file 
     echo "Creating .xinitrc file..."
@@ -146,15 +140,6 @@ EOT
 
     # Set correct sound card for PulseAudio
     sudo echo "set-default-sink output alsa_output.pci-0000_00_1f.3.analog-stereo" >> /mnt/etc/pulse/default.pa
-
-    # Copy Windows fonts over
-    echo "Copying Windows fonts..."
-    #arch-chroot /mnt mkdir /usr/share/fonts/windowsfonts
-    #arch-chroot /mnt mkdir /windows10
-    #arch-chroot /mnt mount /dev/sda3 /windows10
-    #arch-chroot /mnt cp /windows10/Windows/Fonts/* /usr/share/fonts/windowsfonts
-    #arch-chroot /mnt fc-cache -f
-    #arch-chroot /mnt umount /windows10
 
     # Enable services
     echo "Enabling services..."

@@ -1,25 +1,29 @@
 #! /bin/bash
 
 clear
-echo "Paul's Arch Configurator - Post Installer"
+
+echo "     _             _       ___           _        _ _           "
+echo "    / \   _ __ ___| |__   |_ _|_ __  ___| |_ __ _| | | ___ _ __ "
+echo "   / _ \ | '__/ __| '_ \   | || '_ \/ __| __/ _\` | | |/ _ \ '__|"
+echo "  / ___ \| | | (__| | | |  | || | | \__ \ || (_| | | |  __/ |   "
+echo " /_/   \_\_|  \___|_| |_| |___|_| |_|___/\__\__,_|_|_|\___|_|   "
+echo "                                                                "
+echo " Post Installation - Version 2.0"
 
 install_DE()
 {
     # Deepin
     echo "Installing Deepin..."
     read -p 'NOTE: Please select deepin-anything-dkms when prompted. Press any key to continue...' installDE
-    sudo pacman -S deepin deepin-extra redshift systemsettings
+    sudo pacman -S deepin redshift pacman-contrib
 
     # Deepin Arch update notifier
     echo "Installing Deepin update notifier plugin..."
-    yay -S deepin-dock-plugin-arch-update pacman-contrib
+    yay -S deepin-dock-plugin-arch-update
 
     # xinit config
     echo "exec startdde" >> $HOME/.xinitrc
     echo '[[ ! $DISPLAY && $XDG_VTNR -eq 1 ]] && exec startx' >> $HOME/.bash_profile
-
-    echo "Installing fonts..."
-    yay -S nerd-fonts-complete otf-san-francisco
 
     echo "Installing glorious lightdm theme..."
     yay -S lightdm-webkit2-theme-glorious
@@ -27,6 +31,18 @@ install_DE()
     sudo sed -i 's/^debug_mode.*$/debug_mode=true/' /etc/lightdm/lightdm-webkit2-greeter.conf
     sudo sed -i 's/^webkit_theme.*$/webkit_theme=glorious/' /etc/lightdm/lightdm-webkit2-greeter.conf
     sudo systemctl enable lightdm
+
+    echo "Installing fonts..."
+    yay -S nerd-fonts-complete otf-san-francisco
+
+     # Copy Windows fonts over
+    echo "Copying Windows fonts..."
+    sudo mkdir /usr/share/fonts/windowsfonts
+    mkdir /windows10
+    mount /dev/sda3 /windows10
+    cp /windows10/Windows/Fonts/* /usr/share/fonts/windowsfonts
+    fc-cache -f
+    umount /windows10
 }
 
 install_apps()
@@ -54,7 +70,7 @@ install_qemu()
     sudo usermod -a -G libvirt paul
 }
 
-if [[ -d home/paul/yay ]]
+if [[ -d /home/paul/yay ]]
 then
   echo "Installing yay..."
   cd $HOME/yay
@@ -63,9 +79,7 @@ then
   rm -rfd yay
 fi
 
-echo "Installing preload..."
-yay -S preload
-sudo systemctl enable --now preload
+sudo pacman -S archlinux-keyring
 
 # git credentials
 git config --global credential.helper store
