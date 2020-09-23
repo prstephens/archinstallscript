@@ -126,7 +126,7 @@ EOT
 
     # Copy post-install file to /home/paul
     echo "Copy post-install file to /home/paul..."
-    curl -sL https://git.io/JUgkN > /mnt/home/paul/post-install.sh
+    arch-chroot /mnt curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/post-install.sh -o /home/paul/post-install.sh
     arch-chroot /mnt chown paul:paul /home/paul/post-install.sh
     arch-chroot /mnt chmod a+x /home/paul/post-install.sh
 
