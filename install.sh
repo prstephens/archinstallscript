@@ -15,6 +15,7 @@ echo " Version 2.0"
 performInstall()
 {
     # Set up time
+    echo "Setting date and time..."
     timedatectl set-ntp true
 
     # Setup the partitions
@@ -42,6 +43,12 @@ performInstall()
 
 configuration()
 {
+    # Set Cloudfare as our DNS
+    cat <<EOT > /mnt/etc/resolv.conf.head
+nameserver 1.1.1.1
+nameserver 1.0.0.1
+EOT
+
     echo "Updating pacman mirrors to awesomeness..."
     # Update pacman mirror list
     arch-chroot /mnt reflector --verbose -c GB -l 25 --age 12 -p http -p https --sort rate --save /etc/pacman.d/mirrorlist
@@ -98,6 +105,7 @@ resolution 1920 1080
 timeout 5
 default_selection Microsoft
 include themes/Matrix-rEFInd/theme.conf
+showtools shutdown
 EOT
 
     # Create new user
@@ -109,12 +117,14 @@ EOT
     # config files
     echo "Getting some sweet config files..."
     arch-chroot /mnt mkdir /home/paul/.config
-    arch-chroot /mnt chown -R paul /home/paul/.config
     arch-chroot /mnt curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/.Xresources -o /home/paul/.Xresources
     arch-chroot /mnt curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/.bashrc -o /home/paul/.bashrc
     arch-chroot /mnt curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/issue -o /etc/issue
     arch-chroot /mnt curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/reflector.service -o /etc/systemd/system/reflector.service
     arch-chroot /mnt curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/kwinrc -o /home/paul/.config/kwinrc
+
+    arch-chroot /mnt chown -R paul:paul /home/paul/.config
+    arch-chroot /mnt chown paul:paul /home/paul/.Xresources
 
     # Set keyboard FN keys to act normal!
     echo "options hid_apple fnmode=2" > /mnt/etc/modprobe.d/hid_apple.conf

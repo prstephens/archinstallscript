@@ -9,6 +9,23 @@ echo "  / ___ \| | | (__| | | |  | || | | \__ \ || (_| | | |  __/ |   "
 echo " /_/   \_\_|  \___|_| |_| |___|_| |_|___/\__\__,_|_|_|\___|_|   "
 echo "                                                                "
 echo " Post Installation - Version 2.0"
+echo " "
+
+if [[ -d /home/paul/yay ]]
+then
+  echo "Installing yay..."
+  cd $HOME/yay
+  makepkg -si
+  cd ..
+  rm -rfd yay
+fi
+
+sudo pacman -S archlinux-keyring
+
+# git credentials
+git config --global credential.helper store
+git config --global user.email "pr.stephens@gmail.com"
+git config --global user.name "prstephens"
 
 install_DE()
 {
@@ -38,17 +55,17 @@ install_DE()
      # Copy Windows fonts over
     echo "Copying Windows fonts..."
     sudo mkdir /usr/share/fonts/windowsfonts
-    mkdir /windows10
-    mount /dev/sda3 /windows10
-    cp /windows10/Windows/Fonts/* /usr/share/fonts/windowsfonts
+    sudo mkdir /windows10
+    sudo mount /dev/sda3 /windows10
+    sudo cp /windows10/Windows/Fonts/* /usr/share/fonts/windowsfonts
     fc-cache -f
-    umount /windows10
+    sudo umount /windows10
 }
 
 install_apps()
 {
     echo "Installing Chrome, VS Code, WPS Office, Gimp..."
-    yay -S google-chrome firefox code wps-office gimp
+    yay -S google-chrome firefox code wps-office gimp vlc
 
      # Spotify
     echo "Installing Spotify..."
@@ -69,22 +86,6 @@ install_qemu()
 
     sudo usermod -a -G libvirt paul
 }
-
-if [[ -d /home/paul/yay ]]
-then
-  echo "Installing yay..."
-  cd $HOME/yay
-  makepkg -si
-  cd ..
-  rm -rfd yay
-fi
-
-sudo pacman -S archlinux-keyring
-
-# git credentials
-git config --global credential.helper store
-git config --global user.email "pr.stephens@gmail.com"
-git config --global user.name "prstephens"
 
 read -p 'Do you want to install Deepin [y/N]: ' installDE
 if  [ $installDE = 'y' ]
