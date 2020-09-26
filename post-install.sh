@@ -32,7 +32,7 @@ install_DE()
     # Deepin
     echo "Installing Deepin..."
     read -p 'NOTE: Please select deepin-anything-dkms when prompted. Press any key to continue...' installDE
-    sudo pacman -S deepin redshift pacman-contrib
+    sudo pacman -S deepin deepin-compressor redshift pacman-contrib
 
     # Deepin Arch update notifier
     echo "Installing Deepin update notifier plugin..."
@@ -78,13 +78,19 @@ install_qemu()
     echo "Installing QEMU/KVM"
     sudo pacman -S libvirt virt-manager ovmf qemu
 
-    sudo systemctl enable --now libvirtd.service
-    sudo systemctl enable --now virtlogd.socket
-
     # Enable Virtualization Technology for Directed I/O in rEFInd config as boot param
     sudo sed -i.bak 's/linux-zen.img[^"]*/& intel_iommu=on/' /boot/refind_linux.conf
 
     sudo usermod -a -G libvirt paul
+
+sudo cat <<EOT >> /etc/libvirt/qemu.conf
+nvram = [
+	"/usr/share/ovmf/x64/OVMF_CODE.fd:/usr/share/ovmf/x64/OVMF_VARS.fd"
+]
+EOT
+
+    sudo systemctl enable --now libvirtd.service
+    sudo systemctl enable --now virtlogd.socket
 }
 
 read -p 'Do you want to install Deepin [y/N]: ' installDE
