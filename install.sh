@@ -35,7 +35,7 @@ performInstall()
     # Install Arch Linux
     echo "Starting install.."
     echo "Installing Arch Linux with Zen kernel, rEFInd as bootloader" 
-    pacstrap /mnt base base-devel networkmanager reflector linux-zen linux-zen-headers linux-firmware refind efibootmgr intel-ucode ntfs-3g xorg xorg-server xorg-xinit nano sudo git nvidia-dkms nvidia-settings bluez bluez-utils pulseaudio rxvt-unicode lsd unzip cups hplip
+    pacstrap /mnt base base-devel networkmanager reflector linux-zen linux-zen-headers linux-firmware refind efibootmgr intel-ucode ntfs-3g xorg xorg-server xorg-xinit nano sudo git nvidia-dkms nvidia-settings bluez bluez-utils pulseaudio rxvt-unicode lsd unzip cups hplip ufw gufw
 
     # Generate fstab
     genfstab -U /mnt >> /mnt/etc/fstab
@@ -151,6 +151,16 @@ EOT
     # Set correct sound card for PulseAudio
     sudo echo "set-default-sink output alsa_output.pci-0000_00_1f.3.analog-stereo" >> /mnt/etc/pulse/default.pa
 
+    # Enable firewall
+    echo "Enabling firewall..."
+    ufw default deny incoming
+    ufw default allow outgoing
+    ufw allow http
+    ufw allow https
+    ufw allow dns
+    ufw allow ntp
+    ufw enable
+
     # Enable services
     echo "Enabling services..."
     arch-chroot /mnt systemctl enable NetworkManager.service
@@ -159,6 +169,7 @@ EOT
     arch-chroot /mnt systemctl enable reflector
     arch-chroot /mnt systemctl enable reflector.timer
     arch-chroot /mnt systemctl enable fstrim.timer
+    arch-chroot /mnt systemctl enable ufw
 
     echo "===== Installation Complete ====="
 }
