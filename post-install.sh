@@ -11,7 +11,7 @@ echo "                                                                "
 echo " Post Installation - Version 2.0"
 echo " "
 
-if [[ -d /home/paul/yay ]]
+if [[ -d $HOME/yay ]]
 then
   echo "Installing yay..."
   cd $HOME/yay
@@ -81,7 +81,7 @@ install_qemu()
     # Enable Virtualization Technology for Directed I/O in rEFInd config as boot param
     sudo sed -i.bak 's/linux-zen.img[^"]*/& intel_iommu=on/' /boot/refind_linux.conf
 
-    sudo usermod -a -G libvirt paul
+    sudo usermod -a -G libvirt $USER
 
 sudo cat <<EOT >> /etc/libvirt/qemu.conf
 nvram = [
@@ -92,6 +92,13 @@ EOT
     sudo systemctl enable --now libvirtd.service
     sudo systemctl enable --now virtlogd.socket
 }
+
+install_dev()
+{
+    echo "Installing Development tools... IntelliJ, Java gradle"
+    sudo pacman -S jre11-openjdk jdk11-openjdk gradle intellij-idea-community-edition
+}
+
 
 read -p 'Do you want to install Deepin [y/N]: ' installDE
 if  [ $installDE = 'y' ]
@@ -109,6 +116,12 @@ read -p 'Do you want to install QEMU/KVM? [y/N]: ' installqemu
 if  [ $installqemu = 'y' ] 
 then 
     install_qemu
+fi
+
+read -p 'Do you want to install Development tools? [y/N]: ' installdev
+if  [ $installdev = 'y' ] 
+then 
+    install_dev
 fi
 
 echo "Post install complete. Enjoy!"

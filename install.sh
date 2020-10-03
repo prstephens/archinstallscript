@@ -11,6 +11,7 @@ echo "  / ___ \| | | (__| | | |  | || | | \__ \ || (_| | | |  __/ |   "
 echo " /_/   \_\_|  \___|_| |_| |___|_| |_|___/\__\__,_|_|_|\___|_|   "
 echo "                                                                "
 echo " Version 2.0"
+echo " "
 
 performInstall()
 {
@@ -90,9 +91,10 @@ EOT
 
     arch-chroot /mnt refind-install
 
+    # early KMS NVIDIA module and silent boot parameters
     cat <<EOT > /mnt/boot/refind_linux.conf
-"Boot with standard options"  "root=UUID=${ROOTUUID} rw loglevel=3 quiet initrd=boot\intel-ucode.img initrd=boot\initramfs-linux-zen.img"
-"Boot to single-user mode"    "root=UUID=${ROOTUUID} rw loglevel=3 quiet single"
+"Boot with standard options"  "rw root=UUID=${ROOTUUID} nvidia-drm.modeset=1 quiet loglevel=3 splash rd.udev.log_priority=3 vt.global_cursor_default=0 initrd=boot\intel-ucode.img initrd=boot\initramfs-linux-zen.img"
+"Boot to single-user mode"    "rw root=UUID=${ROOTUUID} loglevel=3 quiet single"
 "Boot with minimal options"   "rw root=UUID=${ROOTUUID}"
 EOT
 
@@ -107,6 +109,10 @@ default_selection Microsoft
 include themes/Matrix-rEFInd/theme.conf
 showtools shutdown
 EOT
+
+    # early KMS NVIDIA module load
+    arch-chroot /mnt sed -i 's/^MODULES=.*$/MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)/' /mnt/etc/mkinitcpio.conf
+    arch-chroot /mnt mkinitcpio -P
 
     # Create new user
     arch-chroot /mnt useradd -m -G wheel paul
@@ -170,8 +176,6 @@ EOT
     arch-chroot /mnt systemctl enable reflector.timer
     arch-chroot /mnt systemctl enable fstrim.timer
     arch-chroot /mnt systemctl enable ufw
-
-    echo "===== Installation Complete ====="
 }
 
 checkConnection() 
@@ -189,3 +193,6 @@ loadkeys uk
 checkConnection
 performInstall
 configuration
+
+echo " "
+echo "===== Installation Complete ====="
