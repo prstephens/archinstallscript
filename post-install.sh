@@ -20,18 +20,17 @@ then
   rm -rfd yay
 fi
 
-sudo pacman -S archlinux-keyring
-
 # git credentials
 git config --global credential.helper store
 git config --global user.email "pr.stephens@gmail.com"
 git config --global user.name "prstephens"
 
-install_DE()
+install_deepin()
 {
     # Deepin
-    echo "Installing Deepin..."
-    read -p 'NOTE: Please select deepin-anything-dkms when prompted. Press any key to continue...' installDE
+    dialog --title 'Installing Deepin...' --msgbox 'Please select deepin-anything-dkms when prompted' 6 50
+    clear
+    
     sudo pacman -S deepin deepin-compressor redshift pacman-contrib
 
     # Deepin Arch update notifier
@@ -69,7 +68,8 @@ install_apps()
 
      # Spotify
     echo "Installing Spotify..."
-    gpg --keyserver pool.sks-keyservers.net --recv-keys 931FF8E79F0876134EDDBDCCA87FF9DF48BF1C90 2EBF997C15BDA244B6EBF5D84773BD5E130D1D45
+    #gpg --keyserver pool.sks-keyservers.net --recv-keys 931FF8E79F0876134EDDBDCCA87FF9DF48BF1C90 2EBF997C15BDA244B6EBF5D84773BD5E130D1D45
+    curl -sS https://download.spotify.com/debian/pubkey.gpg | gpg --import -
     yay -S spotify
 }
 
@@ -99,29 +99,44 @@ install_dev()
     sudo pacman -S jre11-openjdk jdk11-openjdk gradle intellij-idea-community-edition
 }
 
+HEIGHT=15
+WIDTH=50
+CHOICE_HEIGHT=4
+BACKTITLE="Arch Linux Post Installer"
+TITLE="Arch Linux Post Installer"
+MENU="Choose one of the following options to install:"
 
-read -p 'Do you want to install Deepin [y/N]: ' installDE
-if  [ $installDE = 'y' ]
-then 
-    install_DE
-fi
+OPTIONS=(1 "Deepin DE"
+    2 "Applications"
+    3 "QEMU/KVM"
+    4 "Jave Development Environment"  
+    5 "Exit")
 
-read -p 'Do you want to install some apps? [y/N]: ' installapps
-if  [ $installapps = 'y' ] 
-then 
-    install_apps
-fi
-
-read -p 'Do you want to install QEMU/KVM? [y/N]: ' installqemu
-if  [ $installqemu = 'y' ] 
-then 
-    install_qemu
-fi
-
-read -p 'Do you want to install Development tools? [y/N]: ' installdev
-if  [ $installdev = 'y' ] 
-then 
-    install_dev
-fi
-
-echo "Post install complete. Enjoy!"
+while CHOICE=$(dialog --clear \
+        --nocancel \
+        --backtitle "$BACKTITLE" \
+        --title "$TITLE" \
+        --menu "$MENU" \
+        $HEIGHT $WIDTH $CHOICE_HEIGHT \
+        "${OPTIONS[@]}" \
+    2>&1 >/dev/tty)
+clear
+do
+    case $CHOICE in
+        1)
+            install_deepin
+            ;;
+        2)
+            install_apps
+            ;;
+        3)
+            install_qemu
+            ;;
+        4)
+            install_dev
+            ;;	   	    
+	    5)
+	        break
+	        ;;
+    esac
+done
