@@ -71,6 +71,12 @@ install_apps()
     #gpg --keyserver pool.sks-keyservers.net --recv-keys 931FF8E79F0876134EDDBDCCA87FF9DF48BF1C90 2EBF997C15BDA244B6EBF5D84773BD5E130D1D45
     curl -sS https://download.spotify.com/debian/pubkey.gpg | gpg --import -
     yay -S spotify
+
+    # Install psd
+    sudo pacman -S profile-sync-daemon
+    psd
+    sed -i 's/^#BROWSERS=.*$/BROWSERS=(google-chrome)/' $HOME/.config/psd/psd.conf
+    systemctl --user enable --now psd.service
 }
 
 install_qemu()
@@ -136,7 +142,7 @@ do
             install_dev
             ;;	   	    
 	    5)
-	        break
-	        ;;
+            break
+            ;;
     esac
 done

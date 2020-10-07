@@ -77,7 +77,7 @@ esac
 # enable color support of ls and also add handy aliases
 if [ -x /usr/bin/dircolors ]; then
     test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
-    alias ls='lsd --color=auto'
+    alias ls='ls --color=auto'
     #alias dir='dir --color=auto'
     #alias vdir='vdir --color=auto'
 
@@ -95,7 +95,6 @@ colortail() { tail -500 $*|ccze -A; }
 
 sink()
 { 
-
     CURRENTSINK=$(pacmd list-sinks | awk '/index:/{i++} /* index:/{print $3}');
     SINK=$(pactl list short sinks | grep analog-stereo | awk '{print $1}');
 
@@ -116,9 +115,9 @@ night()
 }
 
 # some more ls aliases
-alias ll='lsd -alh'
-alias la='lsd -A'
-alias l='lsd -CF'
+alias ll='ls -alh'
+alias la='ls -A'
+alias l='ls -CF'
 alias c='clear'
 alias nano='sudo nano'
 alias tv='exp libreelec ssh root@libreelec.lan -p 22'
@@ -145,7 +144,7 @@ alias dfa='dotfiles add'
 alias dfc='dotfiles commit'
 alias dfp='dotfiles push'
 alias dfs='dotfiles status'
-alias systemctl='sudo systemctl'
+alias ctl='sudo systemctl'
 alias pacman='sudo pacman'
 alias dg='echo "pacman -U /var/cache/pacman/pkg/"'
 alias ug='less /var/log/pacman.log | grep upgraded'

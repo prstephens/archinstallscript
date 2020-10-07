@@ -36,7 +36,7 @@ performInstall()
     # Install Arch Linux
     echo "Starting install.."
     echo "Installing Arch Linux with Zen kernel, rEFInd as bootloader" 
-    pacstrap /mnt base base-devel networkmanager reflector linux-zen linux-zen-headers linux-firmware refind efibootmgr intel-ucode ntfs-3g xorg xorg-server xorg-xinit nano sudo git nvidia-dkms nvidia-settings bluez bluez-utils pulseaudio rxvt-unicode dialog lsd unzip cups hplip ufw gufw archlinux-keyring
+    pacstrap /mnt base base-devel networkmanager reflector linux-zen linux-zen-headers linux-firmware refind efibootmgr intel-ucode ntfs-3g xorg xorg-server xorg-xinit nano sudo git nvidia-dkms nvidia-settings bluez bluez-utils pulseaudio rxvt-unicode dialog unzip cups hplip ufw gufw archlinux-keyring
 
     # Generate fstab
     genfstab -U /mnt >> /mnt/etc/fstab
@@ -100,7 +100,7 @@ EOT
 
     # Morpheous theme for refind 
     arch-chroot /mnt mkdir /boot/efi/EFI/refind/themes
-    arch-chroot /mnt git clone https://github.com/Yannis4444/Matrix-rEFInd.git /boot/efi/EFI/refind/themes/Matrix-rEFInd
+    arch-chroot /mnt git clone https://github.com/prstephens/Matrix-rEFInd.git /boot/efi/EFI/refind/themes/Matrix-rEFInd
 
     cat <<EOT > /mnt/boot/efi/EFI/refind/refind.conf
 resolution 1920 1080
