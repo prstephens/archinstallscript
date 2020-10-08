@@ -107,7 +107,6 @@ resolution 1920 1080
 timeout 5
 default_selection Microsoft
 include themes/Matrix-rEFInd/theme.conf
-showtools shutdown
 EOT
 
     # early KMS NVIDIA module load

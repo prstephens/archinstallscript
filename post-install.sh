@@ -115,7 +115,7 @@ MENU="Choose one of the following options to install:"
 OPTIONS=(1 "Deepin DE"
     2 "Applications"
     3 "QEMU/KVM"
-    4 "Jave Development Environment"  
+    4 "Java Development Environment"  
     5 "Exit")
 
 while CHOICE=$(dialog --clear \
