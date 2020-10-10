@@ -36,7 +36,7 @@ performInstall()
     # Install Arch Linux
     echo "Starting install.."
     echo "Installing Arch Linux with Zen kernel, rEFInd as bootloader" 
-    pacstrap /mnt base base-devel networkmanager reflector linux-zen linux-zen-headers linux-firmware refind efibootmgr intel-ucode ntfs-3g xorg xorg-server xorg-xinit nano sudo git nvidia-dkms nvidia-settings bluez bluez-utils pulseaudio rxvt-unicode dialog unzip cups hplip ufw gufw archlinux-keyring
+    pacstrap /mnt base base-devel networkmanager reflector linux-zen linux-zen-headers linux-firmware refind efibootmgr intel-ucode ntfs-3g xorg xorg-server xorg-xinit nano sudo git nvidia-dkms nvidia-settings bluez bluez-utils pulseaudio rxvt-unicode dialog unzip cups hplip ufw gufw archlinux-keyring anything-sync-daemon
 
     # Generate fstab
     genfstab -U /mnt >> /mnt/etc/fstab
@@ -154,7 +154,7 @@ EOT
     echo "vm.swappiness=10" >> /mnt/etc/sysctl.d/99-swappiness.conf
 
     # Set correct sound card for PulseAudio
-    sudo echo "set-default-sink output alsa_output.pci-0000_00_1f.3.analog-stereo" >> /mnt/etc/pulse/default.pa
+    echo "set-default-sink output alsa_output.pci-0000_00_1f.3.analog-stereo" >> /mnt/etc/pulse/default.pa
 
     # Enable firewall
     echo "Enabling firewall..."
@@ -166,6 +166,13 @@ EOT
     ufw allow ntp
     ufw enable
 
+    # asd config
+    arch-chroot /mnt sed -i "s/^WHATTOSYNC=.*$/WHATTOSYNC=('\/home\/paul\/.cache')/" /etc/asd.conf
+    arch-chroot /mnt sed -i 's/^#USE_OVERLAYFS=.*$/USE_OVERLAYFS="yes")/' /etc/asd.conf
+    arch-chroot /mnt sed -i 's/^#VOLATILE=.*$/VOLATILE="/dev/shm")/' /etc/asd.conf
+    echo "$USER ALL=(ALL) NOPASSWD: /usr/bin/psd-overlay-helper" >> /etc/sudoers
+
+
     # Enable services
     echo "Enabling services..."
     arch-chroot /mnt systemctl enable NetworkManager.service
@@ -175,6 +182,7 @@ EOT
     arch-chroot /mnt systemctl enable reflector.timer
     arch-chroot /mnt systemctl enable fstrim.timer
     arch-chroot /mnt systemctl enable ufw
+    arch-chroot /mnt systemctl enable asd
 }
 
 checkConnection() 

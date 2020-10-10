@@ -1,30 +1,5 @@
 #! /bin/bash
 
-clear
-
-echo "     _             _       ___           _        _ _           "
-echo "    / \   _ __ ___| |__   |_ _|_ __  ___| |_ __ _| | | ___ _ __ "
-echo "   / _ \ | '__/ __| '_ \   | || '_ \/ __| __/ _\` | | |/ _ \ '__|"
-echo "  / ___ \| | | (__| | | |  | || | | \__ \ || (_| | | |  __/ |   "
-echo " /_/   \_\_|  \___|_| |_| |___|_| |_|___/\__\__,_|_|_|\___|_|   "
-echo "                                                                "
-echo " Post Installation - Version 2.0"
-echo " "
-
-if [[ -d $HOME/yay ]]
-then
-  echo "Installing yay..."
-  cd $HOME/yay
-  makepkg -si
-  cd ..
-  rm -rfd yay
-fi
-
-# git credentials
-git config --global credential.helper store
-git config --global user.email "pr.stephens@gmail.com"
-git config --global user.name "prstephens"
-
 install_deepin()
 {
     # Deepin
@@ -76,6 +51,7 @@ install_apps()
     sudo pacman -S profile-sync-daemon
     psd
     sed -i 's/^#BROWSERS=.*$/BROWSERS=(google-chrome)/' $HOME/.config/psd/psd.conf
+    sed -i 's/^#USE_OVERLAYFS=.*$/USE_OVERLAYFS="yes")/' $HOME/.config/psd/psd.conf
     systemctl --user enable --now psd.service
 }
 
@@ -105,6 +81,22 @@ install_dev()
     sudo pacman -S jre11-openjdk jdk11-openjdk gradle intellij-idea-community-edition
 }
 
+#=== START ===
+if [[ -d $HOME/yay ]]
+then
+  echo "Installing yay..."
+  cd $HOME/yay
+  makepkg -si
+  cd ..
+  rm -rfd yay
+fi
+
+# git credentials
+git config --global credential.helper store
+git config --global user.email "pr.stephens@gmail.com"
+git config --global user.name "prstephens"
+
+# Dialog menu
 HEIGHT=15
 WIDTH=50
 CHOICE_HEIGHT=4
