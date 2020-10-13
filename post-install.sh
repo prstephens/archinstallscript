@@ -34,6 +34,11 @@ install_deepin()
     sudo cp /windows10/Windows/Fonts/* /usr/share/fonts/windowsfonts
     fc-cache -f
     sudo umount /windows10
+
+    # preload
+    echo "Installing preload..."
+    yay -S preload
+    sudo systemctl enable --now preload
 }
 
 install_apps()
