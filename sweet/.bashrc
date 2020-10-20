@@ -148,6 +148,7 @@ alias ctl='sudo systemctl'
 alias pacman='sudo pacman'
 alias dg='echo "pacman -U /var/cache/pacman/pkg/"'
 alias ug='less /var/log/pacman.log | grep upgraded'
+alias fixkwin="sudo pacman -U /var/cache/pacman/pkg/kwin-5.19.5-2-x86_64.pkg.tar.zst && sudo pacman -U /var/cache/pacman/pkg/kwayland-server-5.19.5-1-x86_64.pkg.tar.zst"
 
 # Show all logs in /var/log
 alias logs="sudo find /var/log -type f -exec file {} \; | grep 'text' | cut -d' ' -f1 | sed -e's/:$//g' | grep -v '[0-9]$' | xargs tail -f"
