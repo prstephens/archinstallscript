@@ -6,7 +6,9 @@ install_deepin()
     dialog --title 'Installing Deepin...' --msgbox 'Please select deepin-anything-dkms when prompted' 6 50
     clear
     
-    sudo pacman -S deepin deepin-compressor redshift pacman-contrib
+    # Deepin, nightlight, android phone protocols
+    sudo pacman -S deepin deepin-compressor redshift pacman-contrib mtpfs gvfs-mtp gvfs-gphoto2 gvfs-smb file-roller
+    yay -S jmtpfs
 
     # Deepin Arch update notifier
     echo "Installing Deepin update notifier plugin..."
@@ -85,6 +87,7 @@ install_dev()
 {
     echo "Installing Development tools... IntelliJ, Java gradle"
     sudo pacman -S jre11-openjdk jdk11-openjdk gradle intellij-idea-community-edition
+    yay -S postman-bin
 }
 
 #=== START ===
