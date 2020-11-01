@@ -36,7 +36,7 @@ performInstall()
     # Install Arch Linux
     echo "Starting install.."
     echo "Installing Arch Linux with Zen kernel, rEFInd as bootloader" 
-    pacstrap /mnt base base-devel networkmanager reflector linux-zen linux-zen-headers linux-firmware refind efibootmgr intel-ucode ntfs-3g xorg xorg-server xorg-xinit nano sudo git nvidia-dkms nvidia-settings bluez bluez-utils pulseaudio rxvt-unicode dialog unzip cups hplip ufw gufw archlinux-keyring anything-sync-daemon
+    pacstrap /mnt base base-devel networkmanager reflector linux-zen linux-zen-headers linux-firmware refind efibootmgr intel-ucode ntfs-3g xorg xorg-server xorg-xinit nano sudo git nvidia-dkms nvidia-settings bluez bluez-utils pulseaudio rxvt-unicode dialog cups hplip ufw gufw archlinux-keyring anything-sync-daemon
 
     # Generate fstab
     genfstab -U /mnt >> /mnt/etc/fstab
@@ -125,7 +125,6 @@ EOT
     arch-chroot /mnt curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/.Xresources -o /home/paul/.Xresources
     arch-chroot /mnt curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/.bashrc -o /home/paul/.bashrc
     arch-chroot /mnt curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/issue -o /etc/issue
-    arch-chroot /mnt curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/reflector.service -o /etc/systemd/system/reflector.service
     arch-chroot /mnt curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/kwinrc -o /home/paul/.config/kwinrc
 
     arch-chroot /mnt chown -R paul:paul /home/paul/.config
@@ -170,6 +169,21 @@ EOT
     arch-chroot /mnt sed -i "s/^WHATTOSYNC=.*$/WHATTOSYNC=('\/home\/paul\/.cache')/" /etc/asd.conf
     arch-chroot /mnt sed -i 's/^#USE_OVERLAYFS=.*$/USE_OVERLAYFS="yes")/' /etc/asd.conf
     arch-chroot /mnt sed -i 's/^#VOLATILE=.*$/VOLATILE="/dev/shm")/' /etc/asd.conf
+
+# Create the pacman mirrorlist updater service
+cat <<EOT > /mnt/etc/systemd/system/reflector.service
+[Unit]
+Description=Pacman mirrorlist update
+Wants=network-online.target
+After=network-online.target nss-lookup.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/reflector -c GB -l 25 --age 12 -p http -p https --sort rate --save /etc/pacman.d/mirrorlist
+
+[Install]
+WantedBy=multi-user.target
+EOT
 
     # Enable services
     echo "Enabling services..."

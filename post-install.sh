@@ -17,7 +17,6 @@ install_fonts()
 
 install_preload()
 {
-    # preload
     echo "Installing preload..."
     yay -S preload
     sudo systemctl enable --now preload
@@ -35,7 +34,6 @@ install_lightdm()
 
 install_deepin()
 {
-    # Deepin
     dialog --title 'Installing Deepin...' --msgbox 'Please select deepin-anything-dkms when prompted' 6 50
     clear
     
@@ -44,7 +42,7 @@ install_deepin()
     yay -S jmtpfs
 
     # Deepin Arch update notifier
-    echo "Installing Deepin update notifier plugin..."
+    echo "Installing Deepin update notifier ans weather plugin..."
     yay -S deepin-dock-plugin-arch-update
 
     # xinit config
@@ -56,24 +54,37 @@ install_deepin()
     install_preload
 }
 
-install_apps()
+install_spotify()
 {
-    echo "Installing Chrome, VS Code, WPS Office, Gimp..."
-    yay -S google-chrome firefox code wps-office gimp vlc
-
-     # Spotify
     echo "Installing Spotify..."
     #gpg --keyserver pool.sks-keyservers.net --recv-keys 931FF8E79F0876134EDDBDCCA87FF9DF48BF1C90 2EBF997C15BDA244B6EBF5D84773BD5E130D1D45
     curl -sS https://download.spotify.com/debian/pubkey.gpg | gpg --import -
-    yay -S spotify
+    yay -S spotify spicetify-cli spicetify-themes-git
+    sudo chmod -R 777 /opt/spotify
+    spicetify backup apply
+    spicetify config extensions dribbblish.js
+    spicetify config current_theme Dribbblish color_scheme horizon
+    spicetify config inject_css 1 replace_colors 1 overwrite_assets 1
+    spicetify apply
+}
 
-    # Install psd
+install_profile-sync-daemon()
+{
     sudo pacman -S profile-sync-daemon
     psd
     sed -i 's/^#BROWSERS=.*$/BROWSERS=(google-chrome)/' $HOME/.config/psd/psd.conf
     sed -i 's/^#USE_OVERLAYFS=.*$/USE_OVERLAYFS="yes")/' $HOME/.config/psd/psd.conf
     echo "$USER ALL=(ALL) NOPASSWD: /usr/bin/psd-overlay-helper" | sudo tee -a /etc/sudoers
     systemctl --user enable --now psd.service
+}
+
+install_apps()
+{
+    echo "Installing Chrome, VS Code, WPS Office, Gimp..."
+    yay -S google-chrome firefox code wps-office gimp vlc
+
+    install_spotify
+    install_profile-sync-daemon
 }
 
 install_qemu()
@@ -98,7 +109,7 @@ EOT
 
 install_dev()
 {
-    echo "Installing Development tools... IntelliJ, Java gradle"
+    echo "Installing Development tools... IntelliJ, Java, gradle"
     sudo pacman -S jre11-openjdk jdk11-openjdk gradle intellij-idea-community-edition
     yay -S postman-bin
 }
