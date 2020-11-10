@@ -5,6 +5,8 @@ install_fonts()
     echo "Installing fonts..."
     yay -S nerd-fonts-complete otf-san-francisco
 
+    sudo curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/fonts/Youth-Touch.ttf -o /usr/share/fonts/Youth-Touch.ttf
+
      # Copy Windows fonts over
     echo "Copying Windows fonts..."
     sudo mkdir /usr/share/fonts/windowsfonts
@@ -42,16 +44,30 @@ install_deepin()
     yay -S jmtpfs
 
     # Deepin Arch update notifier
-    echo "Installing Deepin update notifier ans weather plugin..."
+    echo "Installing Deepin update notifier plugin..."
     yay -S deepin-dock-plugin-arch-update
 
     # xinit config
     echo "exec startdde" >> $HOME/.xinitrc
     echo '[[ ! $DISPLAY && $XDG_VTNR -eq 1 ]] && exec startx' >> $HOME/.bash_profile
 
-    install_lightdm
     install_fonts
     install_preload
+}
+
+install_plasma()
+{    
+    echo "Installing Plasma.."
+    # Deepin, nightlight, android phone protocols
+    sudo pacman -S plasma
+
+    # xinit config
+    sudo cat <<EOT >> $HOME/.xinitrc
+export DESKTOP_SESSION=plasma
+exec startplasma-x11
+EOT
+    echo '[[ ! $DISPLAY && $XDG_VTNR -eq 2 ]] && exec startx' >> $HOME/.bash_profile
+
 }
 
 install_spotify()
@@ -138,10 +154,12 @@ TITLE="Arch Linux Post Installer"
 MENU="Choose one of the following options to install:"
 
 OPTIONS=(1 "Deepin DE"
-    2 "Applications"
-    3 "QEMU/KVM"
-    4 "Java Development Environment"  
-    5 "Exit")
+    2 "Plasma DE"
+    3 "Lightdm Display Manager"
+    4 "Applications"
+    5 "QEMU/KVM"
+    6 "Java Development Environment"  
+    7 "Exit")
 
 while CHOICE=$(dialog --clear \
         --nocancel \
@@ -158,15 +176,21 @@ do
             install_deepin
             ;;
         2)
-            install_apps
+            install_plasma
             ;;
         3)
-            install_qemu
+            install_lightdm
             ;;
         4)
+            install_apps
+            ;;
+        5)
+            install_qemu
+            ;;
+        6)
             install_dev
             ;;	   	    
-	    5)
+	    7)
             break
             ;;
     esac
