@@ -157,13 +157,13 @@ EOT
 
     # Enable firewall
     echo "Enabling firewall..."
-    ufw default deny incoming
-    ufw default allow outgoing
-    ufw allow http
-    ufw allow https
-    ufw allow dns
-    ufw allow ntp
-    ufw enable
+    arch-chroot /mnt ufw default deny incoming
+    arch-chroot /mnt ufw default allow outgoing
+    arch-chroot /mnt ufw allow http
+    arch-chroot /mnt ufw allow https
+    arch-chroot /mnt ufw allow dns
+    arch-chroot /mnt ufw allow ntp
+    arch-chroot /mnt ufw enable
 
     # asd config
     arch-chroot /mnt sed -i "s/^WHATTOSYNC=.*$/WHATTOSYNC=('\/home\/paul\/.cache')/" /etc/asd.conf
