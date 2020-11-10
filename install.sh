@@ -93,7 +93,7 @@ EOT
 
     # early KMS NVIDIA module and silent boot parameters
     cat <<EOT > /mnt/boot/refind_linux.conf
-"Boot with standard options"  "rw root=UUID=${ROOTUUID} nvidia-drm.modeset=1 quiet loglevel=3 splash rd.udev.log_priority=3 vt.global_cursor_default=0 initrd=boot\intel-ucode.img initrd=boot\initramfs-linux-zen.img"
+"Boot with standard options"  "rw root=UUID=${ROOTUUID} nvidia-drm.modeset=1 quiet loglevel=3 splash rd.udev.log_priority=3 initrd=boot\intel-ucode.img initrd=boot\initramfs-linux-zen.img"
 "Boot to single-user mode"    "rw root=UUID=${ROOTUUID} loglevel=3 quiet single"
 "Boot with minimal options"   "rw root=UUID=${ROOTUUID}"
 EOT
@@ -110,7 +110,7 @@ include themes/Matrix-rEFInd/theme.conf
 EOT
 
     # early KMS NVIDIA module load
-    arch-chroot /mnt sed -i 's/^MODULES=.*$/MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)/' /mnt/etc/mkinitcpio.conf
+    arch-chroot /mnt sed -i 's/^MODULES=.*$/MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)/' /etc/mkinitcpio.conf
     arch-chroot /mnt mkinitcpio -P
 
     # Create new user
