@@ -105,6 +105,12 @@ install_profile-sync-daemon()
     sed -i 's/^#USE_OVERLAYFS=.*$/USE_OVERLAYFS="yes")/' $HOME/.config/psd/psd.conf
     echo "$USER ALL=(ALL) NOPASSWD: /usr/bin/psd-overlay-helper" | sudo tee -a /etc/sudoers
     systemctl --user enable --now psd.service
+
+    # asd config
+    sudo sed -i "s/^WHATTOSYNC=.*$/WHATTOSYNC=('\/home\/paul\/.cache')/" /etc/asd.conf
+    sudo sed -i 's/^#USE_OVERLAYFS=.*$/USE_OVERLAYFS="yes")/' /etc/asd.conf
+    sudo sed -i 's/^#VOLATILE=.*$/VOLATILE="/dev/shm")/' /etc/asd.conf
+    sudo systemctl enable --now asd
 }
 
 install_apps()

@@ -155,12 +155,7 @@ EOT
     # Set correct sound card for PulseAudio
     echo "set-default-sink output alsa_output.pci-0000_00_1f.3.analog-stereo" >> /mnt/etc/pulse/default.pa
 
-    # asd config
-    sed -i "s/^WHATTOSYNC=.*$/WHATTOSYNC=('\/home\/paul\/.cache')/" /mnt/etc/asd.conf
-    sed -i 's/^#USE_OVERLAYFS=.*$/USE_OVERLAYFS="yes")/' /mnt/etc/asd.conf
-    sed -i 's/^#VOLATILE=.*$/VOLATILE="/dev/shm")/' /mnt/etc/asd.conf
-
-# Create the pacman mirrorlist updater service
+    # Create the pacman mirrorlist updater service
 cat <<EOT > /mnt/etc/systemd/system/reflector.service
 [Unit]
 Description=Pacman mirrorlist update
@@ -184,7 +179,6 @@ EOT
     arch-chroot /mnt systemctl enable reflector.timer
     arch-chroot /mnt systemctl enable fstrim.timer
     arch-chroot /mnt systemctl enable ufw
-    arch-chroot /mnt systemctl enable asd
 }
 
 checkConnection() 
