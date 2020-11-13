@@ -87,9 +87,13 @@ install_spotify()
 {
     echo "Installing Spotify..."
     #gpg --keyserver pool.sks-keyservers.net --recv-keys 931FF8E79F0876134EDDBDCCA87FF9DF48BF1C90 2EBF997C15BDA244B6EBF5D84773BD5E130D1D45
-    curl -sS https://download.spotify.com/debian/pubkey.gpg | gpg --import -
+    curl -sS https://download.spotify.com/debian/pubkey_0D811D58.gpg | gpg --import -
     yay -S spotify spicetify-cli spicetify-themes-git
     sudo chmod -R 777 /opt/spotify
+}
+
+apply_spicetify()
+{
     spicetify backup apply
     spicetify config extensions dribbblish.js
     spicetify config current_theme Dribbblish color_scheme horizon
