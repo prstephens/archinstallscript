@@ -121,7 +121,7 @@ EOT
     # Create new user
     arch-chroot /mnt useradd -m -G wheel paul
     arch-chroot /mnt sed -i 's/# %wheel ALL=(ALL) ALL/%wheel ALL=(ALL) ALL/' /etc/sudoers
-    echo "Defaults insults" >> /etc/sudoers
+    echo "Defaults insults" >> /mnt/etc/sudoers
     echo "Set password for new user paul"
     arch-chroot /mnt passwd paul
 
