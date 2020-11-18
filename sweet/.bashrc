@@ -134,7 +134,7 @@ alias fuck='sudo $(history -p \!\!)'
 alias docker='sudo docker'
 alias ports='sudo netstat -tulpn'
 alias screen='xrandr --output DP-4 --mode 1920x1080 --rate 240 && xscreensaver'
-alias rd='ssh pi@rainbowdash -i ~/keys/pi-prvt-ssh.txt'
+alias rd='ssh pi@rainbowdash -i ~/keys/pi-prvt-ssh'
 alias update='yay -Syu'
 alias remove-orphans='sudo pacman -Rns $(pacman -Qtdq)'
 alias fn='echo 0 | sudo tee /sys/module/hid_apple/parameters/fnmode'
@@ -148,7 +148,7 @@ alias ctl='sudo systemctl'
 alias pacman='sudo pacman'
 alias dg='echo "pacman -U /var/cache/pacman/pkg/"'
 alias ug='less /var/log/pacman.log | grep upgraded'
-alias fixkwin="sudo pacman -U /var/cache/pacman/pkg/kwin-5.19.5-2-x86_64.pkg.tar.zst && sudo pacman -U /var/cache/pacman/pkg/kwayland-server-5.19.5-1-x86_64.pkg.tar.zst"
+alias setwall='gsettings set com.deepin.wrap.gnome.desktop.background picture-uri'
 
 # Show all logs in /var/log
 alias logs="sudo find /var/log -type f -exec file {} \; | grep 'text' | cut -d' ' -f1 | sed -e's/:$//g' | grep -v '[0-9]$' | xargs tail -f"
@@ -168,6 +168,3 @@ fi
 if [ -f /etc/bash_completion ] && ! shopt -oq posix; then
     . /etc/bash_completion
 fi
-
-#run shit
-sink

@@ -3,7 +3,8 @@
 install_fonts()
 {
     echo "Installing fonts..."
-    yay -S nerd-fonts-complete otf-san-francisco
+    #yay -S nerd-fonts-complete
+    yay -S otf-san-francisco
 
     sudo curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/fonts/Youth-Touch.ttf -o /usr/share/fonts/Youth-Touch.ttf
 
@@ -52,7 +53,7 @@ install_deepin()
     clear
     
     # Deepin, nightlight, android phone protocols
-    sudo pacman -S deepin deepin-compressor redshift pacman-contrib mtpfs gvfs-mtp gvfs-gphoto2 gvfs-smb file-roller
+    sudo pacman -S deepin deepin-compressor redshift pacman-contrib file-roller
     yay -S jmtpfs
 
     # Deepin Arch update notifier
@@ -60,7 +61,11 @@ install_deepin()
     yay -S deepin-dock-plugin-arch-update
 
     # xinit config
-    echo "exec startdde" >> $HOME/.xinitrc
+sudo cat <<EOT >> $HOME/.xinitrc
+nvidia-settings --load-config-only &
+exec startdde
+EOT
+
     echo '[[ ! $DISPLAY && $XDG_VTNR -eq 1 ]] && exec startx' >> $HOME/.bash_profile
 
     install_fonts
@@ -71,11 +76,11 @@ install_deepin()
 install_plasma()
 {    
     echo "Installing Plasma.."
-    # Deepin, nightlight, android phone protocols
     sudo pacman -S plasma
 
     # xinit config
     sudo cat <<EOT >> $HOME/.xinitrc
+nvidia-settings --load-config-only &
 export DESKTOP_SESSION=plasma
 exec startplasma-x11
 EOT
@@ -106,13 +111,13 @@ install_profile-sync-daemon()
     sudo pacman -S profile-sync-daemon
     psd
     sed -i 's/^#BROWSERS=.*$/BROWSERS=(google-chrome)/' $HOME/.config/psd/psd.conf
-    sed -i 's/^#USE_OVERLAYFS=.*$/USE_OVERLAYFS="yes")/' $HOME/.config/psd/psd.conf
+    sed -i 's/^#USE_OVERLAYFS=.*$/USE_OVERLAYFS="yes"/' $HOME/.config/psd/psd.conf
     echo "$USER ALL=(ALL) NOPASSWD: /usr/bin/psd-overlay-helper" | sudo tee -a /etc/sudoers
     systemctl --user enable --now psd.service
 
     # asd config
     sudo sed -i "s/^WHATTOSYNC=.*$/WHATTOSYNC=('\/home\/paul\/.cache')/" /etc/asd.conf
-    sudo sed -i 's/^#USE_OVERLAYFS=.*$/USE_OVERLAYFS="yes")/' /etc/asd.conf
+    sudo sed -i 's/^#USE_OVERLAYFS=.*$/USE_OVERLAYFS="yes"/' /etc/asd.conf
     sudo sed -i 's/^#VOLATILE=.*$/VOLATILE="/dev/shm")/' /etc/asd.conf
     sudo systemctl enable --now asd
 }

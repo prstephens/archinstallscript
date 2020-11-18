@@ -36,7 +36,7 @@ performInstall()
     # Install Arch Linux
     echo "Starting install.."
     echo "Installing Arch Linux with Zen kernel, rEFInd as bootloader" 
-    pacstrap /mnt base base-devel networkmanager reflector linux-zen linux-zen-headers linux-firmware refind efibootmgr intel-ucode ntfs-3g xorg xorg-server xorg-xinit nano sudo git nvidia-dkms nvidia-settings bluez bluez-utils pulseaudio rxvt-unicode dialog cups hplip ufw gufw archlinux-keyring anything-sync-daemon
+    pacstrap /mnt base base-devel networkmanager dnsutils reflector linux-zen linux-zen-headers linux-firmware refind efibootmgr intel-ucode ntfs-3g xorg xorg-server xorg-xinit nano nano-syntax-highlighting sudo git nvidia-dkms nvidia-settings bluez bluez-utils pulseaudio rxvt-unicode wget dialog cups hplip ufw gufw archlinux-keyring anything-sync-daemon mtpfs gvfs-mtp gvfs-gphoto2 gvfs-smb
 
     # Generate fstab
     genfstab -U /mnt >> /mnt/etc/fstab
@@ -48,6 +48,11 @@ configuration()
     cat <<EOT > /mnt/etc/resolv.conf.head
 nameserver 1.1.1.1
 nameserver 1.0.0.1
+EOT
+
+    cat <<EOT >> /mnt/etc/hosts
+192.168.1.192   rainbowdash.localdomain rainbowdash
+192.168.1.66    libreelec.localdomain libreelec
 EOT
 
     echo "Updating pacman mirrors to awesomeness..."
@@ -116,6 +121,7 @@ EOT
     # Create new user
     arch-chroot /mnt useradd -m -G wheel paul
     arch-chroot /mnt sed -i 's/# %wheel ALL=(ALL) ALL/%wheel ALL=(ALL) ALL/' /etc/sudoers
+    echo "Defaults insults" >> /etc/sudoers
     echo "Set password for new user paul"
     arch-chroot /mnt passwd paul
 
@@ -148,6 +154,9 @@ EOT
     echo "Creating .xinitrc file..."
     head -n -5 /mnt/etc/X11/xinit/xinitrc >> /mnt/home/paul/.xinitrc
     arch-chroot /mnt chown paul:paul /home/paul/.xinitrc
+
+    # nano syntax highlighting
+    echo "include /usr/share/nano/*.nanorc" > /mnt/home/paul/.nanorc
 
     # swappiness config for swap
     echo "vm.swappiness=10" >> /mnt/etc/sysctl.d/99-swappiness.conf
