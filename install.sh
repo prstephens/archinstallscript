@@ -29,9 +29,16 @@ performInstall()
         exit
     fi
 
+    #swap
     mkswap /dev/sdb1
     swapon /dev/sdb1
+
+    #root
     mount /dev/sdb2 /mnt
+
+    #data
+    mkdir /mnt/data
+    mount /dev/sdb3 /mnt/data
 
     # Install Arch Linux
     echo "Starting install.."
@@ -157,6 +164,7 @@ EOT
 
     # nano syntax highlighting
     echo "include /usr/share/nano/*.nanorc" > /mnt/home/paul/.nanorc
+    arch-chroot /mnt chown paul:paul /home/paul/.nanorc
 
     # swappiness config for swap
     echo "vm.swappiness=10" >> /mnt/etc/sysctl.d/99-swappiness.conf
@@ -183,7 +191,7 @@ EOT
     echo "Enabling services..."
     arch-chroot /mnt systemctl enable NetworkManager.service
     arch-chroot /mnt systemctl enable bluetooth.service
-    arch-chroot /mnt systemctl enable org.cups.cupsd.service
+    arch-chroot /mnt systemctl enable cups.service
     arch-chroot /mnt systemctl enable reflector
     arch-chroot /mnt systemctl enable reflector.timer
     arch-chroot /mnt systemctl enable fstrim.timer
