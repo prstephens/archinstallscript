@@ -40,16 +40,11 @@ install_ufw()
     echo "Enabling firewall..."
     sudo ufw default deny incoming
     sudo ufw default allow outgoing
-    sudo ufw allow http
-    sudo ufw allow https
-    sudo ufw allow dns
-    sudo ufw allow ntp
     sudo ufw enable
 }
 
 install_deepin()
 {
-    dialog --title 'Installing Deepin...' --msgbox 'Please select deepin-anything-dkms when prompted' 6 50
     clear
     
     # Deepin, nightlight, android phone protocols

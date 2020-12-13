@@ -43,7 +43,7 @@ performInstall()
     # Install Arch Linux
     echo "Starting install.."
     echo "Installing Arch Linux with Zen kernel, rEFInd as bootloader" 
-    pacstrap /mnt base base-devel networkmanager dnsutils reflector linux-zen linux-zen-headers linux-firmware refind efibootmgr intel-ucode ntfs-3g xorg xorg-server xorg-xinit nano nano-syntax-highlighting sudo git nvidia-dkms nvidia-settings bluez bluez-utils pulseaudio rxvt-unicode wget dialog cups hplip ufw gufw archlinux-keyring anything-sync-daemon mtpfs gvfs-mtp gvfs-gphoto2 gvfs-smb
+    pacstrap /mnt base base-devel networkmanager dnsutils reflector linux linux-firmware refind efibootmgr intel-ucode ntfs-3g xorg xorg-server xorg-xinit nano nano-syntax-highlighting sudo git nvidia nvidia-settings bluez bluez-utils pulseaudio rxvt-unicode wget dialog cups hplip ufw gufw archlinux-keyring anything-sync-daemon mtpfs gvfs-mtp gvfs-gphoto2 gvfs-smb
 
     # Generate fstab
     genfstab -U /mnt >> /mnt/etc/fstab
