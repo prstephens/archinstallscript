@@ -132,7 +132,7 @@ install_qemu()
     sudo pacman -S libvirt virt-manager ovmf qemu
 
     # Enable Virtualization Technology for Directed I/O in rEFInd config as boot param
-    sudo sed -i.bak 's/linux-zen.img[^"]*/& intel_iommu=on/' /boot/refind_linux.conf
+    sudo sed -i.bak 's/linux.img[^"]*/& intel_iommu=on/' /boot/refind_linux.conf
 
     sudo usermod -a -G libvirt $USER
 
