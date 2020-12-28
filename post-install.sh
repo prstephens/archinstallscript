@@ -79,7 +79,7 @@ nvidia-settings --load-config-only &
 export DESKTOP_SESSION=plasma
 exec startplasma-x11
 EOT
-    echo '[[ ! $DISPLAY && $XDG_VTNR -eq 2 ]] && exec startx' >> $HOME/.bash_profile
+    echo '[[ ! $DISPLAY && $XDG_VTNR -eq 1 ]] && exec startx' >> $HOME/.bash_profile
 
 }
 
@@ -120,9 +120,10 @@ install_profile-sync-daemon()
 install_apps()
 {
     echo "Installing Chrome, VS Code, WPS Office, Gimp..."
-    yay -S google-chrome firefox code wps-office gimp vlc balena-etcher
+    yay -S google-chrome firefox code wps-office gimp vlc balena-etcher kodi
 
     install_spotify
+    apply_spicetify
     install_profile-sync-daemon
 }
 

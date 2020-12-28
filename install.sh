@@ -122,7 +122,7 @@ include themes/Matrix-rEFInd/theme.conf
 EOT
 
     # early KMS NVIDIA module load
-    arch-chroot /mnt sed -i 's/^MODULES=.*$/MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)/' /etc/mkinitcpio.conf
+    #arch-chroot /mnt sed -i 's/^MODULES=.*$/MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)/' /etc/mkinitcpio.conf
     arch-chroot /mnt mkinitcpio -P
 
     # Create new user
