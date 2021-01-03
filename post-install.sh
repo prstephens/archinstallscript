@@ -70,8 +70,11 @@ EOT
 
 install_plasma()
 {    
+    clear
+    
     echo "Installing Plasma.."
-    sudo pacman -S plasma
+    sudo pacman -S plasma ark dolphin
+    yay -S latte-dock-git
 
     # xinit config
     sudo cat <<EOT >> $HOME/.xinitrc
@@ -80,7 +83,10 @@ export DESKTOP_SESSION=plasma
 exec startplasma-x11
 EOT
     echo '[[ ! $DISPLAY && $XDG_VTNR -eq 1 ]] && exec startx' >> $HOME/.bash_profile
-
+    
+    install_fonts
+    install_ufw
+    install_preload
 }
 
 install_spotify()
@@ -120,7 +126,7 @@ install_profile-sync-daemon()
 install_apps()
 {
     echo "Installing Chrome, VS Code, WPS Office, Gimp..."
-    yay -S google-chrome firefox code wps-office gimp vlc balena-etcher kodi
+    yay -S google-chrome firefox code wps-office gimp vlc balena-etcher kodi dropbox
 
     install_spotify
     apply_spicetify
