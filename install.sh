@@ -163,8 +163,7 @@ EOT
     arch-chroot /mnt chown paul:paul /home/paul/.xinitrc
 
     # nano syntax highlighting
-    echo "include /usr/share/nano/*.nanorc" > /mnt/home/paul/.nanorc
-    arch-chroot /mnt chown paul:paul /home/paul/.nanorc
+    echo "include /usr/share/nano/*.nanorc" >> /mnt/etc/nanorc
 
     # swappiness config for swap
     echo "vm.swappiness=10" >> /mnt/etc/sysctl.d/99-swappiness.conf

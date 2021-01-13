@@ -73,7 +73,7 @@ install_plasma()
     clear
     
     echo "Installing Plasma.."
-    sudo pacman -S plasma ark dolphin xscreensaver
+    sudo pacman -S plasma ark dolphin xscreensaver konsole
     yay -S latte-dock-git
 
     # xinit config
@@ -135,7 +135,7 @@ install_apps()
 install_qemu()
 {
     echo "Installing QEMU/KVM"
-    sudo pacman -S libvirt virt-manager ovmf qemu
+    sudo pacman -S libvirt virt-manager ovmf qemu ebtables dnsmasq
 
     # Enable Virtualization Technology for Directed I/O in rEFInd config as boot param
     sudo sed -i.bak 's/linux.img[^"]*/& intel_iommu=on/' /boot/refind_linux.conf
