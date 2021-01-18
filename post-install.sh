@@ -142,11 +142,11 @@ install_qemu()
 
     sudo usermod -a -G libvirt $USER
 
-sudo cat <<EOT >> /etc/libvirt/qemu.conf
+sudo bash -c 'sudo cat <<EOT >> /etc/libvirt/qemu.conf
 nvram = [
 	"/usr/share/ovmf/x64/OVMF_CODE.fd:/usr/share/ovmf/x64/OVMF_VARS.fd"
 ]
-EOT
+EOT'
 
     sudo systemctl enable --now libvirtd.service
     sudo systemctl enable --now virtlogd.socket

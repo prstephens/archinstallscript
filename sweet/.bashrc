@@ -149,6 +149,7 @@ alias pacman='sudo pacman'
 alias dg='echo "pacman -U /var/cache/pacman/pkg/"'
 alias ug='less /var/log/pacman.log | grep upgraded'
 alias setwall='gsettings set com.deepin.wrap.gnome.desktop.background picture-uri'
+alias vmbackup='sudo virsh dumpxml'
 
 # Show all logs in /var/log
 alias logs="sudo find /var/log -type f -exec file {} \; | grep 'text' | cut -d' ' -f1 | sed -e's/:$//g' | grep -v '[0-9]$' | xargs tail -f"
