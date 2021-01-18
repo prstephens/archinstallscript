@@ -159,6 +159,22 @@ install_dev()
     yay -S postman-bin
 }
 
+install_nordvpn() 
+{
+    sudo groupadd -r nordvpn
+    yay -Syu nordvpn-bin 
+    sudo systemctl enable --now nordvpnd.service
+    sudo gpasswd -a $USER nordvpn
+
+    nordvpn login
+
+    nordvpn set technology nordlynx
+    nordvpn set killswitch on
+    nordvpn set cybersec on
+    nordvpn set dns 1.1.1.1 1.0.0.1
+    nordvpn set autoconnect on IE
+}
+
 #=== START ===
 if [[ -d $HOME/yay ]]
 then
@@ -187,8 +203,9 @@ OPTIONS=(1 "Deepin DE"
     3 "Lightdm Display Manager"
     4 "Applications"
     5 "QEMU/KVM"
-    6 "Java Development Environment"  
-    7 "Exit")
+    6 "Java Development Environment" 
+    7 "Nord VPN" 
+    8 "Exit")
 
 while CHOICE=$(dialog --clear \
         --nocancel \
@@ -218,8 +235,11 @@ do
             ;;
         6)
             install_dev
-            ;;	   	    
-	    7)
+            ;;	
+        7)
+            install_nordvpn
+            ;;	     	    
+	    8)
             break
             ;;
     esac
