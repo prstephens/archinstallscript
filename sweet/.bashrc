@@ -150,6 +150,8 @@ alias dg='echo "pacman -U /var/cache/pacman/pkg/"'
 alias ug='less /var/log/pacman.log | grep upgraded'
 alias setwall='gsettings set com.deepin.wrap.gnome.desktop.background picture-uri'
 alias vmbackup='sudo virsh dumpxml'
+alias vpn='nordvpn set cybersec on && nordvpn set killswitch on && nordvpn c IE'
+alias killvpn='nordvpn set cybersec off && nordvpn set killswitch off && nordvpn d && sudo systemctl restart NetworkManager'
 
 # Show all logs in /var/log
 alias logs="sudo find /var/log -type f -exec file {} \; | grep 'text' | cut -d' ' -f1 | sed -e's/:$//g' | grep -v '[0-9]$' | xargs tail -f"
