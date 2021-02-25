@@ -73,8 +73,11 @@ install_plasma()
     clear
     
     echo "Installing Plasma.."
-    sudo pacman -S plasma ark dolphin xscreensaver konsole
+    sudo pacman -S plasma ark dolphin xscreensaver konsole sshfs
     yay -S latte-dock-git
+
+    # Dracula colour scheme for Konsole
+    curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/Dracula.colorscheme -o $HOME/.local/konsole/Dracula.colorscheme
 
     # xinit config
     sudo cat <<EOT >> $HOME/.xinitrc
@@ -125,7 +128,7 @@ install_profile-sync-daemon()
 install_apps()
 {
     echo "Installing Chrome, VS Code, WPS Office, Gimp..."
-    yay -S google-chrome firefox code wps-office gimp vlc balena-etcher kodi dropbox
+    yay -S google-chrome firefox code wps-office gimp vlc balena-etcher kodi dropbox handbrake
 
     install_spotify
     apply_spicetify
@@ -159,22 +162,6 @@ install_dev()
     yay -S postman-bin
 }
 
-install_nordvpn() 
-{
-    sudo groupadd -r nordvpn
-    yay -Syu nordvpn-bin 
-    sudo systemctl enable --now nordvpnd.service
-    sudo gpasswd -a $USER nordvpn
-
-    nordvpn login
-
-    nordvpn set technology nordlynx
-    nordvpn set killswitch on
-    nordvpn set cybersec on
-    nordvpn set dns 1.1.1.1 1.0.0.1
-    nordvpn set autoconnect on IE
-}
-
 #=== START ===
 if [[ -d $HOME/yay ]]
 then
@@ -204,8 +191,7 @@ OPTIONS=(1 "Deepin DE"
     4 "Applications"
     5 "QEMU/KVM"
     6 "Java Development Environment" 
-    7 "Nord VPN" 
-    8 "Exit")
+    7 "Exit")
 
 while CHOICE=$(dialog --clear \
         --nocancel \
@@ -235,11 +221,8 @@ do
             ;;
         6)
             install_dev
-            ;;	
-        7)
-            install_nordvpn
-            ;;	     	    
-	    8)
+            ;;		     	    
+	    7)
             break
             ;;
     esac
