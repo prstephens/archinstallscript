@@ -122,7 +122,7 @@ include themes/Matrix-rEFInd/theme.conf
 EOT
 
     # early KMS NVIDIA module load
-    #arch-chroot /mnt sed -i 's/^MODULES=.*$/MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)/' /etc/mkinitcpio.conf
+    arch-chroot /mnt sed -i 's/^MODULES=.*$/MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)/' /etc/mkinitcpio.conf
     arch-chroot /mnt mkinitcpio -P
 
     # Create new user
@@ -161,6 +161,29 @@ EOT
     head -n -5 /mnt/etc/X11/xinit/xinitrc >> /mnt/home/paul/.xinitrc
     arch-chroot /mnt chown paul:paul /home/paul/.xinitrc
 
+    cat <<EOT >> /mnt/home/paul/.xinitrc
+xrandr --setprovideroutputsource modesetting NVIDIA-0
+xrandr --auto
+EOT
+
+    cat <<EOT > /mnt/etc/X11/xorg.conf.d/20-nvidia.conf
+Section "OutputClass"
+Identifier "intel"
+MatchDriver "i915"
+Driver "modesetting"
+EndSection
+
+Section "OutputClass"
+Identifier "nvidia"
+MatchDriver "nvidia-drm"
+Driver "nvidia"
+Option "AllowEmptyInitialConfiguration"
+Option "PrimaryGPU" "yes"
+ModulePath "/usr/lib/nvidia/xorg"
+ModulePath "/usr/lib/xorg/modules"
+EndSection
+EOT
+    
     # nano syntax highlighting
     echo "include /usr/share/nano/*.nanorc" >> /mnt/etc/nanorc
 

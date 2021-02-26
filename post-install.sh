@@ -47,7 +47,7 @@ install_deepin()
 {
     clear
     
-    # Deepin, nightlight, android phone protocols
+    # Deepin, nightlight
     sudo pacman -S deepin deepin-compressor redshift pacman-contrib file-roller
     yay -S jmtpfs
 
