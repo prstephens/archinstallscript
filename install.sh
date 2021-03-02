@@ -105,7 +105,7 @@ EOT
 
     # early KMS NVIDIA module and silent boot parameters
     cat <<EOT > /mnt/boot/refind_linux.conf
-"Boot with standard options"  "rw root=UUID=${ROOTUUID} quiet loglevel=3 rd.udev.log_priority=3 initrd=boot\intel-ucode.img initrd=boot\initramfs-linux.img"
+"Boot with standard options"  "rw root=UUID=${ROOTUUID} quiet loglevel=3 rd.udev.log_priority=3 nvidia-drm.modeset=1 nouveau.modeset=0 initrd=boot\intel-ucode.img initrd=boot\initramfs-linux.img"
 "Boot to single-user mode"    "rw root=UUID=${ROOTUUID} loglevel=3 quiet single"
 "Boot with minimal options"   "rw root=UUID=${ROOTUUID}"
 EOT

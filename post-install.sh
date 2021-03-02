@@ -76,6 +76,9 @@ install_plasma()
     sudo pacman -S plasma ark dolphin xscreensaver konsole sshfs
     yay -S latte-dock-git
 
+    # xscreensaver settings - 10 min timeout - GL matrix 
+    curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/.xscreensaver -o $HOME/.xscreensaver
+
     # Dracula colour scheme for Konsole
     curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/Dracula.colorscheme -o $HOME/.local/konsole/Dracula.colorscheme
 
