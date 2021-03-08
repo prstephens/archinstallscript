@@ -1,20 +1,57 @@
 #!/bin/bash
 
-set -e
-
 clear
+#set -uo pipefail
+#trap 's=$?; echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
+loadkeys uk
 
-echo "     _             _       ___           _        _ _           "
-echo "    / \   _ __ ___| |__   |_ _|_ __  ___| |_ __ _| | | ___ _ __ "
-echo "   / _ \ | '__/ __| '_ \   | || '_ \/ __| __/ _\` | | |/ _ \ '__|"
-echo "  / ___ \| | | (__| | | |  | || | | \__ \ || (_| | | |  __/ |   "
-echo " /_/   \_\_|  \___|_| |_| |___|_| |_|___/\__\__,_|_|_|\___|_|   "
-echo "                                                                "
-echo " Version 2.0"
-echo " "
+BACKTITLE="Arch Installer v2.1"
+MIRRORLIST_URL="https://archlinux.org/mirrorlist/?country=GB&protocol=https&use_mirror_status=on"
+
+#devicelistraw=$(lsblk -o name,size,type)
+#devicelist=$(lsblk -dplnx size -o name,size | grep -Ev "boot|rpmb|loop" | tac)
+#device=$(dialog --backtitle "$BACKTITLE" --title "Select installation disk" --stdout --menu "${devicelistraw}" 0 0 0 ${devicelist}) || exit 1
+
+#dialog --yesno "Have you partitioned your drive ready?" 0 0
+#response=$?
+
+#if [ "$response" -eq 1 ]; then
+#  cfdisk $device
+#fi 
+
+if [[ $(ping -q -w1 -c1 google.com &>/dev/null && echo online || echo offline) == "offline" ]]; 
+    then
+        dialog --backtitle "$BACKTITLE" --title 'Installation Stopped' --msgbox 'No Interent connection' 0 0
+        exit
+fi
+
+pacman -Sy --noconfirm pacman-contrib dialog
+
+echo "Updating mirror list"
+curl -sL "$MIRRORLIST_URL" | sed -e 's/^#Server/Server/' -e '/^#/d' | rankmirrors -n 5 - > /etc/pacman.d/mirrorlist
+
+### Get infomation from user ###
+hostname=$(dialog --backtitle "$BACKTITLE" --stdout --inputbox "Enter hostname" 0 0) || exit 1
+clear
+: ${hostname:?"hostname cannot be empty"}
+
+user=$(dialog --backtitle "$BACKTITLE" --stdout --inputbox "Enter admin username" 0 0) || exit 1
+clear
+: ${user:?"user cannot be empty"}
+
+password=$(dialog --backtitle "$BACKTITLE" --stdout --passwordbox "Enter admin password" 0 0) || exit 1
+clear
+: ${password:?"password cannot be empty"}
+
+password2=$(dialog --backtitle "$BACKTITLE" --stdout --passwordbox "Enter admin password again" 0 0) || exit 1
+clear
+[[ "$password" == "$password2" ]] || ( echo "Passwords did not match"; exit 1; )
+
 
 performInstall()
 {
+    clear
+
     # Set up time
     echo "Setting date and time..."
     timedatectl set-ntp true
@@ -51,6 +88,8 @@ performInstall()
 
 configuration()
 {
+    clear
+
     # Set Cloudfare as our DNS
     cat <<EOT > /mnt/etc/resolv.conf.head
 nameserver 1.1.1.1
@@ -80,12 +119,8 @@ EOT
     echo "KEYMAP=uk" >> /mnt/etc/vconsole.conf
 
     # Set hostname
-    echo "archpc" >> /mnt/etc/hostname
+    echo "${hostname}" > /mnt/etc/hostname
     echo "127.0.1.1 archpc.localdomain  archpc" >> /mnt/etc/hosts
-
-    # Set root password
-    echo "Set root password"
-    arch-chroot /mnt passwd
 
     # Install bootloader
     # rEFInd
@@ -126,42 +161,43 @@ EOT
     arch-chroot /mnt mkinitcpio -P
 
     # Create new user
-    arch-chroot /mnt useradd -m -G wheel paul
+    arch-chroot /mnt useradd -m -G wheel $user
     arch-chroot /mnt sed -i 's/# %wheel ALL=(ALL) ALL/%wheel ALL=(ALL) ALL/' /etc/sudoers
     echo "Defaults insults" >> /mnt/etc/sudoers
-    echo "Set password for new user paul"
-    arch-chroot /mnt passwd paul
+    echo "Set password for new user ${user}"
+
+    # Set root password
+    echo "Setting user and root password..."
+    echo "$user:$password" | chpasswd --root /mnt
+    echo "root:$password" | chpasswd --root /mnt
 
     # config files
     echo "Getting some sweet config files..."
-    arch-chroot /mnt mkdir /home/paul/.config
-    arch-chroot /mnt curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/.Xresources -o /home/paul/.Xresources
-    arch-chroot /mnt curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/.bashrc -o /home/paul/.bashrc
+    arch-chroot /mnt mkdir /home/$user/.config
+    arch-chroot /mnt curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/.Xresources -o /home/$user/.Xresources
+    arch-chroot /mnt curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/.bashrc -o /home/$user/.bashrc
     arch-chroot /mnt curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/issue -o /etc/issue
 
-    arch-chroot /mnt chown -R paul:paul /home/paul/.config
-    arch-chroot /mnt chown paul:paul /home/paul/.Xresources
-
-    # Set keyboard FN keys to act normal!
-    echo "options hid_apple fnmode=2" > /mnt/etc/modprobe.d/hid_apple.conf
+    arch-chroot /mnt chown -R $user:$user /home/$user/.config
+    arch-chroot /mnt chown $user:$user /home/$user/.Xresources
 
     # Get yay ready 
-    echo "Getting yay all ready for paul..."
-    arch-chroot /mnt git clone https://aur.archlinux.org/yay.git /home/paul/yay
-    arch-chroot /mnt chown -R paul:paul /home/paul/yay/
+    echo "Getting yay all ready for ${user}..."
+    arch-chroot /mnt git clone https://aur.archlinux.org/yay.git /home/$user/yay
+    arch-chroot /mnt chown -R $user:$user /home/$user/yay/
 
-    # Copy post-install file to /home/paul
-    echo "Copy post-install file to /home/paul..."
-    arch-chroot /mnt curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/post-install.sh -o /home/paul/post-install.sh
-    arch-chroot /mnt chown paul:paul /home/paul/post-install.sh
-    arch-chroot /mnt chmod a+x /home/paul/post-install.sh
+    # Copy post-install file to /home/$user
+    echo "Copy post-install file to /home/${user}..."
+    arch-chroot /mnt curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/post-install.sh -o /home/$user/post-install.sh
+    arch-chroot /mnt chown $user:$user /home/$user/post-install.sh
+    arch-chroot /mnt chmod a+x /home/$user/post-install.sh
 
     # Create user xinit config file 
     echo "Creating .xinitrc file..."
-    head -n -5 /mnt/etc/X11/xinit/xinitrc >> /mnt/home/paul/.xinitrc
-    arch-chroot /mnt chown paul:paul /home/paul/.xinitrc
+    head -n -5 /mnt/etc/X11/xinit/xinitrc >> /mnt/home/$user/.xinitrc
+    arch-chroot /mnt chown $user:$user /home/$user/.xinitrc
 
-    cat <<EOT >> /mnt/home/paul/.xinitrc
+    cat >> /mnt/home/${user}/.xinitrc <<EOT 
 xrandr --setprovideroutputsource modesetting NVIDIA-0
 xrandr --auto
 EOT
@@ -183,6 +219,9 @@ ModulePath "/usr/lib/nvidia/xorg"
 ModulePath "/usr/lib/xorg/modules"
 EndSection
 EOT
+
+    # Set keyboard FN keys to act normal!
+    echo "options hid_apple fnmode=2" > /mnt/etc/modprobe.d/hid_apple.conf
     
     # nano syntax highlighting
     echo "include /usr/share/nano/*.nanorc" >> /mnt/etc/nanorc
@@ -219,21 +258,11 @@ EOT
     arch-chroot /mnt systemctl enable ufw
 }
 
-checkConnection() 
-{
-    if [[ $(ping -q -w1 -c1 google.com &>/dev/null && echo online || echo offline) == "offline" ]]; 
-    then
-        echo "Oh dear. You need to be connected to the information highway..."
-        echo "Installation stopped"
-        exit
-    fi
-}
-
 # START
-loadkeys uk
-checkConnection
 performInstall
 configuration
 
-echo " "
-echo "===== Installation Complete ====="
+dialog --backtitle "$BACKTITLE" --title 'Install Complete' --msgbox 'Congratulations! \n\nThe system will now reboot' 0 0
+
+umount -a
+reboot

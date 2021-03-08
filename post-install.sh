@@ -175,6 +175,10 @@ then
   rm -rfd yay
 fi
 
+# optimise yay when building packages
+sudo sed -i 's/^#MAKEFLAGS="-j2"/MAKEFLAGS="-j$(nproc)"/' /etc/makepkg.conf
+sudo sed -i "s/^PKGEXT=.*$/PKGEXT='.pkg.tar'/" /etc/makepkg.conf
+
 # git credentials
 git config --global credential.helper store
 git config --global user.email "pr.stephens@gmail.com"
