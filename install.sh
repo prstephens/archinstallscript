@@ -91,10 +91,12 @@ configuration()
     clear
 
     # Set Cloudfare as our DNS
-    cat <<EOT > /mnt/etc/resolv.conf.head
+    cat <<EOT > /mnt/etc/resolv.conf
 nameserver 1.1.1.1
 nameserver 1.0.0.1
 EOT
+
+    chattr +i /mnt/etc/resolv.conf
 
     cat <<EOT >> /mnt/etc/hosts
 192.168.1.192   rainbowdash.localdomain rainbowdash
