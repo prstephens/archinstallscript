@@ -19,13 +19,13 @@ MIRRORLIST_URL="https://archlinux.org/mirrorlist/?country=GB&protocol=https&use_
 #  cfdisk $device
 #fi 
 
-pacman -Sy --noconfirm pacman-contrib dialog
-
 if [[ $(ping -q -w1 -c1 google.com &>/dev/null && echo online || echo offline) == "offline" ]]; 
     then
-        dialog --backtitle "$BACKTITLE" --title 'Installation Stopped' --msgbox 'No Interent connection' 0 0
+        echo "Installation Stopped - No Interent connection"
         exit
 fi
+
+pacman -Sy --noconfirm pacman-contrib dialog
 
 echo "Updating mirror list"
 curl -sL "$MIRRORLIST_URL" | sed -e 's/^#Server/Server/' -e '/^#/d' | rankmirrors -n 5 - > /etc/pacman.d/mirrorlist
@@ -80,7 +80,7 @@ performInstall()
     # Install Arch Linux
     echo "Starting install.."
     echo "Installing Arch Linux with Zen kernel, rEFInd as bootloader" 
-    pacstrap /mnt base base-devel networkmanager dnsutils reflector linux linux-firmware refind efibootmgr intel-ucode ntfs-3g xorg xorg-server xorg-xinit nano nano-syntax-highlighting sudo git nvidia nvidia-settings bluez bluez-utils pulseaudio rxvt-unicode wget dialog cups hplip ufw gufw archlinux-keyring anything-sync-daemon mtpfs gvfs-mtp gvfs-gphoto2 gvfs-smb openssh openvpn ncdu
+    pacstrap /mnt base base-devel networkmanager dnsutils reflector linux linux-firmware refind efibootmgr intel-ucode ntfs-3g xorg xorg-server xorg-xinit nano nano-syntax-highlighting sudo git nvidia nvidia-settings nvidia-utils bluez bluez-utils pulseaudio rxvt-unicode wget dialog cups hplip ufw gufw archlinux-keyring anything-sync-daemon mtpfs gvfs-mtp gvfs-gphoto2 gvfs-smb openssh openvpn ncdu glances htop
 
     # Generate fstab
     genfstab -U /mnt >> /mnt/etc/fstab
@@ -166,7 +166,6 @@ EOT
     arch-chroot /mnt useradd -m -G wheel $user
     arch-chroot /mnt sed -i 's/# %wheel ALL=(ALL) ALL/%wheel ALL=(ALL) ALL/' /etc/sudoers
     echo "Defaults insults" >> /mnt/etc/sudoers
-    echo "Set password for new user ${user}"
 
     # Set root password
     echo "Setting user and root password..."
