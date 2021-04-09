@@ -35,14 +35,6 @@ install_lightdm()
     sudo systemctl enable lightdm
 }
 
-install_ufw()
-{
-    echo "Enabling firewall..."
-    sudo ufw default deny incoming
-    sudo ufw default allow outgoing
-    sudo ufw enable
-}
-
 install_deepin()
 {
     clear
@@ -64,7 +56,6 @@ EOT
     echo '[[ ! $DISPLAY && $XDG_VTNR -eq 1 ]] && exec startx' >> $HOME/.bash_profile
 
     install_fonts
-    install_ufw
     install_preload
 }
 
@@ -91,7 +82,6 @@ EOT
     echo '[[ ! $DISPLAY && $XDG_VTNR -eq 1 ]] && exec startx' >> $HOME/.bash_profile
     
     install_fonts
-    install_ufw
     install_preload
 }
 
