@@ -80,7 +80,7 @@ performInstall()
     # Install Arch Linux
     echo "Starting install.."
     echo "Installing Arch Linux with Zen kernel, rEFInd as bootloader" 
-    pacstrap /mnt base base-devel networkmanager dnsutils reflector linux linux-firmware refind efibootmgr intel-ucode ntfs-3g xorg xorg-server xorg-xinit nano nano-syntax-highlighting sudo git nvidia nvidia-settings nvidia-utils bluez bluez-utils pulseaudio rxvt-unicode wget dialog cups hplip ufw gufw archlinux-keyring anything-sync-daemon mtpfs gvfs-mtp gvfs-gphoto2 gvfs-smb openssh openvpn ncdu glances htop
+    pacstrap /mnt base base-devel networkmanager dnsutils reflector linux-zen linux-zen-headers linux-firmware refind efibootmgr intel-ucode ntfs-3g xorg xorg-server xorg-xinit nano nano-syntax-highlighting sudo git nvidia-dkms nvidia-settings nvidia-utils bluez bluez-utils pulseaudio rxvt-unicode wget dialog cups hplip archlinux-keyring anything-sync-daemon mtpfs gvfs-mtp gvfs-gphoto2 gvfs-smb openssh openvpn ncdu glances htop
 
     # Generate fstab
     genfstab -U /mnt >> /mnt/etc/fstab
@@ -142,7 +142,7 @@ EOT
 
     # early KMS NVIDIA module and silent boot parameters
     cat <<EOT > /mnt/boot/refind_linux.conf
-"Boot with standard options"  "rw root=UUID=${ROOTUUID} quiet loglevel=3 rd.udev.log_priority=3 nvidia-drm.modeset=1 nouveau.modeset=0 initrd=boot\intel-ucode.img initrd=boot\initramfs-linux.img"
+"Boot with standard options"  "rw root=UUID=${ROOTUUID} quiet loglevel=3 rd.udev.log_priority=3 nvidia-drm.modeset=1 nouveau.modeset=0 initrd=boot\intel-ucode.img initrd=boot\initramfs-linux-zen.img"
 "Boot to single-user mode"    "rw root=UUID=${ROOTUUID} loglevel=3 quiet single"
 "Boot with minimal options"   "rw root=UUID=${ROOTUUID}"
 EOT
@@ -255,7 +255,6 @@ EOT
     arch-chroot /mnt systemctl enable reflector
     arch-chroot /mnt systemctl enable reflector.timer
     arch-chroot /mnt systemctl enable fstrim.timer
-    arch-chroot /mnt systemctl enable ufw
 }
 
 # START
