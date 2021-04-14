@@ -131,7 +131,7 @@ install_apps()
 install_qemu()
 {
     echo "Installing QEMU/KVM"
-    sudo pacman -S libvirt virt-manager ovmf qemu ebtables dnsmasq
+    sudo pacman -S libvirt virt-manager ovmf qemu iptables-nft dnsmasq
 
     # Enable Virtualization Technology for Directed I/O in rEFInd config as boot param
     sudo sed -i.bak 's/linux.img[^"]*/& intel_iommu=on/' /boot/refind_linux.conf
