@@ -6,8 +6,6 @@ install_fonts()
     #yay -S nerd-fonts-complete
     yay -S otf-san-francisco
 
-    sudo curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/fonts/Youth-Touch.ttf -o /usr/share/fonts/Youth-Touch.ttf
-
      # Copy Windows fonts over
     echo "Copying Windows fonts..."
     sudo mkdir /usr/share/fonts/windowsfonts
