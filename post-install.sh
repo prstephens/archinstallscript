@@ -57,13 +57,25 @@ EOT
     install_preload
 }
 
+restore_bigsur()
+{
+    konsave -i $HOME/bigsur.knsv
+}
+
 install_plasma()
 {    
     clear
     
     echo "Installing Plasma.."
     sudo pacman -S plasma ark dolphin xscreensaver konsole sshfs
-    yay -S latte-dock-git
+    yay -S latte-dock-git plasma5-applets-kde-arch-update-notifier-git
+    
+    # konsave
+    sudo pacman -S python-pip
+    python -m pip install konsave
+
+    # mac os big sur dark theme with latte config. complete restore.
+    curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/bigsur.knsv -o $HOME/bigsur.knsv
 
     # xscreensaver settings - 10 min timeout - GL matrix 
     curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/.xscreensaver -o $HOME/.xscreensaver
