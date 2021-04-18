@@ -60,6 +60,7 @@ EOT
 restore_bigsur()
 {
     konsave -i $HOME/bigsur.knsv
+    konsave -a 1
 }
 
 install_plasma()
@@ -93,6 +94,9 @@ EOT
     
     install_fonts
     install_preload
+
+    # apply MacOs bigsur theme
+    restore_bigsur
 }
 
 install_spotify()
