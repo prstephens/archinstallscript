@@ -174,12 +174,13 @@ EOT
 
     # config files
     echo "Getting some sweet config files..."
-    arch-chroot /mnt mkdir /home/$user/.config
     arch-chroot /mnt curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/.Xresources -o /home/$user/.Xresources
     arch-chroot /mnt curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/.bashrc -o /home/$user/.bashrc
     arch-chroot /mnt curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/issue -o /etc/issue
 
-    arch-chroot /mnt chown -R $user:$user /home/$user/.config
+    # set custom pacman.conf 
+    arch-chroot /mnt mv /etc/pacman.conf /etc/pacman.conf.bak
+    arch-chroot /mnt curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/pacman.conf -o /etc/pacman.conf
     
     # Get yay ready 
     echo "Getting yay all ready for ${user}..."
@@ -255,6 +256,7 @@ EOT
     arch-chroot /mnt systemctl enable reflector
     arch-chroot /mnt systemctl enable reflector.timer
     arch-chroot /mnt systemctl enable fstrim.timer
+
 }
 
 # START
