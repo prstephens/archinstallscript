@@ -193,6 +193,13 @@ EOT
     arch-chroot /mnt chown $user:$user /home/$user/post-install.sh
     arch-chroot /mnt chmod a+x /home/$user/post-install.sh
 
+    # If ~/.inputrc doesn't exist yet: First include the original /etc/inputrc
+    # so it won't get overriden
+    if [ ! -a /mnt/home/$user/.inputrc ]; then echo '$include /mnt/etc/inputrc' > /mnt/home/$user/.inputrc; fi
+
+    # Add shell-option to ~/.inputrc to enable case-insensitive tab completion
+    echo 'set completion-ignore-case On' >> /mnt/home/$user/.inputrc
+
     # Create user xinit config file 
     echo "Creating .xinitrc file..."
     head -n -5 /mnt/etc/X11/xinit/xinitrc >> /mnt/home/$user/.xinitrc
