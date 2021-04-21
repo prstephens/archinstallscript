@@ -167,7 +167,7 @@ EOT
 
     # Set hostname
     echo "${hostname}" > /mnt/etc/hostname
-    echo "127.0.1.1 archpc.localdomain  archpc" >> /mnt/etc/hosts
+    echo "127.0.1.1 ${hostname}.localdomain  ${hostname}" >> /mnt/etc/hosts
 
     # NVIDIA configuration
     cat <<EOT > /mnt/etc/X11/xorg.conf.d/20-nvidia.conf
