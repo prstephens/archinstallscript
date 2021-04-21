@@ -1,53 +1,5 @@
 #!/bin/bash
 
-clear
-#set -uo pipefail
-#trap 's=$?; echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
-loadkeys uk
-
-BACKTITLE="Arch Installer v2.1"
-MIRRORLIST_URL="https://archlinux.org/mirrorlist/?country=GB&protocol=https&use_mirror_status=on"
-
-#devicelistraw=$(lsblk -o name,size,type)
-#devicelist=$(lsblk -dplnx size -o name,size | grep -Ev "boot|rpmb|loop" | tac)
-#device=$(dialog --backtitle "$BACKTITLE" --title "Select installation disk" --stdout --menu "${devicelistraw}" 0 0 0 ${devicelist}) || exit 1
-
-#dialog --yesno "Have you partitioned your drive ready?" 0 0
-#response=$?
-
-#if [ "$response" -eq 1 ]; then
-#  cfdisk $device
-#fi 
-
-if [[ $(ping -q -w1 -c1 google.com &>/dev/null && echo online || echo offline) == "offline" ]]; 
-    then
-        echo "Installation Stopped - No Interent connection"
-        exit
-fi
-
-pacman -Sy --noconfirm pacman-contrib dialog
-
-echo "Updating mirror list"
-curl -sL "$MIRRORLIST_URL" | sed -e 's/^#Server/Server/' -e '/^#/d' | rankmirrors -n 5 - > /etc/pacman.d/mirrorlist
-
-### Get infomation from user ###
-hostname=$(dialog --backtitle "$BACKTITLE" --stdout --inputbox "Enter hostname" 0 0) || exit 1
-clear
-: ${hostname:?"hostname cannot be empty"}
-
-user=$(dialog --backtitle "$BACKTITLE" --stdout --inputbox "Enter admin username" 0 0) || exit 1
-clear
-: ${user:?"user cannot be empty"}
-
-password=$(dialog --backtitle "$BACKTITLE" --stdout --passwordbox "Enter admin password" 0 0) || exit 1
-clear
-: ${password:?"password cannot be empty"}
-
-password2=$(dialog --backtitle "$BACKTITLE" --stdout --passwordbox "Enter admin password again" 0 0) || exit 1
-clear
-[[ "$password" == "$password2" ]] || ( echo "Passwords did not match"; exit 1; )
-
-
 performInstall()
 {
     clear
@@ -84,6 +36,99 @@ performInstall()
 
     # Generate fstab
     genfstab -U /mnt >> /mnt/etc/fstab
+}
+
+installBootloader()
+{
+    # Install bootloader
+    # rEFInd
+    echo "Installing rEFInd..."
+
+    ROOTUUID=$(blkid -s UUID -o value /dev/sdb2)
+
+    arch-chroot /mnt mkdir /boot/efi
+
+    # mount windows EFI boot (on sda1)
+    arch-chroot /mnt mount /dev/sda1 /boot/efi
+
+    # clean it up before install
+    [[ -d /mnt/boot/efi/EFI/refind ]] && rm -rdf /mnt/boot/efi/EFI/refind
+
+    arch-chroot /mnt refind-install
+
+    # early KMS NVIDIA module and silent boot parameters
+    cat <<EOT > /mnt/boot/refind_linux.conf
+"Boot with standard options"  "rw root=UUID=${ROOTUUID} quiet loglevel=3 rd.udev.log_priority=3 nvidia-drm.modeset=1 nouveau.modeset=0 initrd=boot\intel-ucode.img initrd=boot\initramfs-linux-zen.img"
+"Boot to single-user mode"    "rw root=UUID=${ROOTUUID} loglevel=3 quiet single"
+"Boot with minimal options"   "rw root=UUID=${ROOTUUID}"
+EOT
+
+    # Morpheous theme for refind 
+    arch-chroot /mnt mkdir /boot/efi/EFI/refind/themes
+    arch-chroot /mnt git clone https://github.com/prstephens/Matrix-rEFInd.git /boot/efi/EFI/refind/themes/Matrix-rEFInd
+
+    cat <<EOT > /mnt/boot/efi/EFI/refind/refind.conf
+resolution 1920 1080
+timeout 5
+default_selection Microsoft
+include themes/Matrix-rEFInd/theme.conf
+EOT
+
+    # early KMS NVIDIA module load
+    arch-chroot /mnt sed -i 's/^MODULES=.*$/MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)/' /etc/mkinitcpio.conf
+    arch-chroot /mnt mkinitcpio -P
+}
+
+setupUser()
+{
+     # Create new user
+    arch-chroot /mnt useradd -m -G wheel $user
+    arch-chroot /mnt sed -i 's/# %wheel ALL=(ALL) ALL/%wheel ALL=(ALL) ALL/' /etc/sudoers
+    echo "Defaults insults" >> /mnt/etc/sudoers
+
+    # Set root password
+    echo "Setting user and root password..."
+    echo "$user:$password" | chpasswd --root /mnt
+    echo "root:$password" | chpasswd --root /mnt
+
+    # config files
+    echo "Getting some sweet config files..."
+    arch-chroot /mnt curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/.Xresources -o /home/$user/.Xresources
+    arch-chroot /mnt curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/.bashrc -o /home/$user/.bashrc
+    arch-chroot /mnt curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/issue -o /etc/issue
+
+    # set custom pacman.conf 
+    arch-chroot /mnt mv /etc/pacman.conf /etc/pacman.conf.bak
+    arch-chroot /mnt curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/pacman.conf -o /etc/pacman.conf
+    
+    # Get yay ready 
+    echo "Getting yay all ready for ${user}..."
+    arch-chroot /mnt git clone https://aur.archlinux.org/yay.git /home/$user/yay
+    arch-chroot /mnt chown -R $user:$user /home/$user/yay/
+
+    # Copy post-install file to /home/$user
+    echo "Copy post-install file to /home/${user}..."
+    arch-chroot /mnt curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/post-install.sh -o /home/$user/post-install.sh
+    arch-chroot /mnt chown $user:$user /home/$user/post-install.sh
+    arch-chroot /mnt chmod a+x /home/$user/post-install.sh
+
+    # If ~/.inputrc doesn't exist yet: First include the original /etc/inputrc
+    # so it won't get overriden
+    if [ ! -a /mnt/home/$user/.inputrc ]; then echo '$include /etc/inputrc' > /mnt/home/$user/.inputrc; fi
+
+    # Add shell-option to ~/.inputrc to enable case-insensitive tab completion
+    echo 'set completion-ignore-case On' >> /mnt/home/$user/.inputrc
+
+    # Create user xinit config file 
+    echo "Creating .xinitrc file..."
+    head -n -5 /mnt/etc/X11/xinit/xinitrc >> /mnt/home/$user/.xinitrc
+    arch-chroot /mnt chown $user:$user /home/$user/.xinitrc
+
+    cat >> /mnt/home/${user}/.xinitrc <<EOT 
+xrandr --setprovideroutputsource modesetting NVIDIA-0
+xrandr --auto
+EOT
+
 }
 
 configuration()
@@ -124,92 +169,7 @@ EOT
     echo "${hostname}" > /mnt/etc/hostname
     echo "127.0.1.1 archpc.localdomain  archpc" >> /mnt/etc/hosts
 
-    # Install bootloader
-    # rEFInd
-    echo "Installing rEFInd..."
-
-    ROOTUUID=$(blkid -s UUID -o value /dev/sdb2)
-
-    arch-chroot /mnt mkdir /boot/efi
-
-    # mount windows EFI boot (on sda1)
-    arch-chroot /mnt mount /dev/sda1 /boot/efi
-
-    # clean it up before install
-    [[ -d /mnt/boot/efi/EFI/refind ]] && rm -rdf /mnt/boot/efi/EFI/refind
-
-    arch-chroot /mnt refind-install
-
-    # early KMS NVIDIA module and silent boot parameters
-    cat <<EOT > /mnt/boot/refind_linux.conf
-"Boot with standard options"  "rw root=UUID=${ROOTUUID} quiet loglevel=3 rd.udev.log_priority=3 nvidia-drm.modeset=1 nouveau.modeset=0 initrd=boot\intel-ucode.img initrd=boot\initramfs-linux-zen.img"
-"Boot to single-user mode"    "rw root=UUID=${ROOTUUID} loglevel=3 quiet single"
-"Boot with minimal options"   "rw root=UUID=${ROOTUUID}"
-EOT
-
-    # Morpheous theme for refind 
-    arch-chroot /mnt mkdir /boot/efi/EFI/refind/themes
-    arch-chroot /mnt git clone https://github.com/prstephens/Matrix-rEFInd.git /boot/efi/EFI/refind/themes/Matrix-rEFInd
-
-    cat <<EOT > /mnt/boot/efi/EFI/refind/refind.conf
-resolution 1920 1080
-timeout 5
-default_selection Microsoft
-include themes/Matrix-rEFInd/theme.conf
-EOT
-
-    # early KMS NVIDIA module load
-    arch-chroot /mnt sed -i 's/^MODULES=.*$/MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)/' /etc/mkinitcpio.conf
-    arch-chroot /mnt mkinitcpio -P
-
-    # Create new user
-    arch-chroot /mnt useradd -m -G wheel $user
-    arch-chroot /mnt sed -i 's/# %wheel ALL=(ALL) ALL/%wheel ALL=(ALL) ALL/' /etc/sudoers
-    echo "Defaults insults" >> /mnt/etc/sudoers
-
-    # Set root password
-    echo "Setting user and root password..."
-    echo "$user:$password" | chpasswd --root /mnt
-    echo "root:$password" | chpasswd --root /mnt
-
-    # config files
-    echo "Getting some sweet config files..."
-    arch-chroot /mnt curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/.Xresources -o /home/$user/.Xresources
-    arch-chroot /mnt curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/.bashrc -o /home/$user/.bashrc
-    arch-chroot /mnt curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/issue -o /etc/issue
-
-    # set custom pacman.conf 
-    arch-chroot /mnt mv /etc/pacman.conf /etc/pacman.conf.bak
-    arch-chroot /mnt curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/pacman.conf -o /etc/pacman.conf
-    
-    # Get yay ready 
-    echo "Getting yay all ready for ${user}..."
-    arch-chroot /mnt git clone https://aur.archlinux.org/yay.git /home/$user/yay
-    arch-chroot /mnt chown -R $user:$user /home/$user/yay/
-
-    # Copy post-install file to /home/$user
-    echo "Copy post-install file to /home/${user}..."
-    arch-chroot /mnt curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/post-install.sh -o /home/$user/post-install.sh
-    arch-chroot /mnt chown $user:$user /home/$user/post-install.sh
-    arch-chroot /mnt chmod a+x /home/$user/post-install.sh
-
-    # If ~/.inputrc doesn't exist yet: First include the original /etc/inputrc
-    # so it won't get overriden
-    if [ ! -a /mnt/home/$user/.inputrc ]; then echo '$include /mnt/etc/inputrc' > /mnt/home/$user/.inputrc; fi
-
-    # Add shell-option to ~/.inputrc to enable case-insensitive tab completion
-    echo 'set completion-ignore-case On' >> /mnt/home/$user/.inputrc
-
-    # Create user xinit config file 
-    echo "Creating .xinitrc file..."
-    head -n -5 /mnt/etc/X11/xinit/xinitrc >> /mnt/home/$user/.xinitrc
-    arch-chroot /mnt chown $user:$user /home/$user/.xinitrc
-
-    cat >> /mnt/home/${user}/.xinitrc <<EOT 
-xrandr --setprovideroutputsource modesetting NVIDIA-0
-xrandr --auto
-EOT
-
+    # NVIDIA configuration
     cat <<EOT > /mnt/etc/X11/xorg.conf.d/20-nvidia.conf
 Section "OutputClass"
 Identifier "intel"
@@ -266,10 +226,62 @@ EOT
 
 }
 
-# START
+# START ========================================
+
+clear
+#set -uo pipefail
+#trap 's=$?; echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
+loadkeys uk
+
+BACKTITLE="Arch Installer v2.1"
+MIRRORLIST_URL="https://archlinux.org/mirrorlist/?country=GB&protocol=https&use_mirror_status=on"
+
+#devicelistraw=$(lsblk -o name,size,type)
+#devicelist=$(lsblk -dplnx size -o name,size | grep -Ev "boot|rpmb|loop" | tac)
+#device=$(dialog --backtitle "$BACKTITLE" --title "Select installation disk" --stdout --menu "${devicelistraw}" 0 0 0 ${devicelist}) || exit 1
+
+#dialog --yesno "Have you partitioned your drive ready?" 0 0
+#response=$?
+
+#if [ "$response" -eq 1 ]; then
+#  cfdisk $device
+#fi 
+
+if [[ $(ping -q -w1 -c1 google.com &>/dev/null && echo online || echo offline) == "offline" ]]; 
+    then
+        echo "Installation Stopped - No Interent connection"
+        exit
+fi
+
+pacman -Sy --noconfirm pacman-contrib dialog
+
+echo "Updating mirror list"
+curl -sL "$MIRRORLIST_URL" | sed -e 's/^#Server/Server/' -e '/^#/d' | rankmirrors -n 5 - > /etc/pacman.d/mirrorlist
+
+### Get infomation from user ###
+hostname=$(dialog --backtitle "$BACKTITLE" --stdout --inputbox "Enter hostname" 0 0) || exit 1
+clear
+: ${hostname:?"hostname cannot be empty"}
+
+user=$(dialog --backtitle "$BACKTITLE" --stdout --inputbox "Enter admin username" 0 0) || exit 1
+clear
+: ${user:?"user cannot be empty"}
+
+password=$(dialog --backtitle "$BACKTITLE" --stdout --passwordbox "Enter admin password" 0 0) || exit 1
+clear
+: ${password:?"password cannot be empty"}
+
+password2=$(dialog --backtitle "$BACKTITLE" --stdout --passwordbox "Enter admin password again" 0 0) || exit 1
+clear
+[[ "$password" == "$password2" ]] || ( echo "Passwords did not match"; exit 1; )
+
+# main steps start here
 performInstall
 configuration
+installBootloader
+setupUser
 
+# finished
 dialog --backtitle "$BACKTITLE" --title 'Install Complete' --msgbox 'Congratulations! \n\nThe system will now reboot' 0 0
 
 umount -a
