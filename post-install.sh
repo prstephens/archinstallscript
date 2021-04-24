@@ -135,7 +135,7 @@ install_profile-sync-daemon()
 install_apps()
 {
     echo "Installing Chrome, VS Code, WPS Office, Gimp..."
-    yay -S google-chrome firefox code wps-office gimp vlc balena-etcher kodi dropbox handbrake
+    yay -S google-chrome firefox code wps-office gimp vlc balena-etcher kodi dropbox handbrake pamac-aur
 
     install_spotify
     apply_spicetify
