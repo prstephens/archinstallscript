@@ -253,7 +253,7 @@ if [[ $(ping -q -w1 -c1 google.com &>/dev/null && echo online || echo offline) =
         exit
 fi
 
-pacman -Sy --noconfirm pacman-contrib dialog
+pacman -Sy --noconfirm pacman-contrib dialog glibc
 
 echo "Updating mirror list"
 curl -sL "$MIRRORLIST_URL" | sed -e 's/^#Server/Server/' -e '/^#/d' | rankmirrors -n 5 - > /etc/pacman.d/mirrorlist

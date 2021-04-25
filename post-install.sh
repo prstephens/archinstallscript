@@ -68,12 +68,12 @@ install_plasma()
     clear
     
     echo "Installing Plasma.."
-    sudo pacman -S plasma ark dolphin xscreensaver konsole sshfs
-    yay -S latte-dock-git plasma5-applets-kde-arch-update-notifier-git
+    sudo pacman -S plasma ark dolphin xscreensaver konsole sshfs kvantum-qt5
+    yay -S latte-dock plasma5-applets-kde-arch-update-notifier
     
     # konsave
     sudo pacman -S python-pip
-    python -m pip install konsave
+    sudo python -m pip install konsave
 
     # mac os big sur dark theme with latte config. complete restore.
     curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/bigsur.knsv -o $HOME/bigsur.knsv
@@ -145,10 +145,10 @@ install_apps()
 install_qemu()
 {
     echo "Installing QEMU/KVM"
-    sudo pacman -S libvirt virt-manager ovmf qemu iptables-nft dnsmasq
+    sudo pacman -S libvirt virt-manager ovmf qemu iptables-nft dnsmasq dmidecode
 
     # Enable Virtualization Technology for Directed I/O in rEFInd config as boot param
-    sudo sed -i.bak 's/linux.img[^"]*/& intel_iommu=on/' /boot/refind_linux.conf
+    sudo sed -i.bak 's/linux-zen.img[^"]*/& intel_iommu=on/' /boot/refind_linux.conf
 
     sudo usermod -a -G libvirt $USER
 
