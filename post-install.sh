@@ -1,5 +1,13 @@
 #! /bin/bash
 
+# Arch Linux Post Install Script 
+# ------------------------------
+# author    : prstephens
+#             https://github.com/prstephens           
+# project   : https://github.com/prstephens/archinstallscript
+# license   : LGPL-3.0 (http://opensource.org/licenses/lgpl-3.0.html)
+# referance : https://wiki.archlinux.org/index.php/Installation_guide
+
 install_fonts()
 {
     echo "Installing fonts..."
@@ -134,6 +142,8 @@ install_profile-sync-daemon()
 
 install_apps()
 {
+    clear
+
     echo "Installing Chrome, VS Code, WPS Office, Gimp..."
     yay -S google-chrome firefox code wps-office gimp vlc balena-etcher kodi-x11 dropbox handbrake pamac-aur
 
@@ -144,6 +154,8 @@ install_apps()
 
 install_qemu()
 {
+    clear
+
     echo "Installing QEMU/KVM"
     sudo pacman -S libvirt virt-manager ovmf qemu iptables-nft dnsmasq dmidecode
 
@@ -169,7 +181,8 @@ install_dev()
     yay -S postman-bin
 }
 
-#=== START ===
+# --------------------------------------------------------
+
 if [[ -d $HOME/yay ]]
 then
   echo "Installing yay..."

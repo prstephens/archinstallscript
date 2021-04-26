@@ -1,5 +1,19 @@
 #!/bin/bash
 
+# Arch Linux Install Script 
+# -------------------------
+# author    : prstephens
+#             https://github.com/prstephens           
+# project   : https://github.com/prstephens/archinstallscript
+# license   : LGPL-3.0 (http://opensource.org/licenses/lgpl-3.0.html)
+# referance : https://wiki.archlinux.org/index.php/Installation_guide
+
+# Globals
+BACKTITLE="Arch Installer v2.1"
+MIRRORLIST_URL="https://archlinux.org/mirrorlist/?country=GB&protocol=https&use_mirror_status=on"
+
+# --------------------------------------------------------
+
 performInstall()
 {
     clear
@@ -112,11 +126,8 @@ setupUser()
     arch-chroot /mnt chown $user:$user /home/$user/post-install.sh
     arch-chroot /mnt chmod a+x /home/$user/post-install.sh
 
-    # If ~/.inputrc doesn't exist yet: First include the original /etc/inputrc
-    # so it won't get overriden
-    if [ ! -a /mnt/home/$user/.inputrc ]; then echo '$include /etc/inputrc' > /mnt/home/$user/.inputrc; fi
-
     # Add shell-option to ~/.inputrc to enable case-insensitive tab completion
+    if [ ! -a /mnt/home/$user/.inputrc ]; then echo '$include /etc/inputrc' > /mnt/home/$user/.inputrc; fi
     echo 'set completion-ignore-case On' >> /mnt/home/$user/.inputrc
 
     # Create user xinit config file 
@@ -226,26 +237,10 @@ EOT
 
 }
 
-# START ========================================
+# --------------------------------------------------------
 
 clear
-#set -uo pipefail
-#trap 's=$?; echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
 loadkeys uk
-
-BACKTITLE="Arch Installer v2.1"
-MIRRORLIST_URL="https://archlinux.org/mirrorlist/?country=GB&protocol=https&use_mirror_status=on"
-
-#devicelistraw=$(lsblk -o name,size,type)
-#devicelist=$(lsblk -dplnx size -o name,size | grep -Ev "boot|rpmb|loop" | tac)
-#device=$(dialog --backtitle "$BACKTITLE" --title "Select installation disk" --stdout --menu "${devicelistraw}" 0 0 0 ${devicelist}) || exit 1
-
-#dialog --yesno "Have you partitioned your drive ready?" 0 0
-#response=$?
-
-#if [ "$response" -eq 1 ]; then
-#  cfdisk $device
-#fi 
 
 if [[ $(ping -q -w1 -c1 google.com &>/dev/null && echo online || echo offline) == "offline" ]]; 
     then
