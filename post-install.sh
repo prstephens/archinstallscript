@@ -92,6 +92,10 @@ install_plasma()
     # Dracula colour scheme for Konsole
     curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/Dracula.colorscheme -o $HOME/.local/konsole/Dracula.colorscheme
 
+    # Autostart xscreensaver desktop file
+    if [ ! -d $HOME/.config/autostart/ ];then mkdir $HOME/.config/autostart;fi
+    curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/xscreensaver.desktop -o $HOME/.config/autostart/xscreensaver.desktop
+
     # xinit config
     sudo cat <<EOT >> $HOME/.xinitrc
 nvidia-settings --load-config-only &
