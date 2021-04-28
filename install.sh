@@ -9,7 +9,7 @@
 # referance : https://wiki.archlinux.org/index.php/Installation_guide
 
 # Globals
-BACKTITLE="Arch Installer v2.1"
+BACKTITLE="Arch Installer v3"
 MIRRORLIST_URL="https://archlinux.org/mirrorlist/?country=GB&protocol=https&use_mirror_status=on"
 
 # --------------------------------------------------------
@@ -46,7 +46,7 @@ performInstall()
     # Install Arch Linux
     echo "Starting install.."
     echo "Installing Arch Linux with Zen kernel, rEFInd as bootloader" 
-    pacstrap /mnt base base-devel networkmanager dnsutils reflector linux-zen linux-zen-headers linux-firmware refind efibootmgr intel-ucode ntfs-3g xorg xorg-server xorg-xinit nano nano-syntax-highlighting sudo git nvidia-dkms nvidia-settings nvidia-utils bluez bluez-utils pulseaudio rxvt-unicode wget dialog cups hplip archlinux-keyring anything-sync-daemon mtpfs gvfs-mtp gvfs-gphoto2 gvfs-smb openssh openvpn ncdu glances htop
+    pacstrap /mnt base base-devel networkmanager dnsutils reflector linux-zen linux-zen-headers linux-firmware refind efibootmgr intel-ucode ntfs-3g nfs-utils xorg xorg-server xorg-xinit nano nano-syntax-highlighting sudo git nvidia-dkms nvidia-settings nvidia-utils bluez bluez-utils pulseaudio rxvt-unicode wget dialog cups hplip archlinux-keyring anything-sync-daemon mtpfs gvfs-mtp gvfs-gphoto2 gvfs-smb openssh openvpn ncdu glances htop
 
     # Generate fstab
     genfstab -U /mnt >> /mnt/etc/fstab
@@ -237,47 +237,49 @@ EOT
 
 }
 
+checkConnection()
+{
+    if [[ $(ping -q -w1 -c1 google.com &>/dev/null && echo online || echo offline) == "offline" ]]; 
+        then
+            whiptail --backtitle "$BACKTITLE" --msgbox --title "No Network Connection" "You need to be connected to the Internet.\n\nInstallation stopped." 0 0
+            exit
+    fi
+
+    pacman -Sy --noconfirm pacman-contrib
+
+    echo "Updating mirror list"
+    curl -sL "$MIRRORLIST_URL" | sed -e 's/^#Server/Server/' -e '/^#/d' | rankmirrors -n 5 - > /etc/pacman.d/mirrorlist
+}
+
+getInfo()
+{
+    hostname=$(whiptail --backtitle "$BACKTITLE" --inputbox "Enter hostname" 20 78 3>&1 1>&2 2>&3)
+    user=$(whiptail --backtitle "$BACKTITLE" --inputbox "Enter admin username" 20 78 3>&1 1>&2 2>&3)
+
+    password="x"
+    password2="xx"
+    passphrase_invalid_message=""
+
+    while [[ "$password" != "$password2" ]]; do
+
+        password=$(whiptail --backtitle "$BACKTITLE" --passwordbox "${passphrase_invalid_message}Please enter the admin password" 20 78 3>&1 1>&2 2>&3)
+        password2=$(whiptail --backtitle "$BACKTITLE" --passwordbox "Please repeat the admin password" 20 78 3>&1 1>&2 2>&3)
+        passphrase_invalid_message="Passwords do not match! "
+
+    done
+}
+
 # --------------------------------------------------------
 
-clear
-loadkeys uk
-
-if [[ $(ping -q -w1 -c1 google.com &>/dev/null && echo online || echo offline) == "offline" ]]; 
-    then
-        echo "Installation Stopped - No Interent connection"
-        exit
-fi
-
-pacman -Sy --noconfirm pacman-contrib dialog glibc
-
-echo "Updating mirror list"
-curl -sL "$MIRRORLIST_URL" | sed -e 's/^#Server/Server/' -e '/^#/d' | rankmirrors -n 5 - > /etc/pacman.d/mirrorlist
-
-### Get infomation from user ###
-hostname=$(dialog --backtitle "$BACKTITLE" --stdout --inputbox "Enter hostname" 0 0) || exit 1
-clear
-: ${hostname:?"hostname cannot be empty"}
-
-user=$(dialog --backtitle "$BACKTITLE" --stdout --inputbox "Enter admin username" 0 0) || exit 1
-clear
-: ${user:?"user cannot be empty"}
-
-password=$(dialog --backtitle "$BACKTITLE" --stdout --passwordbox "Enter admin password" 0 0) || exit 1
-clear
-: ${password:?"password cannot be empty"}
-
-password2=$(dialog --backtitle "$BACKTITLE" --stdout --passwordbox "Enter admin password again" 0 0) || exit 1
-clear
-[[ "$password" == "$password2" ]] || ( echo "Passwords did not match"; exit 1; )
-
-# main steps start here
+checkConnection
+getInfo
 performInstall
 configuration
 installBootloader
 setupUser
 
 # finished
-dialog --backtitle "$BACKTITLE" --title 'Install Complete' --msgbox 'Congratulations! \n\nThe system will now reboot' 0 0
+whiptail --backtitle "$BACKTITLE" --msgbox --title "Install Complete" "Congratulations! \n\nThe system will now reboot." 0 0
 
 umount -a
 reboot
