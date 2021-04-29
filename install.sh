@@ -237,24 +237,10 @@ EOT
 
 }
 
-checkConnection()
-{
-    if [[ $(ping -q -w1 -c1 google.com &>/dev/null && echo online || echo offline) == "offline" ]]; 
-        then
-            whiptail --backtitle "$BACKTITLE" --msgbox --title "No Network Connection" "You need to be connected to the Internet.\n\nInstallation stopped." 0 0
-            exit
-    fi
-
-    pacman -Sy --noconfirm pacman-contrib
-
-    echo "Updating mirror list"
-    curl -sL "$MIRRORLIST_URL" | sed -e 's/^#Server/Server/' -e '/^#/d' | rankmirrors -n 5 - > /etc/pacman.d/mirrorlist
-}
-
 getInfo()
 {
-    hostname=$(whiptail --backtitle "$BACKTITLE" --inputbox "Enter hostname" 20 78 3>&1 1>&2 2>&3)
-    user=$(whiptail --backtitle "$BACKTITLE" --inputbox "Enter admin username" 20 78 3>&1 1>&2 2>&3)
+    hostname=$(whiptail --backtitle "$BACKTITLE" --inputbox "Enter hostname:" 8 78 3>&1 1>&2 2>&3)
+    user=$(whiptail --backtitle "$BACKTITLE" --inputbox "Enter admin username:" 8 78 3>&1 1>&2 2>&3)
 
     password="x"
     password2="xx"
@@ -262,16 +248,64 @@ getInfo()
 
     while [[ "$password" != "$password2" ]]; do
 
-        password=$(whiptail --backtitle "$BACKTITLE" --passwordbox "${passphrase_invalid_message}Please enter the admin password" 20 78 3>&1 1>&2 2>&3)
-        password2=$(whiptail --backtitle "$BACKTITLE" --passwordbox "Please repeat the admin password" 20 78 3>&1 1>&2 2>&3)
+        password=$(whiptail --backtitle "$BACKTITLE" --passwordbox "${passphrase_invalid_message}Please enter the admin password:" 8 78 3>&1 1>&2 2>&3)
+        password2=$(whiptail --backtitle "$BACKTITLE" --passwordbox "Please repeat the admin password:" 8 78 3>&1 1>&2 2>&3)
         passphrase_invalid_message="Passwords do not match! "
 
     done
 }
 
+welcome()
+{
+    whiptail --msgbox --title "$BACKTITLE" "Welcome" 20 78
+}
+
+checkConnection()
+{
+    if [[ $(ping -q -w1 -c1 google.com &>/dev/null && echo online || echo offline) == "offline" ]]; 
+        then
+            whiptail --backtitle "$BACKTITLE" --msgbox --title "No Network Connection" "You need to be connected to the Internet.\n\nInstallation stopped." 20 78
+            exit
+    fi
+}
+
+checkProgress()
+{
+    i="0"
+    while (true)
+    do
+        proc=$(ps aux | grep -v grep | grep -e $1)
+        if [[ "$proc" == "" ]]; then break; fi
+        #sleep 1
+        echo $i
+        i=$(expr $i + 1)
+    done
+    # If it is done then display 100%
+    echo 100
+    # Give it some time to display the progress to the user.
+    sleep 2
+}
+
+initialise()
+{
+    curl -sL "$MIRRORLIST_URL" | sed -e 's/^#Server/Server/' -e '/^#/d' | rankmirrors -n 5 - > /etc/pacman.d/mirrorlist &
+    {
+        checkProgress "rankmirrors"
+
+    } | whiptail --gauge --title "$BACKTITLE" "Ranking Mirrors..." 8 78 0
+
+    pacman -Sy --noconfirm pacman-contrib > /dev/null 2>&1 &
+    {
+        checkProgress "pacman"
+
+    } | whiptail --gauge --title "$BACKTITLE" "Installing dependancies..." 8 78 0
+}
+
 # --------------------------------------------------------
 
 checkConnection
+initialise
+welcome
 getInfo
 performInstall
 configuration
