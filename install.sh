@@ -11,6 +11,7 @@
 # Globals
 BACKTITLE="Arch Installer v3"
 MIRRORLIST_URL="https://archlinux.org/mirrorlist/?country=GB&protocol=https&use_mirror_status=on"
+BASE_URL="https://raw.githubusercontent.com/prstephens/archinstallscript/master/"
 
 # --------------------------------------------------------
 
@@ -45,8 +46,7 @@ performInstall()
 
     # Install Arch Linux
     echo "Starting install.."
-    echo "Installing Arch Linux with Zen kernel, rEFInd as bootloader" 
-    pacstrap /mnt base base-devel networkmanager dnsutils reflector linux-zen linux-zen-headers linux-firmware refind efibootmgr intel-ucode ntfs-3g nfs-utils xorg xorg-server xorg-xinit nano nano-syntax-highlighting sudo git nvidia-dkms nvidia-settings nvidia-utils bluez bluez-utils pulseaudio rxvt-unicode wget dialog cups hplip archlinux-keyring anything-sync-daemon mtpfs gvfs-mtp gvfs-gphoto2 gvfs-smb openssh openvpn ncdu glances htop
+    pacstrap /mnt $package_list
 
     # Generate fstab
     genfstab -U /mnt >> /mnt/etc/fstab
@@ -107,13 +107,13 @@ setupUser()
 
     # config files
     echo "Getting some sweet config files..."
-    arch-chroot /mnt curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/.Xresources -o /home/$user/.Xresources
-    arch-chroot /mnt curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/.bashrc -o /home/$user/.bashrc
-    arch-chroot /mnt curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/issue -o /etc/issue
+    arch-chroot /mnt curl -sL $BASE_URL/sweet/.Xresources -o /home/$user/.Xresources
+    arch-chroot /mnt curl -sL $BASE_URL/sweet/.bashrc -o /home/$user/.bashrc
+    arch-chroot /mnt curl -sL $BASE_URL/sweet/issue -o /etc/issue
 
     # set custom pacman.conf 
     arch-chroot /mnt mv /etc/pacman.conf /etc/pacman.conf.bak
-    arch-chroot /mnt curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/sweet/pacman.conf -o /etc/pacman.conf
+    arch-chroot /mnt curl -sL $BASE_URL/sweet/pacman.conf -o /etc/pacman.conf
     
     # Get yay ready 
     echo "Getting yay all ready for ${user}..."
@@ -122,7 +122,7 @@ setupUser()
 
     # Copy post-install file to /home/$user
     echo "Copy post-install file to /home/${user}..."
-    arch-chroot /mnt curl https://raw.githubusercontent.com/prstephens/archinstallscript/master/post-install.sh -o /home/$user/post-install.sh
+    arch-chroot /mnt curl -sL $BASE_URL/post-install.sh -o /home/$user/post-install.sh
     arch-chroot /mnt chown $user:$user /home/$user/post-install.sh
     arch-chroot /mnt chmod a+x /home/$user/post-install.sh
 
@@ -299,6 +299,13 @@ initialise()
         checkProgress "pacman"
 
     } | whiptail --gauge --title "$BACKTITLE" "Installing dependancies..." 8 78 0
+
+    # Get base packages to install
+    curl -sL $BASE_URL/packages -o /tmp/packages
+    while read line
+    do
+        package_list="$package_list $(echo $line)"
+    done < /tmp/packages
 }
 
 # --------------------------------------------------------
