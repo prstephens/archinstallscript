@@ -1,0 +1,250 @@
+#! /bin/bash
+
+# Arch Linux Post Install Script 
+# ------------------------------
+# author    : prstephens
+#             https://github.com/prstephens           
+# project   : https://github.com/prstephens/archinstallscript
+# license   : LGPL-3.0 (http://opensource.org/licenses/lgpl-3.0.html)
+# referance : https://wiki.archlinux.org/index.php/Installation_guide
+
+BACKTITLE="Arch Installer v3"
+BASE_URL="https://raw.githubusercontent.com/prstephens/archinstallscript/master/"
+
+# --------------------------------------------------------
+
+mainmenu(){
+        if [ "${1}" = "" ]; then
+            nextitem="."
+        else
+            nextitem=${1}
+        fi
+        options=()
+        options+=("1" "Plasma DE")
+        options+=("2" "Lightdm Display Manager")
+        options+=("3" "Applications")
+        options+=("4" "QEMU/KVM")
+        options+=("5" "Java Development Environment")
+
+        sel=$(whiptail --backtitle "${BACKTITLE}" --title "Arch Linux Post Installer" --menu "" --cancel-button "Exit" --default-item "${nextitem}" 0 0 0 \
+            "${options[@]}" \
+            3>&1 1>&2 2>&3)
+        if [ "$?" = "0" ]; then
+            case ${sel} in
+                "1")
+                    install_plasma
+                    nextitem="2"
+                ;;
+                "2")
+                    install_lightdm
+                    nextitem="3"
+                ;;
+                "3")
+                    install_apps
+                    nextitem="4"
+                ;;
+                "4")
+                    install_qemu
+                    nextitem="5"
+                ;;
+                "5")
+                    install_dev
+                    nextitem="5"
+                ;;
+            esac
+            mainmenu "${nextitem}"
+        else
+            clear
+        fi
+}
+
+install_fonts(){
+        echo "Installing fonts..."
+        #yay -S nerd-fonts-complete
+        yay -S otf-san-francisco
+
+        # Copy Windows fonts over
+        echo "Copying Windows fonts..."
+        sudo mkdir /usr/share/fonts/windowsfonts
+        sudo mkdir /windows10
+        sudo mount /dev/sda3 /windows10
+        sudo cp /windows10/Windows/Fonts/* /usr/share/fonts/windowsfonts
+        fc-cache -f
+        sudo umount /windows10
+}
+
+install_preload(){
+        echo "Installing preload..."
+        yay -S preload
+        sudo systemctl enable --now preload
+}
+
+install_lightdm(){
+        clear
+
+        echo "Installing lightdm..."
+        yay -S lightdm-webkit2-theme-glorious lightdm
+        sudo sed -i 's/^#greeter-session=.*$/greeter-session=lightdm-webkit2-greeter/' /etc/lightdm/lightdm.conf
+        sudo sed -i 's/^debug_mode.*$/debug_mode=true/' /etc/lightdm/lightdm-webkit2-greeter.conf
+        sudo sed -i 's/^webkit_theme.*$/webkit_theme=glorious/' /etc/lightdm/lightdm-webkit2-greeter.conf
+        sudo systemctl enable lightdm
+}
+
+install_deepin(){
+        clear
+        
+        # Deepin, nightlight
+        sudo pacman -S deepin deepin-compressor redshift pacman-contrib file-roller
+        yay -S jmtpfs
+
+        # Deepin Arch update notifier
+        echo "Installing Deepin update notifier plugin..."
+        yay -S deepin-dock-plugin-arch-update
+
+        # xinit config
+        sudo cat <<EOT >> $HOME/.xinitrc
+nvidia-settings --load-config-only &
+exec startdde
+EOT
+
+        echo '[[ ! $DISPLAY && $XDG_VTNR -eq 1 ]] && exec startx' >> $HOME/.bash_profile
+
+        install_fonts
+        install_preload
+}
+
+restore_bigsur(){
+        konsave -i $HOME/bigsur.knsv
+        konsave -a 1
+}
+
+install_plasma(){    
+        clear
+        
+        echo "Installing Plasma.."
+        sudo pacman -S plasma ark dolphin xscreensaver konsole sshfs kvantum-qt5
+        yay -S latte-dock plasma5-applets-kde-arch-update-notifier
+        
+        # konsave
+        sudo pacman -S python-pip
+        sudo python -m pip install konsave
+
+        # mac os big sur dark theme with latte config. complete restore.
+        curl -sL $BASE_URL/sweet/bigsur.knsv -o $HOME/bigsur.knsv
+
+        # xscreensaver settings - 10 min timeout - GL matrix 
+        curl -sL $BASE_URL/sweet/.xscreensaver -o $HOME/.xscreensaver
+
+        # Dracula colour scheme for Konsole
+        curl -sL $BASE_URL/sweet/Dracula.colorscheme -o $HOME/.local/konsole/Dracula.colorscheme
+
+        # Autostart xscreensaver desktop file
+        if [ ! -d $HOME/.config/autostart/ ];then mkdir $HOME/.config/autostart;fi
+        curl -sL $BASE_URL/sweet/xscreensaver.desktop -o $HOME/.config/autostart/xscreensaver.desktop
+
+        # xinit config
+        sudo cat <<EOT >> $HOME/.xinitrc
+nvidia-settings --load-config-only &
+export DESKTOP_SESSION=plasma
+exec startplasma-x11
+EOT
+        echo '[[ ! $DISPLAY && $XDG_VTNR -eq 1 ]] && exec startx' >> $HOME/.bash_profile
+        
+        install_fonts
+        install_preload
+
+        # apply MacOs bigsur theme
+        restore_bigsur
+}
+
+install_spotify(){
+        echo "Installing Spotify..."
+        curl -sS https://download.spotify.com/debian/pubkey_0D811D58.gpg | gpg --import -
+        yay -S spotify spicetify-cli spicetify-themes-git
+        sudo chmod -R 777 /opt/spotify
+}
+
+apply_spicetify(){
+        spicetify backup apply
+        spicetify config extensions dribbblish.js
+        spicetify config current_theme Dribbblish color_scheme dracula
+        spicetify config inject_css 1 replace_colors 1 overwrite_assets 1
+        spicetify apply
+}
+
+install_profile-sync-daemon(){
+        sudo pacman -S profile-sync-daemon
+        psd
+        sed -i 's/^#BROWSERS=.*$/BROWSERS=(google-chrome)/' $HOME/.config/psd/psd.conf
+        sed -i 's/^#USE_OVERLAYFS=.*$/USE_OVERLAYFS="yes"/' $HOME/.config/psd/psd.conf
+        echo "$USER ALL=(ALL) NOPASSWD: /usr/bin/psd-overlay-helper" | sudo tee -a /etc/sudoers
+        systemctl --user enable --now psd.service
+
+        # asd config
+        sudo sed -i "s/^WHATTOSYNC=.*$/WHATTOSYNC=('\/home\/paul\/.cache')/" /etc/asd.conf
+        sudo sed -i 's/^#USE_OVERLAYFS=.*$/USE_OVERLAYFS="yes"/' /etc/asd.conf
+        sudo sed -i 's/^#VOLATILE=.*$/VOLATILE="/dev/shm")/' /etc/asd.conf
+        sudo systemctl enable --now asd
+}
+
+install_apps(){
+        clear
+
+        echo "Installing Chrome, VS Code, WPS Office, Gimp..."
+        yay -S google-chrome firefox code wps-office gimp vlc balena-etcher kodi-x11 dropbox handbrake pamac-aur
+
+        install_spotify
+        apply_spicetify
+        install_profile-sync-daemon
+}
+
+install_qemu(){
+        clear
+
+        echo "Installing QEMU/KVM"
+        sudo pacman -S libvirt virt-manager ovmf qemu iptables-nft dnsmasq dmidecode
+
+        # Enable Virtualization Technology for Directed I/O in rEFInd config as boot param
+        sudo sed -i.bak 's/linux-zen.img[^"]*/& intel_iommu=on/' /boot/refind_linux.conf
+
+        sudo usermod -a -G libvirt $USER
+
+        sudo bash -c 'sudo cat <<EOT >> /etc/libvirt/qemu.conf
+nvram = [
+	"/usr/share/ovmf/x64/OVMF_CODE.fd:/usr/share/ovmf/x64/OVMF_VARS.fd"
+]
+EOT'
+
+        sudo systemctl enable --now libvirtd.service
+        sudo systemctl enable --now virtlogd.socket
+}
+
+install_dev(){
+        clear
+
+        echo "Installing Development tools... IntelliJ, Java, gradle"
+        sudo pacman -S jre11-openjdk jdk11-openjdk gradle intellij-idea-community-edition
+        yay -S postman-bin
+}
+
+# --------------------------------------------------------
+
+if [[ -d $HOME/yay ]]
+then
+  echo "Installing yay..."
+  cd $HOME/yay
+  makepkg -si
+  cd ..
+  rm -rfd yay
+fi
+
+# optimise yay when building packages
+sudo sed -i 's/^#MAKEFLAGS="-j2"/MAKEFLAGS="-j$(nproc)"/' /etc/makepkg.conf
+sudo sed -i "s/^PKGEXT=.*$/PKGEXT='.pkg.tar'/" /etc/makepkg.conf
+
+# git credentials
+git config --global credential.helper store
+git config --global user.email "pr.stephens@gmail.com"
+git config --global user.name "prstephens"
+
+mainmenu
