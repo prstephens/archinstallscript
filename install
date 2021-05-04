@@ -235,7 +235,7 @@ EOT
 
 }
 
-getInfo(){
+getinfo(){
         hostname=$(whiptail --backtitle "$BACKTITLE" --inputbox "Enter hostname:" 8 78 3>&1 1>&2 2>&3)
         user=$(whiptail --backtitle "$BACKTITLE" --inputbox "Enter admin username:" 8 78 3>&1 1>&2 2>&3)
 
@@ -252,11 +252,13 @@ getInfo(){
         done
 }
 
+# --------------------------------------------------------
+
 welcome(){
         whiptail --msgbox --title "$BACKTITLE" "Welcome" 20 78
 }
 
-checkConnection(){
+checkconnection(){
         if [[ $(ping -q -w1 -c1 google.com &>/dev/null && echo online || echo offline) == "offline" ]]; 
             then
                 whiptail --backtitle "$BACKTITLE" --msgbox --title "No Network Connection" "You need to be connected to the Internet.\n\nInstallation stopped." 20 78
@@ -264,7 +266,7 @@ checkConnection(){
         fi
 }
 
-checkProgress(){
+checkprogress(){
         i="0"
         while (true)
         do
@@ -280,20 +282,23 @@ checkProgress(){
         sleep 2
 }
 
-initialise(){
+updatemirrors(){
         curl -sL "$MIRRORLIST_URL" | sed -e 's/^#Server/Server/' -e '/^#/d' | rankmirrors -n 5 - > /etc/pacman.d/mirrorlist &
         {
-            checkProgress "rankmirrors"
+            checkprogress "rankmirrors"
 
         } | whiptail --gauge --title "$BACKTITLE" "Ranking Mirrors..." 8 78 0
+}
 
+dependencies(){
         pacman -Sy --noconfirm pacman-contrib > /dev/null 2>&1 &
         {
-            checkProgress "pacman"
+            checkprogress "pacman"
 
         } | whiptail --gauge --title "$BACKTITLE" "Installing dependancies..." 8 78 0
+}
 
-        # Get base packages to install
+getpackagelist(){
         curl -sL $BASE_URL/packages -o /tmp/packages
         while read line
         do
@@ -301,12 +306,18 @@ initialise(){
         done < /tmp/packages
 }
 
+initialise(){
+        checkconnection
+        updatemirrors
+        dependencies
+        getpackagelist
+        welcome
+}
+
 # --------------------------------------------------------
 
-checkConnection
 initialise
-welcome
-getInfo
+getinfo
 performInstall
 configuration
 installBootloader
