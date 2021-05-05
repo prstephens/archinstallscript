@@ -20,36 +20,36 @@ mainmenu(){
             nextitem=${1}
         fi
         options=()
-        options+=("1" "Plasma DE")
-        options+=("2" "Lightdm Display Manager")
-        options+=("3" "Applications")
-        options+=("4" "QEMU/KVM")
-        options+=("5" "Java Development Environment")
+        options+=("1)" "Plasma DE")
+        options+=("2)" "Lightdm Display Manager")
+        options+=("3)" "Applications")
+        options+=("4)" "QEMU/KVM")
+        options+=("5)" "Java Development Environment")
 
         sel=$(whiptail --backtitle "${BACKTITLE}" --title "Arch Linux Post Installer" --menu "" --cancel-button "Exit" --default-item "${nextitem}" 0 0 0 \
             "${options[@]}" \
             3>&1 1>&2 2>&3)
         if [ "$?" = "0" ]; then
             case ${sel} in
-                "1")
+                "1)")
                     install_plasma
-                    nextitem="2"
+                    nextitem="2)"
                 ;;
-                "2")
+                "2)")
                     install_lightdm
-                    nextitem="3"
+                    nextitem="3)"
                 ;;
-                "3")
+                "3)")
                     install_apps
-                    nextitem="4"
+                    nextitem="4)"
                 ;;
-                "4")
+                "4)")
                     install_qemu
-                    nextitem="5"
+                    nextitem="5)"
                 ;;
-                "5")
+                "5)")
                     install_dev
-                    nextitem="5"
+                    nextitem="5)"
                 ;;
             esac
             mainmenu "${nextitem}"
@@ -231,11 +231,11 @@ install_dev(){
 
 if [[ -d $HOME/yay ]]
 then
-  echo "Installing yay..."
-  cd $HOME/yay
-  makepkg -si
-  cd ..
-  rm -rfd yay
+        echo "Installing yay..."
+        cd $HOME/yay
+        makepkg -si
+        cd ..
+        rm -rfd yay
 fi
 
 # optimise yay when building packages

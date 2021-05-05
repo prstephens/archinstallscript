@@ -15,7 +15,111 @@ BASE_URL="https://raw.githubusercontent.com/prstephens/archinstallscript/master/
 
 # --------------------------------------------------------
 
-performInstall(){
+mainmenu(){
+        if [ "${1}" = "" ]; then
+                nextitem="."
+        else
+                nextitem=${1}
+        fi
+        options=()
+        options+=("1)" "Partition disk (cfdisk)")
+        options+=("2)" "Select partitions to mount")
+        options+=("3)" "Install the base System")
+        options+=("" "")
+        options+=("4)" "Finish and reboot")
+
+        sel=$(whiptail --backtitle "${BACKTITLE}" --title "Main Menu" --menu "" --cancel-button "Exit" --default-item "${nextitem}" 20 78 0\
+                "${options[@]}" \
+                3>&1 1>&2 2>&3)
+        if [ "$?" = "0" ]; then
+                case ${sel} in
+                        "1)")
+                                diskpartcfdisk
+                                nextitem="2)"
+                        ;;
+                        "2)")
+                                mountpartitions
+                                nextitem="3)"
+                        ;;
+                        "3)")
+                                performinstall
+                                nextitem="4)"
+                        ;;
+                        "4)")
+                                rebootpc
+                                nextitem="4)"
+                        ;;
+                esac
+                mainmenu "${nextitem}"
+        else
+                clear
+        fi
+}
+
+diskpartcfdisk(){
+	device=$( selectdisk "Edit Partitions (cfdisk)" )
+        if [ "$?" = "0" ]; then
+            clear
+            cfdisk ${device}
+        fi
+}
+
+selectdisk(){
+        items=$(lsblk -d -p -n -l -o NAME,SIZE -e 7,11)
+        options=()
+        IFS_ORIG=$IFS
+        IFS=$'\n'
+        for item in ${items}
+        do  
+                options+=("${item}" "")
+        done
+        IFS=$IFS_ORIG
+        result=$(whiptail --backtitle "${BACKTITLE}" --title "${1}" --menu "" 0 78 0 "${options[@]}" 3>&1 1>&2 2>&3)
+        if [ "$?" != "0" ]
+        then
+                return 1
+        fi
+        echo ${result%%\ *}
+        return 0    
+}
+
+mountpartitions(){
+        itemsinfo=$(lsblk -o NAME,SIZE,FSTYPE)
+        items=$(lsblk -p -n -l -o NAME -e 7,11)
+        deviceitems=$(lsblk -d -n -l -o NAME -e 7,11)
+        options=()
+        optionstoremove=()
+        IFS_ORIG=$IFS
+        IFS=$'\n'
+        for item in ${deviceitems}
+        do  
+                optionstoremove+=("/dev/${item}")
+        done
+        for item in ${items}
+        do  
+                if [[ ! " ${optionstoremove[@]} " =~ " ${item} " ]]; then
+                        options+=("${item}" "")
+                fi
+        done
+        IFS=$IFS_ORIG
+        result=$(whiptail --backtitle "${BACKTITLE}" --title "${1}" --menu "${itemsinfo}" 0 78 0 "${options[@]}" 3>&1 1>&2 2>&3)
+        if [ "$?" != "0" ]
+        then
+                return 1
+        fi
+        echo ${result%%\ *}
+        return 0    
+}
+
+rebootpc(){
+        if (whiptail --backtitle "${BACKTITLE}" --yesno "Reboot?" --defaultno 8 78) then
+                clear
+                umount -a
+                reboot
+        fi
+}
+
+performinstall(){
         clear
 
         # Set up time
@@ -26,10 +130,10 @@ performInstall(){
         read -p 'You are about to wipe /dev/sdb2? [y/N]: ' wipe
         if [ $wipe = 'y' ]
         then
-            mkfs.ext4 /dev/sdb2
+                mkfs.ext4 /dev/sdb2
         else
-            echo "Install stopped"
-            exit
+                echo "Install stopped"
+                exit
         fi
 
         #swap
@@ -254,10 +358,6 @@ getinfo(){
 
 # --------------------------------------------------------
 
-welcome(){
-        whiptail --msgbox --title "$BACKTITLE" "Welcome" 20 78
-}
-
 checkconnection(){
         if [[ $(ping -q -w1 -c1 google.com &>/dev/null && echo online || echo offline) == "offline" ]]; 
             then
@@ -311,20 +411,15 @@ initialise(){
         updatemirrors
         dependencies
         getpackagelist
-        welcome
 }
 
 # --------------------------------------------------------
 
-initialise
-getinfo
-performInstall
-configuration
-installBootloader
-setupUser
+[[ ! -f /tmp/packages ]] && initialise
 
-# finished
-whiptail --backtitle "$BACKTITLE" --msgbox --title "Install Complete" "Congratulations! \n\nThe system will now reboot." 0 0
-
-umount -a
-reboot
+mainmenu
+#getinfo
+#performInstall
+#configuration
+#installBootloader
+#setupUser
