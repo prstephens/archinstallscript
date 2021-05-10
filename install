@@ -24,9 +24,10 @@ mainmenu(){
         options=()
         options+=("1)" "Partition disk (cfdisk)")
         options+=("2)" "Select partitions to mount")
-        options+=("3)" "Install the base System")
+        options+=("3)" "Setup user and root password")
+        options+=("4)" "Install")
         options+=("" "")
-        options+=("4)" "Finish and reboot")
+        options+=("5)" "Finish and reboot")
 
         sel=$(whiptail --backtitle "${BACKTITLE}" --title "Main Menu" --menu "" --cancel-button "Exit" --default-item "${nextitem}" 20 78 0\
                 "${options[@]}" \
@@ -38,16 +39,20 @@ mainmenu(){
                                 nextitem="2)"
                         ;;
                         "2)")
-                                mountpartitions
+                                choosepartitions
                                 nextitem="3)"
                         ;;
                         "3)")
-                                performinstall
+                                getuserinfo
                                 nextitem="4)"
                         ;;
                         "4)")
+                                performinstall
+                                nextitem="5)"
+                        ;;
+                        "5)")
                                 rebootpc
-                                nextitem="4)"
+                                nextitem="5)"
                         ;;
                 esac
                 mainmenu "${nextitem}"
@@ -83,8 +88,8 @@ selectdisk(){
         return 0    
 }
 
-mountpartitions(){
-        itemsinfo=$(lsblk -o NAME,SIZE,FSTYPE)
+choosepartitions(){
+	itemsinfo=$(lsblk -o NAME,SIZE,FSTYPE)
         items=$(lsblk -p -n -l -o NAME -e 7,11)
         deviceitems=$(lsblk -d -n -l -o NAME -e 7,11)
         options=()
@@ -101,73 +106,126 @@ mountpartitions(){
                         options+=("${item}" "")
                 fi
         done
-        IFS=$IFS_ORIG
-        result=$(whiptail --backtitle "${BACKTITLE}" --title "${1}" --menu "${itemsinfo}" 0 78 0 "${options[@]}" 3>&1 1>&2 2>&3)
-        if [ "$?" != "0" ]
-        then
-                return 1
+	bootdev=$(whiptail --backtitle "${BACKTITLE}" --title "Select Boot partition" --menu "${itemsinfo}" --default-item "${bootdev}" 0 78 0 \
+		"none" "-" \
+		"${options[@]}" \
+		3>&1 1>&2 2>&3)
+	if [ ! "$?" = "0" ]; then
+		return 1
+	else
+		if [ "${bootdev}" = "none" ]; then
+			bootdev=
+		fi
+	fi
+	swapdev=$(whiptail --backtitle "${BACKTITLE}" --title "Select Swap partition" --menu "${itemsinfo}" --default-item "${swapdev}" 0 78 0 \
+		"none" "-" \
+		"${options[@]}" \
+		3>&1 1>&2 2>&3)
+	if [ ! "$?" = "0" ]; then
+		return 1
+	else
+		if [ "${swapdev}" = "none" ]; then
+			swapdev=
+		fi
+	fi
+	rootdev=$(whiptail --backtitle "${BACKTITLE}" --title "Select Root partition" --menu "${itemsinfo}" --default-item "${rootdev}" 0 78 0 \
+		"${options[@]}" \
+		3>&1 1>&2 2>&3)
+	if [ ! "$?" = "0" ]; then
+		return 1
+	fi
+	realrootdev=${rootdev}
+	
+        msg=""
+	msg=${msg}"Boot : "${bootdev}"\n"
+	msg=${msg}"Swap     : "${swapdev}"\n"
+	msg=${msg}"Root     : "${rootdev}"\n\n"
+	if (whiptail --backtitle "${BACKTITLE}" --title "Are these values correct?" --yesno "${msg}" 0 78) then
+		mainmenu "3)"
+        else
+                choosepartitions
         fi
-        echo ${result%%\ *}
-        return 0    
 }
 
-rebootpc(){
-        if (whiptail --backtitle "${BACKTITLE}" --yesno "Reboot?" --defaultno 8 78) then
-                clear
-                umount -a
-                reboot
-        fi
+getuserinfo(){
+        hostname=$(whiptail --backtitle "$BACKTITLE" --inputbox "Enter hostname:" 8 78 3>&1 1>&2 2>&3)
+        user=$(whiptail --backtitle "$BACKTITLE" --inputbox "Enter admin username:" 8 78 3>&1 1>&2 2>&3)
+
+        password="x"
+        password2="xx"
+        passphrase_invalid_message=""
+
+        while [[ "$password" != "$password2" ]]; do
+
+            password=$(whiptail --backtitle "$BACKTITLE" --passwordbox "${passphrase_invalid_message}Please enter the admin password:" 8 78 3>&1 1>&2 2>&3)
+            password2=$(whiptail --backtitle "$BACKTITLE" --passwordbox "Please repeat the admin password:" 8 78 3>&1 1>&2 2>&3)
+            passphrase_invalid_message="Passwords do not match! "
+
+        done
+
+        msg=${msg}"Hostname : "${hostname}"\n"
+        msg=${msg}"User     : "${user}"\n\n"
+
 }
 
 performinstall(){
+        whiptail --backtitle "${BACKTITLE}" --title "Are you sure?" --yesno "${msg}" 0 78 3>&1 1>&2 2>&3
+        if [ ! "$?" = "0" ]; then
+		mainmenu "1)"
+	fi
+        
         clear
 
-        # Set up time
         echo "Setting date and time..."
         timedatectl set-ntp true
 
         # Setup the partitions
-        read -p 'You are about to wipe /dev/sdb2? [y/N]: ' wipe
+        read -p "You are about to wipe ${rootdev}? [y/N]: " wipe
         if [ $wipe = 'y' ]
         then
-                mkfs.ext4 /dev/sdb2
+                mkfs.ext4 $rootdev
         else
                 echo "Install stopped"
                 exit
         fi
 
-        #swap
-        mkswap /dev/sdb1
-        swapon /dev/sdb1
+        if [ ! "${swapdev}" = "" ]
+        then
+                mkswap $swapdev
+                swapon $swapdev
+        fi
 
         #root
-        mount /dev/sdb2 /mnt
+        mount $rootdev /mnt
 
-        #data
-        mkdir /mnt/data
-        mount /dev/sdb3 /mnt/data
-
-        # Install Arch Linux
         echo "Starting install.."
         pacstrap /mnt $package_list
 
         # Generate fstab
         genfstab -U /mnt >> /mnt/etc/fstab
+
+        configuration
+        
+        installbootloader
+
+        setupuser
+
+        finish
 }
 
-installBootloader(){
+installbootloader(){
         # Install bootloader
         # rEFInd
         clear
 
         echo "Installing rEFInd..."
 
-        ROOTUUID=$(blkid -s UUID -o value /dev/sdb2)
+        ROOTUUID=$(blkid -s UUID -o value $rootdev)
 
         arch-chroot /mnt mkdir /boot/efi
 
         # mount windows EFI boot (on sda1)
-        arch-chroot /mnt mount /dev/sda1 /boot/efi
+        arch-chroot /mnt mount $bootdev /boot/efi
 
         # clean it up before install
         [[ -d /mnt/boot/efi/EFI/refind ]] && rm -rdf /mnt/boot/efi/EFI/refind
@@ -197,7 +255,7 @@ EOT
         arch-chroot /mnt mkinitcpio -P
 }
 
-setupUser(){
+setupuser(){
         # Create new user
         arch-chroot /mnt useradd -m -G wheel $user
         arch-chroot /mnt sed -i 's/# %wheel ALL=(ALL) ALL/%wheel ALL=(ALL) ALL/' /etc/sudoers
@@ -218,11 +276,6 @@ setupUser(){
         arch-chroot /mnt mv /etc/pacman.conf /etc/pacman.conf.bak
         arch-chroot /mnt curl -sL $BASE_URL/sweet/pacman.conf -o /etc/pacman.conf
         
-        # Get yay ready 
-        echo "Getting yay all ready for ${user}..."
-        arch-chroot /mnt git clone https://aur.archlinux.org/yay.git /home/$user/yay
-        arch-chroot /mnt chown -R $user:$user /home/$user/yay/
-
         # Copy post-install file to /home/$user
         echo "Copy post-install file to /home/${user}..."
         arch-chroot /mnt curl -sL $BASE_URL/post-install -o /home/$user/post-install
@@ -243,6 +296,11 @@ xrandr --setprovideroutputsource modesetting NVIDIA-0
 xrandr --auto
 EOT
 
+}
+
+finish(){
+        whiptail --backtitle "$BACKTITLE" --msgbox --title "Congratulations" "Install Complete\n\Return to main menu and select 'Finsh and Reboot'" 20 78
+        nextitem="5)"
 }
 
 configuration(){
@@ -339,23 +397,6 @@ EOT
 
 }
 
-getinfo(){
-        hostname=$(whiptail --backtitle "$BACKTITLE" --inputbox "Enter hostname:" 8 78 3>&1 1>&2 2>&3)
-        user=$(whiptail --backtitle "$BACKTITLE" --inputbox "Enter admin username:" 8 78 3>&1 1>&2 2>&3)
-
-        password="x"
-        password2="xx"
-        passphrase_invalid_message=""
-
-        while [[ "$password" != "$password2" ]]; do
-
-            password=$(whiptail --backtitle "$BACKTITLE" --passwordbox "${passphrase_invalid_message}Please enter the admin password:" 8 78 3>&1 1>&2 2>&3)
-            password2=$(whiptail --backtitle "$BACKTITLE" --passwordbox "Please repeat the admin password:" 8 78 3>&1 1>&2 2>&3)
-            passphrase_invalid_message="Passwords do not match! "
-
-        done
-}
-
 # --------------------------------------------------------
 
 checkconnection(){
@@ -372,7 +413,7 @@ checkprogress(){
         do
             proc=$(ps aux | grep -v grep | grep -e $1)
             if [[ "$proc" == "" ]]; then break; fi
-            #sleep 1
+            sleep 0.5
             echo $i
             i=$(expr $i + 1)
         done
@@ -418,8 +459,3 @@ initialise(){
 [[ ! -f /tmp/packages ]] && initialise
 
 mainmenu
-#getinfo
-#performInstall
-#configuration
-#installBootloader
-#setupUser

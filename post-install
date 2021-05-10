@@ -122,7 +122,7 @@ install_plasma(){
         clear
         
         echo "Installing Plasma.."
-        sudo pacman -S plasma ark dolphin xscreensaver konsole sshfs kvantum-qt5
+        sudo pacman -S plasma-meta ark dolphin xscreensaver konsole sshfs kvantum-qt5
         yay -S latte-dock plasma5-applets-kde-arch-update-notifier
         
         # konsave
@@ -227,15 +227,43 @@ install_dev(){
         yay -S postman-bin
 }
 
-# --------------------------------------------------------
+checkprogress(){
+        i="0"
+        while (true)
+        do
+            proc=$(ps aux | grep -v grep | grep -e $1)
+            if [[ "$proc" == "" ]]; then break; fi
+            sleep 0.5
+            echo $i
+            i=$(expr $i + 1)
+        done
+        # If it is done then display 100%
+        echo 100
+        # Give it some time to display the progress to the user.
+        sleep 2
+}
 
-if [[ -d $HOME/yay ]]
-then
-        echo "Installing yay..."
+updatemirrors(){
+        curl -sL "$MIRRORLIST_URL" | sed -e 's/^#Server/Server/' -e '/^#/d' | rankmirrors -n 5 - > /etc/pacman.d/mirrorlist &
+        {
+            checkprogress "rankmirrors"
+
+        } | whiptail --gauge --title "$BACKTITLE" "Ranking Mirrors..." 8 78 0
+}
+
+install_yay(){
+        git clone https://aur.archlinux.org/yay.git $HOME/yay
         cd $HOME/yay
         makepkg -si
         cd ..
         rm -rfd yay
+}
+
+# --------------------------------------------------------
+
+if [[ -d $HOME/yay ]]
+then
+        install_yay
 fi
 
 # optimise yay when building packages
