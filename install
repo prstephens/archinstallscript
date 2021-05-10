@@ -299,7 +299,7 @@ EOT
 }
 
 finish(){
-        whiptail --backtitle "$BACKTITLE" --msgbox --title "Congratulations" "Install Complete\n\Return to main menu and select 'Finsh and Reboot'" 20 78
+        whiptail --backtitle "$BACKTITLE" --msgbox --title "Congratulations" "Install Complete\n\nReturn to main menu and select 'Finsh and Reboot'" 0 78
         nextitem="5)"
 }
 
@@ -402,7 +402,7 @@ EOT
 checkconnection(){
         if [[ $(ping -q -w1 -c1 google.com &>/dev/null && echo online || echo offline) == "offline" ]]; 
             then
-                whiptail --backtitle "$BACKTITLE" --msgbox --title "No Network Connection" "You need to be connected to the Internet.\n\nInstallation stopped." 20 78
+                whiptail --backtitle "$BACKTITLE" --msgbox --title "No Network Connection" "You need to be connected to the Internet.\n\nInstallation stopped." 0 78
                 exit
         fi
 }
