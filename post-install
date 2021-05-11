@@ -36,20 +36,24 @@ mainmenu(){
                     nextitem="2)"
                 ;;
                 "2)")
-                    install_lightdm
+                    install_gnome
                     nextitem="3)"
                 ;;
                 "3)")
-                    install_apps
+                    install_lightdm
                     nextitem="4)"
                 ;;
                 "4)")
-                    install_qemu
+                    install_apps
                     nextitem="5)"
                 ;;
                 "5)")
+                    install_qemu
+                    nextitem="6)"
+                ;;
+                "6)")
                     install_dev
-                    nextitem="5)"
+                    nextitem="6)"
                 ;;
             esac
             mainmenu "${nextitem}"
@@ -134,13 +138,11 @@ install_plasma(){
 
         # xscreensaver settings - 10 min timeout - GL matrix 
         curl -sL $BASE_URL/sweet/.xscreensaver -o $HOME/.xscreensaver
+        if [ ! -d $HOME/.config/autostart/ ];then mkdir $HOME/.config/autostart;fi
+        curl -sL $BASE_URL/sweet/xscreensaver.desktop -o $HOME/.config/autostart/xscreensaver.desktop
 
         # Dracula colour scheme for Konsole
         curl -sL $BASE_URL/sweet/Dracula.colorscheme -o $HOME/.local/konsole/Dracula.colorscheme
-
-        # Autostart xscreensaver desktop file
-        if [ ! -d $HOME/.config/autostart/ ];then mkdir $HOME/.config/autostart;fi
-        curl -sL $BASE_URL/sweet/xscreensaver.desktop -o $HOME/.config/autostart/xscreensaver.desktop
 
         # xinit config
         sudo cat <<EOT >> $HOME/.xinitrc
@@ -155,6 +157,35 @@ EOT
 
         # apply MacOs bigsur theme
         restore_bigsur
+}
+
+install_gnome(){
+        clear
+        
+        echo "Installing Gnome.."
+        sudo pacman -S gnome
+
+        # xscreensaver settings - 10 min timeout - GL matrix 
+        curl -sL $BASE_URL/sweet/.xscreensaver -o $HOME/.xscreensaver
+        if [ ! -d $HOME/.config/autostart/ ];then mkdir $HOME/.config/autostart;fi
+        curl -sL $BASE_URL/sweet/xscreensaver.desktop -o $HOME/.config/autostart/xscreensaver.desktop
+
+        git clone https://github.com/aunetx/blur-my-shell
+        cd blur-my-shell
+        make install
+
+        # xinit config
+        sudo cat <<EOT >> $HOME/.xinitrc
+nvidia-settings --load-config-only &
+export XDG_SESSION_TYPE=x11
+export GDK_BACKEND=x11
+exec gnome-session
+EOT
+
+        echo '[[ ! $DISPLAY && $XDG_VTNR -eq 1 ]] && exec startx' >> $HOME/.bash_profile
+        
+        install_fonts
+        install_preload
 }
 
 install_spotify(){
