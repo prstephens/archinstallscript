@@ -173,6 +173,14 @@ install_gnome(){
         git clone https://github.com/aunetx/blur-my-shell
         cd blur-my-shell
         make install
+        cd ..
+
+        git clone git://github.com/coadmunkee/gnome-shell-extension-espresso.git
+        cd gnome-shell-extension-espresso
+        ./update-locale.sh
+        glib-compile-schemas --strict --targetdir=espresso@coadmunkee.github.com/schemas/ espresso@coadmunkee.github.com/schemas
+        cp -r espresso@coadmunkee.github.com ~/.local/share/gnome-shell/extensions
+        cd ..
 
         # xinit config
         sudo cat <<EOT >> $HOME/.xinitrc
