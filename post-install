@@ -21,7 +21,7 @@ mainmenu(){
         fi
         options=()
         options+=("1)" "Plasma DE")
-        options+=("2)" "Lightdm Display Manager")
+        options+=("2)" "Gnome DE")
         options+=("3)" "Applications")
         options+=("4)" "QEMU/KVM")
         options+=("5)" "Java Development Environment")
@@ -40,20 +40,16 @@ mainmenu(){
                     nextitem="3)"
                 ;;
                 "3)")
-                    install_lightdm
+                    install_apps
                     nextitem="4)"
                 ;;
                 "4)")
-                    install_apps
+                    install_qemu
                     nextitem="5)"
                 ;;
                 "5)")
-                    install_qemu
-                    nextitem="6)"
-                ;;
-                "6)")
                     install_dev
-                    nextitem="6)"
+                    nextitem="5)"
                 ;;
             esac
             mainmenu "${nextitem}"
@@ -81,17 +77,6 @@ install_preload(){
         echo "Installing preload..."
         yay -S preload
         sudo systemctl enable --now preload
-}
-
-install_lightdm(){
-        clear
-
-        echo "Installing lightdm..."
-        yay -S lightdm-webkit2-theme-glorious lightdm
-        sudo sed -i 's/^#greeter-session=.*$/greeter-session=lightdm-webkit2-greeter/' /etc/lightdm/lightdm.conf
-        sudo sed -i 's/^debug_mode.*$/debug_mode=true/' /etc/lightdm/lightdm-webkit2-greeter.conf
-        sudo sed -i 's/^webkit_theme.*$/webkit_theme=glorious/' /etc/lightdm/lightdm-webkit2-greeter.conf
-        sudo systemctl enable lightdm
 }
 
 install_deepin(){
@@ -163,24 +148,20 @@ install_gnome(){
         clear
         
         echo "Installing Gnome.."
-        sudo pacman -S gnome
+        sudo pacman -S gnome firefox
+        yay -S chrome-gnome-shell
 
         # xscreensaver settings - 10 min timeout - GL matrix 
         curl -sL $BASE_URL/sweet/.xscreensaver -o $HOME/.xscreensaver
         if [ ! -d $HOME/.config/autostart/ ];then mkdir $HOME/.config/autostart;fi
         curl -sL $BASE_URL/sweet/xscreensaver.desktop -o $HOME/.config/autostart/xscreensaver.desktop
 
-        git clone https://github.com/aunetx/blur-my-shell
-        cd blur-my-shell
-        make install
-        cd ..
-
-        git clone git://github.com/coadmunkee/gnome-shell-extension-espresso.git
-        cd gnome-shell-extension-espresso
-        ./update-locale.sh
-        glib-compile-schemas --strict --targetdir=espresso@coadmunkee.github.com/schemas/ espresso@coadmunkee.github.com/schemas
-        cp -r espresso@coadmunkee.github.com ~/.local/share/gnome-shell/extensions
-        cd ..
+        # Gnome terminal padding
+        cat <<EOT >> $HOME/.config/gtk-3.0/gtk.css
+vte-terminal {
+    padding: 20px;
+}
+EOT
 
         # xinit config
         sudo cat <<EOT >> $HOME/.xinitrc
@@ -194,6 +175,11 @@ EOT
         
         install_fonts
         install_preload
+
+        whiptail --backtitle "${BACKTITLE}" --title "GDM" --yesno "Do you want to enable GDM?" 0 78 3>&1 1>&2 2>&3
+        if [ "$?" = "0" ]; then
+		sudo systemctl enable --now gdm
+	fi
 }
 
 install_spotify(){
@@ -230,7 +216,7 @@ install_apps(){
         clear
 
         echo "Installing Chrome, VS Code, WPS Office, Gimp..."
-        yay -S google-chrome firefox code wps-office gimp vlc balena-etcher kodi-x11 dropbox handbrake pamac-aur
+        yay -S google-chrome code wps-office gimp vlc balena-etcher kodi-x11 dropbox handbrake pamac-aur
 
         install_spotify
         apply_spicetify
@@ -295,15 +281,11 @@ install_yay(){
         cd $HOME/yay
         makepkg -si
         cd ..
-        rm -rfd yay
 }
 
 # --------------------------------------------------------
 
-if [[ -d $HOME/yay ]]
-then
-        install_yay
-fi
+if [[ ! -d $HOME/yay ]] && install_yay
 
 # optimise yay when building packages
 sudo sed -i 's/^#MAKEFLAGS="-j2"/MAKEFLAGS="-j$(nproc)"/' /etc/makepkg.conf
