@@ -260,6 +260,9 @@ setupuser(){
         arch-chroot /mnt useradd -m -G wheel $user
         arch-chroot /mnt sed -i 's/# %wheel ALL=(ALL) ALL/%wheel ALL=(ALL) ALL/' /etc/sudoers
         echo "Defaults insults" >> /mnt/etc/sudoers
+        echo "${user} ALL=(ALL) NOPASSWD: /usr/bin/mount" >> /mnt/etc/sudoers
+        echo "${user} ALL=(ALL) NOPASSWD: /usr/bin/umount" >> /mnt/etc/sudoers
+        echo "${user} ALL=(ALL) NOPASSWD: /usr/bin/sed" >> /mnt/etc/sudoers
 
         # Set root password
         echo "Setting user and root password..."
@@ -341,6 +344,8 @@ EOT
         echo "127.0.1.1 ${hostname}.localdomain  ${hostname}" >> /mnt/etc/hosts
 
         # NVIDIA configuration
+        arch-chroot /mnt curl -sL $BASE_URL/sweet/xorg.conf -o /etc/X11/xorg.conf
+
         cat <<EOT > /mnt/etc/X11/xorg.conf.d/20-nvidia.conf
 Section "OutputClass"
 Identifier "intel"
@@ -357,6 +362,24 @@ Option "PrimaryGPU" "yes"
 ModulePath "/usr/lib/nvidia/xorg"
 ModulePath "/usr/lib/xorg/modules"
 EndSection
+EOT
+
+        # NVIDIA pacman hook configuration - update initramfs after driver update
+cat <<EOT > /nmt/etc/pacman.d/hooks/nvidia.hook
+[Trigger]
+Operation=Install
+Operation=Upgrade
+Operation=Remove
+Type=Package
+Target=nvidia-dkms
+Target=linux-zen
+
+[Action]
+Description=Update Nvidia module in initcpio
+Depends=mkinitcpio
+When=PostTransaction
+NeedsTargets
+Exec=/bin/sh -c 'while read -r trg; do case $trg in linux-zen) exit 0; esac; done; /usr/bin/mkinitcpio -P'
 EOT
 
         # Set keyboard FN keys to act normal!
@@ -436,7 +459,7 @@ dependencies(){
         {
             checkprogress "pacman"
 
-        } | whiptail --gauge --title "$BACKTITLE" "Installing dependancies..." 8 78 0
+        } | whiptail --gauge --title "$BACKTITLE" "Installing dependencies..." 8 78 0
 }
 
 getpackagelist(){

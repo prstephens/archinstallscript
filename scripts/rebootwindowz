@@ -1,0 +1,23 @@
+#!/bin/bash
+
+if [ "$1" == "r" ]
+then
+	echo "resetting to linux..."
+	sudo mount /dev/sda1 /boot/efi
+	sudo sed -i 's/default_selection.*$/default_selection 2/' /boot/efi/EFI/refind/refind.conf
+	sudo umount /boot/efi
+	exit 0
+fi
+
+sudo mount /dev/sda1 /boot/efi
+sudo sed -i 's/default_selection.*$/default_selection Microsoft/' /boot/efi/EFI/refind/refind.conf
+ans=$(zenity --question --text="Do you want to reboot to Windowz?")
+rc=$?
+if [[ rc -eq 0 ]]
+then
+    reboot
+else
+    sudo umount /boot/efi
+fi
+
+

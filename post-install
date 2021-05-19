@@ -148,7 +148,7 @@ install_gnome(){
         clear
         
         echo "Installing Gnome.."
-        sudo pacman -S gnome firefox
+        sudo pacman -S gnome firefox plank
         yay -S chrome-gnome-shell
 
         # xscreensaver settings - 10 min timeout - GL matrix 
