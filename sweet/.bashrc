@@ -87,7 +87,7 @@ if [ -x /usr/bin/dircolors ]; then
 fi
 
 # add my scripts folder to my path
-PATH=/home/paul/scripts/:/home/paul/vpn/:"$PATH"
+PATH=/home/paul/data/scripts/:"$PATH"
 
 # custom functions
 bu() { cp "$@" "$@.backup-`date +%s`"; echo "`date +%Y-%m-%d` backed up $PWD/$@" >> ~/.backups.log; } 

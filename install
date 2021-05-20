@@ -137,7 +137,7 @@ choosepartitions(){
 	realrootdev=${rootdev}
 	
         msg=""
-	msg=${msg}"Boot : "${bootdev}"\n"
+	msg=${msg}"Boot     : "${bootdev}"\n"
 	msg=${msg}"Swap     : "${swapdev}"\n"
 	msg=${msg}"Root     : "${rootdev}"\n\n"
 	if (whiptail --backtitle "${BACKTITLE}" --title "Are these values correct?" --yesno "${msg}" 0 78) then
@@ -176,7 +176,6 @@ performinstall(){
         
         clear
 
-        echo "Setting date and time..."
         timedatectl set-ntp true
 
         # Setup the partitions
@@ -417,7 +416,6 @@ EOT
         arch-chroot /mnt systemctl enable reflector
         arch-chroot /mnt systemctl enable reflector.timer
         arch-chroot /mnt systemctl enable fstrim.timer
-
 }
 
 # --------------------------------------------------------
