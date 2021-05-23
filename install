@@ -198,7 +198,8 @@ performinstall(){
         mount $rootdev /mnt
 
         echo "Starting install.."
-        pacstrap /mnt $package_list
+        #pacstrap /mnt $package_list
+        pacstrap /mnt base base-devel linux-firmware linux-zen linux-zen-headers intel-ucode refind efibootmgr ntfs-3g networkmanager dnsutils reflector nfs-utils xorg xorg-server xorg-xinit nvidia-dkms nvidia-settings nvidia-utils nano nano-syntax-highlighting sudo git bluez bluez-utils pulseaudio rxvt-unicode wget cups hplip archlinux-keyring anything-sync-daemon openssh ncdu glances htop
 
         # Generate fstab
         genfstab -U /mnt >> /mnt/etc/fstab
@@ -428,36 +429,12 @@ checkconnection(){
         fi
 }
 
-checkprogress(){
-        i="0"
-        while (true)
-        do
-            proc=$(ps aux | grep -v grep | grep -e $1)
-            if [[ "$proc" == "" ]]; then break; fi
-            sleep 0.5
-            echo $i
-            i=$(expr $i + 1)
-        done
-        # If it is done then display 100%
-        echo 100
-        # Give it some time to display the progress to the user.
-        sleep 2
-}
-
 updatemirrors(){
-        curl -sL "$MIRRORLIST_URL" | sed -e 's/^#Server/Server/' -e '/^#/d' | rankmirrors -n 5 - > /etc/pacman.d/mirrorlist &
-        {
-            checkprogress "rankmirrors"
-
-        } | whiptail --gauge --title "$BACKTITLE" "Ranking Mirrors..." 8 78 0
+        curl -sL "$MIRRORLIST_URL" | sed -e 's/^#Server/Server/' -e '/^#/d' | rankmirrors -n 5 - > /etc/pacman.d/mirrorlist
 }
 
 dependencies(){
-        pacman -Sy --noconfirm pacman-contrib > /dev/null 2>&1 &
-        {
-            checkprogress "pacman"
-
-        } | whiptail --gauge --title "$BACKTITLE" "Installing dependencies..." 8 78 0
+        pacman -Sy --noconfirm pacman-contrib
 }
 
 getpackagelist(){
@@ -472,7 +449,7 @@ initialise(){
         checkconnection
         dependencies
         updatemirrors
-        getpackagelist
+        #getpackagelist
 }
 
 # --------------------------------------------------------
