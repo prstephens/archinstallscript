@@ -48,6 +48,10 @@ mainmenu(){
                         ;;
                         "4)")
                                 performinstall
+                                configuration
+                                installbootloader
+                                setupuser
+                                finish
                                 nextitem="5)"
                         ;;
                         "5)")
@@ -198,19 +202,11 @@ performinstall(){
         mount $rootdev /mnt
 
         echo "Starting install.."
-        #pacstrap /mnt $package_list
-        pacstrap /mnt base base-devel linux-firmware linux-zen linux-zen-headers intel-ucode refind efibootmgr ntfs-3g networkmanager dnsutils reflector nfs-utils xorg xorg-server xorg-xinit nvidia-dkms nvidia-settings nvidia-utils nano nano-syntax-highlighting sudo git bluez bluez-utils pulseaudio rxvt-unicode wget cups hplip archlinux-keyring anything-sync-daemon openssh ncdu glances htop
+        pacstrap /mnt ${package_list}
+        #pacstrap /mnt base base-devel linux-firmware linux-zen linux-zen-headers intel-ucode refind efibootmgr ntfs-3g networkmanager dnsutils reflector nfs-utils xorg xorg-server xorg-xinit nvidia-dkms nvidia-settings nvidia-utils nano nano-syntax-highlighting sudo git bluez bluez-utils pulseaudio rxvt-unicode wget cups hplip archlinux-keyring pacman-contrib anything-sync-daemon openssh ncdu glances htop
 
         # Generate fstab
         genfstab -U /mnt >> /mnt/etc/fstab
-
-        configuration
-        
-        installbootloader
-
-        setupuser
-
-        finish
 }
 
 installbootloader(){
@@ -266,8 +262,8 @@ setupuser(){
 
         # Set root password
         echo "Setting user and root password..."
-        echo "$user:$password" | chpasswd --root /mnt
-        echo "root:$password" | chpasswd --root /mnt
+        echo "${user}:${password}" | arch-chroot /mnt chpasswd
+        echo "root:${password}" | arch-chroot /mnt chpasswd
 
         # config files
         echo "Getting some sweet config files..."
@@ -299,11 +295,6 @@ xrandr --setprovideroutputsource modesetting NVIDIA-0
 xrandr --auto
 EOT
 
-}
-
-finish(){
-        whiptail --backtitle "$BACKTITLE" --msgbox --title "Congratulations" "Install Complete\n\nReturn to main menu and select 'Finsh and Reboot'" 0 78
-        nextitem="5)"
 }
 
 configuration(){
@@ -365,7 +356,7 @@ EndSection
 EOT
 
         # NVIDIA pacman hook configuration - update initramfs after driver update
-cat <<EOT > /nmt/etc/pacman.d/hooks/nvidia.hook
+cat <<EOT > /mnt/etc/pacman.d/hooks/nvidia.hook
 [Trigger]
 Operation=Install
 Operation=Upgrade
@@ -419,6 +410,11 @@ EOT
         arch-chroot /mnt systemctl enable fstrim.timer
 }
 
+finish(){
+        whiptail --backtitle "$BACKTITLE" --msgbox --title "Congratulations" "Install Complete\n\nReturn to main menu and select 'Finsh and Reboot'" 0 78
+        nextitem="5)"
+}
+
 # --------------------------------------------------------
 
 checkconnection(){
@@ -439,9 +435,15 @@ dependencies(){
 
 getpackagelist(){
         curl -sL $BASE_URL/packages -o /tmp/packages
+        sed -i '/^\s*$/d' /tmp/packages
+        sed -i '/^#/ d' /tmp/packages
+
+        # base packages REQUIRED
+        package_list="base base-devel linux-firmware"
+
         while read line
         do
-            package_list="$package_list $(echo $line)"
+                package_list="$package_list $(echo $line | sed 's/"//g')"
         done < /tmp/packages
 }
 
@@ -449,7 +451,7 @@ initialise(){
         checkconnection
         dependencies
         updatemirrors
-        #getpackagelist
+        getpackagelist
 }
 
 # --------------------------------------------------------

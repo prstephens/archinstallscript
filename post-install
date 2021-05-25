@@ -285,7 +285,7 @@ install_yay(){
 
 # --------------------------------------------------------
 
-if [[ ! -d $HOME/yay ]] && install_yay
+[[ ! -d $HOME/yay ]] && install_yay
 
 # optimise yay when building packages
 sudo sed -i 's/^#MAKEFLAGS="-j2"/MAKEFLAGS="-j$(nproc)"/' /etc/makepkg.conf

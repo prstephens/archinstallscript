@@ -1,6 +1,3 @@
-base
-base-devel
-linux-firmware
 linux-zen
 linux-zen-headers
 intel-ucode
@@ -29,6 +26,7 @@ wget
 cups
 hplip
 archlinux-keyring
+pacman-contrib
 anything-sync-daemon
 openssh
 ncdu
