@@ -148,7 +148,7 @@ install_gnome(){
         clear
         
         echo "Installing Gnome.."
-        sudo pacman -S gnome firefox
+        sudo pacman -S gnome firefox nemo nemo-fileroller nemo-preview
         yay -S chrome-gnome-shell
 
         # xscreensaver settings - 10 min timeout - GL matrix 
@@ -156,12 +156,19 @@ install_gnome(){
         if [ ! -d $HOME/.config/autostart/ ];then mkdir $HOME/.config/autostart;fi
         curl -sL $BASE_URL/sweet/xscreensaver.desktop -o $HOME/.config/autostart/xscreensaver.desktop
 
-        # Gnome terminal padding
-        cat <<EOT >> $HOME/.config/gtk-3.0/gtk.css
-vte-terminal {
-    padding: 20px;
-}
-EOT
+        xdg-mime default nemo.desktop inode/directory application/x-gnome-saved-search
+        gsettings set org.cinnamon.desktop.default-applications.terminal exec urxvt
+        gsettings set org.cinnamon.desktop.default-applications.terminal exec-arg -e
+
+        # Orchis-pink-dark theme
+        git clone https://github.com/prstephens/Orchis-theme.git /tmp/Orchis-theme
+        /tmp/Orchis-theme/install.sh -d $HOME/.themes -t pink -c dark
+        gsettings set org.gnome.desktop.interface gtk-theme Orchis-pink-dark
+        
+        # Tela icon theme
+        git clone https://github.com/prstephens/Tela-icon-theme.git /tmp/Tela-icon-theme
+        /tmp/Tela-icon-theme/install.sh -d $HOME/.icons pink
+        gsettings set org.gnome.desktop.interface icon-theme Tela-pink-dark
 
         # xinit config
         sudo cat <<EOT >> $HOME/.xinitrc
