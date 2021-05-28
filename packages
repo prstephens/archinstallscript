@@ -6,6 +6,7 @@ efibootmgr
 ntfs-3g
 networkmanager
 dnsutils
+usbutils
 reflector
 nfs-utils
 xorg

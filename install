@@ -203,7 +203,7 @@ performinstall(){
 
         echo "Starting install.."
         pacstrap /mnt ${package_list}
-        #pacstrap /mnt base base-devel linux-firmware linux-zen linux-zen-headers intel-ucode refind efibootmgr ntfs-3g networkmanager dnsutils reflector nfs-utils xorg xorg-server xorg-xinit nvidia-dkms nvidia-settings nvidia-utils nano nano-syntax-highlighting sudo git bluez bluez-utils pulseaudio rxvt-unicode wget cups hplip archlinux-keyring pacman-contrib anything-sync-daemon openssh ncdu glances htop
+        #pacstrap /mnt base base-devel linux-firmware linux-zen linux-zen-headers intel-ucode refind efibootmgr ntfs-3g networkmanager dnsutils usbutils reflector nfs-utils xorg xorg-server xorg-xinit nvidia-dkms nvidia-settings nvidia-utils nano nano-syntax-highlighting sudo git bluez bluez-utils pulseaudio rxvt-unicode wget cups hplip archlinux-keyring pacman-contrib anything-sync-daemon openssh ncdu glances htop
 
         # Generate fstab
         genfstab -U /mnt >> /mnt/etc/fstab
