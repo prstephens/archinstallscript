@@ -124,6 +124,12 @@ cheat()
     curl cheat.sh/$1
 }
 
+extbackup()
+{
+    rm -rdf $HOME/data/gnome-extensions
+    cp -r $HOME/.local/share/gnome-shell/extensions $HOME/data/gnome-extensions
+}
+
 # some more ls aliases
 alias ll='ls -alh'
 alias la='ls -A'

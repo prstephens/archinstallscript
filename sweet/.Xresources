@@ -18,9 +18,7 @@
 
 *.foreground:                     pallete16
 *.background:                     pallete0
-*.cursorColor:                    pallete16
-!*fading:                          35
-!*fadeColor:                       pallete2
+*.cursorColor:                    pallete13
 
 *.color0:                         pallete0
 *.color1:                         pallete4
@@ -50,6 +48,7 @@ URxvt.internalBorder: 20
 URxvt.clipboard.autocopy: true
 URxvt.cursorBlink: 1
 URxvt.cursorUnderline: 1
+URxvt*fading:  30
 
 URxvt.urlLauncher:                google-chrome-stable
 URxvt.underlineURLs:              true
