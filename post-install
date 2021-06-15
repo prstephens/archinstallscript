@@ -148,8 +148,8 @@ install_gnome(){
         clear
         
         echo "Installing Gnome.."
-        sudo pacman -S gnome firefox nemo nemo-fileroller nemo-preview
-        yay -S chrome-gnome-shell
+        sudo pacman -S gnome firefox flatpak nemo nemo-fileroller nemo-preview gtk-engine-murrine sassc
+        yay -S chrome-gnome-shell fancontrol-gui pamac-aur
 
         # xscreensaver settings - 10 min timeout - GL matrix 
         curl -sL $BASE_URL/sweet/.xscreensaver -o $HOME/.xscreensaver
@@ -169,6 +169,12 @@ install_gnome(){
         git clone https://github.com/prstephens/Tela-icon-theme.git /tmp/Tela-icon-theme
         /tmp/Tela-icon-theme/install.sh -d $HOME/.icons pink
         gsettings set org.gnome.desktop.interface icon-theme Tela-pink-dark
+
+        #install flatpak user repo
+        flatpak --user remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+
+        #install GKraken for NZXT pump configuration
+        flatpak install flathub com.leinardi.gkraken
 
         # xinit config
         sudo cat <<EOT >> $HOME/.xinitrc
@@ -223,7 +229,7 @@ install_apps(){
         clear
 
         echo "Installing Chrome, VS Code, WPS Office, Gimp..."
-        yay -S google-chrome code wps-office gimp vlc balena-etcher kodi-x11 dropbox handbrake pamac-aur
+        yay -S google-chrome code onlyoffice-bin gimp vlc balena-etcher kodi-x11 dropbox handbrake
 
         install_spotify
         apply_spicetify
