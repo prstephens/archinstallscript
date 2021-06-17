@@ -97,10 +97,19 @@ if [ -f $CSS ]; then
         cp $CSS "backups/${CSS}.bak.${DATE}"
         sed -i 's/#lockDialogGroup/#lockDialogGroup-old/' $CSS
         printf "#lockDialogGroup {\n    background: #2e3436 url(${PIC});\n    background-repeat: no-repeat;\n    background-size: cover; }\n" >> $CSS
+
+        # change blue accent colour to nice pink
+        sed -i 's/#1b6acb/#f981b6/g' $CSS
+        sed -i 's/#1c6fd4/#f56898/g' $CSS
+        sed -i 's/#629fea/#f56898/g' $CSS
+        sed -i 's/rgba(188, 214, 246, 0.3)/rgba(249, 129, 182, 0.3)/g' $CSS
 else
         echo Error: could not find file $CSS
         exit 1
 fi
+
+echo 'Edit any file now before installation then hit ENTER to continue...'
+read
 
 echo Compiling binary resources...
 glib-compile-resources $XMLRES
