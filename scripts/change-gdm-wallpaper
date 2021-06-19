@@ -117,4 +117,4 @@ echo Copying binary resources over to ${SHARE}...
 sudo cp $GRESOURCE "${SHARE}${GRESOURCE}"
 sudo cp $CSS "${SHARE}${CSS}"
 
-echo Restart to load your changes.
+busctl --user call org.gnome.Shell /org/gnome/Shell org.gnome.Shell Eval s 'Meta.restart("Restarting…")'
