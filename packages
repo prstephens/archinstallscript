@@ -12,9 +12,8 @@ nfs-utils
 xorg
 xorg-server
 xorg-xinit
-nvidia-dkms
-nvidia-settings
-nvidia-utils
+mesa
+vulkan-intel
 nano
 nano-syntax-highlighting
 sudo

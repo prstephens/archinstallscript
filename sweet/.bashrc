@@ -104,16 +104,6 @@ sink()
     fi
 }
 
-night()
-{
-    status=$(pgrep redshift 2>&1);
-
-    if [[ ! -n "$status" ]];
-    then
-        redshift -l 51.39546:-0.44889 &
-    fi
-}
-
 lspac()
 {
     sudo pacman -Qei $(pacman -Qu|cut -d" " -f 1)|awk ' BEGIN {FS=":"}/^Name/{printf("\033[1;36m%s\033[1;37m", $2)}/^Description/{print $2}'
@@ -128,6 +118,12 @@ extbackup()
 {
     rm -rdf $HOME/data/gnome-extensions
     cp -r $HOME/.local/share/gnome-shell/extensions $HOME/data/gnome-extensions
+}
+
+extrestore()
+{
+    rm -rdf $HOME/data/gnome-extensions
+    cp -r $HOME/data/gnome-extensions $HOME/.local/share/gnome-shell/extensions
 }
 
 # some more ls aliases
@@ -164,10 +160,7 @@ alias ctl='sudo systemctl'
 alias pacman='sudo pacman'
 alias dg='echo "pacman -U /var/cache/pacman/pkg/"'
 alias ug='less /var/log/pacman.log | grep upgraded'
-alias setwall='gsettings set com.deepin.wrap.gnome.desktop.background picture-uri'
 alias vmbackup='sudo virsh dumpxml'
-alias vpn='nordvpn set cybersec on && nordvpn set killswitch on && nordvpn c IE'
-alias killvpn='nordvpn set cybersec off && nordvpn set killswitch off && nordvpn d && sudo systemctl restart NetworkManager'
 alias cdev='cd ~/data/dev'
 alias errors='journalctl -xb -p 0..3'
 

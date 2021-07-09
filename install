@@ -169,7 +169,6 @@ getuserinfo(){
 
         msg=${msg}"Hostname : "${hostname}"\n"
         msg=${msg}"User     : "${user}"\n\n"
-
 }
 
 performinstall(){
@@ -203,7 +202,7 @@ performinstall(){
 
         echo "Starting install.."
         pacstrap /mnt ${package_list}
-        #pacstrap /mnt base base-devel linux-firmware linux-zen linux-zen-headers intel-ucode refind efibootmgr ntfs-3g networkmanager dnsutils usbutils reflector nfs-utils xorg xorg-server xorg-xinit nvidia-dkms nvidia-settings nvidia-utils nano nano-syntax-highlighting sudo git bluez bluez-utils pulseaudio rxvt-unicode wget cups hplip archlinux-keyring pacman-contrib anything-sync-daemon openssh ncdu glances htop
+        #pacstrap /mnt base base-devel linux-firmware linux-zen linux-zen-headers intel-ucode refind efibootmgr ntfs-3g networkmanager dnsutils usbutils reflector nfs-utils xorg xorg-server xorg-xinit mesa vulkan-intel nano nano-syntax-highlighting sudo git bluez bluez-utils pulseaudio rxvt-unicode wget cups hplip archlinux-keyring pacman-contrib anything-sync-daemon openssh ncdu glances htop
 
         # Generate fstab
         genfstab -U /mnt >> /mnt/etc/fstab
@@ -228,9 +227,8 @@ installbootloader(){
 
         arch-chroot /mnt refind-install
 
-        # early KMS NVIDIA module and silent boot parameters
         cat <<EOT > /mnt/boot/refind_linux.conf
-"Boot with standard options"  "rw root=UUID=${ROOTUUID} quiet loglevel=3 rd.udev.log_priority=3 nvidia-drm.modeset=1 nouveau.modeset=0 initrd=boot\intel-ucode.img initrd=boot\initramfs-linux-zen.img"
+"Boot with standard options"  "rw root=UUID=${ROOTUUID} quiet loglevel=3 rd.udev.log_priority=3 initrd=boot\intel-ucode.img initrd=boot\initramfs-linux-zen.img"
 "Boot to single-user mode"    "rw root=UUID=${ROOTUUID} loglevel=3 quiet single"
 "Boot with minimal options"   "rw root=UUID=${ROOTUUID}"
 EOT
@@ -244,11 +242,7 @@ resolution 1920 1080
 timeout 5
 default_selection Microsoft
 include themes/Matrix-rEFInd/theme.conf
-EOT
-
-        # early KMS NVIDIA module load
-        arch-chroot /mnt sed -i 's/^MODULES=.*$/MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)/' /etc/mkinitcpio.conf
-        arch-chroot /mnt mkinitcpio -P
+EOT   
 }
 
 setupuser(){
@@ -288,13 +282,7 @@ setupuser(){
         # Create user xinit config file 
         echo "Creating .xinitrc file..."
         head -n -5 /mnt/etc/X11/xinit/xinitrc >> /mnt/home/$user/.xinitrc
-        arch-chroot /mnt chown $user:$user /home/$user/.xinitrc
-
-        cat >> /mnt/home/${user}/.xinitrc <<EOT 
-xrandr --setprovideroutputsource modesetting NVIDIA-0
-xrandr --auto
-EOT
-
+        arch-chroot /mnt chown $user:$user /home/$user/.xinitrc      
 }
 
 configuration(){
@@ -334,45 +322,6 @@ EOT
         echo "${hostname}" > /mnt/etc/hostname
         echo "127.0.1.1 ${hostname}.localdomain  ${hostname}" >> /mnt/etc/hosts
 
-        # NVIDIA configuration
-        arch-chroot /mnt curl -sL $BASE_URL/sweet/xorg.conf -o /etc/X11/xorg.conf
-
-        cat <<EOT > /mnt/etc/X11/xorg.conf.d/20-nvidia.conf
-Section "OutputClass"
-Identifier "intel"
-MatchDriver "i915"
-Driver "modesetting"
-EndSection
-
-Section "OutputClass"
-Identifier "nvidia"
-MatchDriver "nvidia-drm"
-Driver "nvidia"
-Option "AllowEmptyInitialConfiguration"
-Option "PrimaryGPU" "yes"
-ModulePath "/usr/lib/nvidia/xorg"
-ModulePath "/usr/lib/xorg/modules"
-EndSection
-EOT
-
-        # NVIDIA pacman hook configuration - update initramfs after driver update
-cat <<EOT > /mnt/etc/pacman.d/hooks/nvidia.hook
-[Trigger]
-Operation=Install
-Operation=Upgrade
-Operation=Remove
-Type=Package
-Target=nvidia-dkms
-Target=linux-zen
-
-[Action]
-Description=Update Nvidia module in initcpio
-Depends=mkinitcpio
-When=PostTransaction
-NeedsTargets
-Exec=/bin/sh -c 'while read -r trg; do case $trg in linux-zen) exit 0; esac; done; /usr/bin/mkinitcpio -P'
-EOT
-
         # Set keyboard FN keys to act normal!
         echo "options hid_apple fnmode=2" > /mnt/etc/modprobe.d/hid_apple.conf
         
@@ -409,6 +358,52 @@ EOT
         arch-chroot /mnt systemctl enable reflector
         arch-chroot /mnt systemctl enable reflector.timer
         arch-chroot /mnt systemctl enable fstrim.timer
+        arch-chroot /mnt systemctl enable sshd
+}
+
+nvidia-config(){
+        pacstrap /mnt nvidia-dkms nvidia-settings nvidia-utils
+
+        arch-chroot /mnt curl -sL $BASE_URL/sweet/xorg.conf -o /etc/X11/xorg.conf
+
+        arch-chroot /mnt sed -i 's/^MODULES=.*$/MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)/' /etc/mkinitcpio.conf
+        arch-chroot /mnt mkinitcpio -P
+
+        cat <<EOT > /mnt/etc/X11/xorg.conf.d/20-nvidia.conf
+Section "OutputClass"
+Identifier "intel"
+MatchDriver "i915"
+Driver "modesetting"
+EndSection
+
+Section "OutputClass"
+Identifier "nvidia"
+MatchDriver "nvidia-drm"
+Driver "nvidia"
+Option "AllowEmptyInitialConfiguration"
+Option "PrimaryGPU" "yes"
+ModulePath "/usr/lib/nvidia/xorg"
+ModulePath "/usr/lib/xorg/modules"
+EndSection
+EOT
+
+        # NVIDIA pacman hook configuration - update initramfs after driver update
+        cat <<EOT > /mnt/etc/pacman.d/hooks/nvidia.hook
+[Trigger]
+Operation=Install
+Operation=Upgrade
+Operation=Remove
+Type=Package
+Target=nvidia-dkms
+Target=linux-zen
+
+[Action]
+Description=Update Nvidia module in initcpio
+Depends=mkinitcpio
+When=PostTransaction
+NeedsTargets
+Exec=/bin/sh -c 'while read -r trg; do case $trg in linux-zen) exit 0; esac; done; /usr/bin/mkinitcpio -P'
+EOT
 }
 
 finish(){
