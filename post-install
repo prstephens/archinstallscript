@@ -178,7 +178,6 @@ install_gnome(){
 
         # xinit config
         sudo cat <<EOT >> $HOME/.xinitrc
-nvidia-settings --load-config-only &
 export XDG_SESSION_TYPE=x11
 export GDK_BACKEND=x11
 exec gnome-session
@@ -322,14 +321,6 @@ install_spotify(){
         sudo chmod -R 777 /opt/spotify
 }
 
-apply_spicetify(){
-        spicetify backup apply
-        spicetify config extensions dribbblish.js
-        spicetify config current_theme Dribbblish color_scheme dracula
-        spicetify config inject_css 1 replace_colors 1 overwrite_assets 1
-        spicetify apply
-}
-
 install_profile-sync-daemon(){
         sudo pacman -S profile-sync-daemon
         psd
@@ -352,7 +343,6 @@ install_apps(){
         yay -S google-chrome code onlyoffice-bin gimp vlc balena-etcher kodi-x11 dropbox handbrake
 
         install_spotify
-        apply_spicetify
         install_profile-sync-daemon
 }
 
