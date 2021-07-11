@@ -148,7 +148,7 @@ install_gnome(){
         clear
         
         echo "Installing Gnome.."
-        sudo pacman -S gnome firefox flatpak nemo nemo-fileroller nemo-preview gtk-engine-murrine sassc
+        sudo pacman -S gnome gnome-tweaks firefox flatpak nemo nemo-fileroller nemo-preview gtk-engine-murrine sassc
         yay -S chrome-gnome-shell fancontrol-gui pamac-aur
 
         # xscreensaver settings - 10 min timeout - GL matrix 
@@ -317,7 +317,7 @@ EOT
 install_spotify(){
         echo "Installing Spotify..."
         curl -sS https://download.spotify.com/debian/pubkey_0D811D58.gpg | gpg --import -
-        yay -S spotify spicetify-cli spicetify-themes-git
+        yay -S spotify
         sudo chmod -R 777 /opt/spotify
 }
 
