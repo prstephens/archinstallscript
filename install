@@ -202,7 +202,7 @@ performinstall(){
 
         echo "Starting install.."
         pacstrap /mnt ${package_list}
-        #pacstrap /mnt base base-devel linux-firmware linux-zen linux-zen-headers intel-ucode refind efibootmgr ntfs-3g networkmanager dnsutils usbutils reflector nfs-utils xorg xorg-server xorg-xinit mesa vulkan-intel nano nano-syntax-highlighting sudo git bluez bluez-utils pulseaudio rxvt-unicode wget cups hplip archlinux-keyring pacman-contrib anything-sync-daemon openssh ncdu glances htop
+        #pacstrap /mnt base base-devel linux-firmware linux-zen linux-zen-headers intel-ucode refind efibootmgr ntfs-3g networkmanager dnsutils usbutils reflector nfs-utils xorg xorg-server xorg-xinit mesa vulkan-intel nano nano-syntax-highlighting sudo git bluez bluez-utils pulseaudio rxvt-unicode wget cups hplip archlinux-keyring pacman-contrib openssh ncdu glances htop
 
         # Generate fstab
         genfstab -U /mnt >> /mnt/etc/fstab
@@ -332,8 +332,7 @@ EOT
         # swappiness config for swap
         echo "vm.swappiness=10" >> /mnt/etc/sysctl.d/99-swappiness.conf
 
-        # Set correct sound card for PulseAudio
-        echo "set-default-sink output alsa_output.pci-0000_00_1f.3.analog-stereo" >> /mnt/etc/pulse/default.pa
+        # PulseAudio
         arch-chroot /mnt sed -i '/load-module module-suspend-on-idle/ s/^#*/#/' /etc/pulse/default.pa
 
         # Create the pacman mirrorlist updater service

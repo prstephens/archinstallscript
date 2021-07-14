@@ -192,6 +192,9 @@ EOT
         if [ "$?" = "0" ]; then
 		sudo systemctl enable --now gdm
 	fi
+
+        # missing firmware for the mkinitcpio warnings
+        yay -S aic94xx-firmware wd719x-firmware upd72020x-fw
 }
 
 change-gdm-wallpaper(){
@@ -353,7 +356,7 @@ install_qemu(){
         sudo pacman -S libvirt virt-manager edk2-ovmf qemu iptables-nft dnsmasq dmidecode
 
         # Enable Virtualization Technology for Directed I/O in rEFInd config as boot param
-        sudo sed -i.bak 's/linux-zen.img[^"]*/& intel_iommu=on iommu=pt video=efifb:off pci=realloc/' /boot/refind_linux.conf
+        sudo sed -i.bak 's/linux-zen.img[^"]*/& intel_iommu=on iommu=pt video=efifb:off pci=realloc module_blacklist=xpad/' /boot/refind_linux.conf
 
         sudo sed -i 's/^MODULES=.*$/MODULES=(vfio_pci vfio vfio_iommu_type1 vfio_virqfd)/' /etc/mkinitcpio.conf
         sudo mkinitcpio -P
@@ -379,6 +382,8 @@ EOT
 '
         sudo systemctl enable --now libvirtd.service
         sudo systemctl enable --now virtlogd.socket
+        sudo virsh net-autostart default
+        sudo virsh net-start default
 }
 
 install_dev(){

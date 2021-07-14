@@ -28,7 +28,6 @@ cups
 hplip
 archlinux-keyring
 pacman-contrib
-anything-sync-daemon
 openssh
 ncdu
 glances
