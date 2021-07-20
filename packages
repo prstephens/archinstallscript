@@ -26,6 +26,7 @@ rxvt-unicode
 wget
 cups
 hplip
+python-pyqt5
 archlinux-keyring
 pacman-contrib
 openssh

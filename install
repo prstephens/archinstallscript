@@ -202,7 +202,7 @@ performinstall(){
 
         echo "Starting install.."
         pacstrap /mnt ${package_list}
-        #pacstrap /mnt base base-devel linux-firmware linux-zen linux-zen-headers intel-ucode refind efibootmgr ntfs-3g networkmanager dnsutils usbutils reflector nfs-utils xorg xorg-server xorg-xinit mesa vulkan-intel nano nano-syntax-highlighting sudo git bluez bluez-utils pulseaudio rxvt-unicode wget cups hplip archlinux-keyring pacman-contrib openssh ncdu glances htop
+        #pacstrap /mnt base base-devel linux-firmware linux-zen linux-zen-headers intel-ucode refind efibootmgr ntfs-3g networkmanager dnsutils usbutils reflector nfs-utils xorg xorg-server xorg-xinit mesa vulkan-intel nano nano-syntax-highlighting sudo git bluez bluez-utils pulseaudio rxvt-unicode wget cups hplip python-pyqt5 archlinux-keyring pacman-contrib openssh ncdu glances htop
 
         # Generate fstab
         genfstab -U /mnt >> /mnt/etc/fstab
@@ -264,6 +264,8 @@ setupuser(){
         echo "Getting some sweet config files..."
         arch-chroot /mnt curl -sL $BASE_URL/sweet/.Xresources -o /home/$user/.Xresources
         arch-chroot /mnt curl -sL $BASE_URL/sweet/.bashrc -o /home/$user/.bashrc
+        arch-chroot /mnt chown $user:$user /home/$user/.Xresources
+        arch-chroot /mnt chown $user:$user /home/$user/.bashrc
         arch-chroot /mnt curl -sL $BASE_URL/sweet/issue -o /etc/issue
 
         # set custom pacman.conf 
@@ -279,6 +281,7 @@ setupuser(){
         # Add shell-option to ~/.inputrc to enable case-insensitive tab completion
         if [ ! -a /mnt/home/$user/.inputrc ]; then echo '$include /etc/inputrc' > /mnt/home/$user/.inputrc; fi
         echo 'set completion-ignore-case On' >> /mnt/home/$user/.inputrc
+        arch-chroot /mnt chown $user:$user /home/$user/.inputrc
 
         # Create user xinit config file 
         echo "Creating .xinitrc file..."
