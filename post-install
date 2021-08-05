@@ -148,7 +148,7 @@ install_gnome(){
         clear
         
         echo "Installing Gnome.."
-        sudo pacman -S gnome gnome-tweaks firefox flatpak nemo nemo-fileroller nemo-preview gtk-engine-murrine sassc
+        sudo pacman -S gnome gnome-tweaks firefox flatpak nemo nemo-fileroller nemo-preview gtk-engine-murrine sassc seahorse
         yay -S chrome-gnome-shell fancontrol-gui pamac-aur
 
         # xscreensaver settings - 10 min timeout - GL matrix 

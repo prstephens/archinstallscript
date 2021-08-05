@@ -1,5 +1,6 @@
 linux-zen
 linux-zen-headers
+dkms
 intel-ucode
 refind
 efibootmgr
