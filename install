@@ -338,6 +338,14 @@ EOT
         # PulseAudio
         arch-chroot /mnt sed -i '/load-module module-suspend-on-idle/ s/^#*/#/' /etc/pulse/default.pa
 
+        # Intel X11 config
+        cat <<EOT > /mnt/etc/X11/xorg.conf.d/20-intel.conf 
+Section "Device"
+  Identifier "Intel Graphics"
+  Driver "intel"
+EndSection
+EOT
+
         # Create the pacman mirrorlist updater service
         cat <<EOT > /mnt/etc/systemd/system/reflector.service
 [Unit]
