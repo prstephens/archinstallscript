@@ -343,7 +343,7 @@ install_apps(){
         clear
 
         echo "Installing Chrome, VS Code, WPS Office, Gimp..."
-        yay -S google-chrome code onlyoffice-bin gimp vlc balena-etcher kodi-x11 dropbox handbrake
+        yay -S google-chrome code onlyoffice-bin gimp vlc balena-etcher kodi dropbox handbrake
 
         install_spotify
         install_profile-sync-daemon
