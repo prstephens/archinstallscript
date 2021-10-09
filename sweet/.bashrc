@@ -169,6 +169,7 @@ alias ug='less /var/log/pacman.log | grep upgraded'
 alias update='yay -Syu'
 alias vmbackup='sudo virsh dumpxml'
 alias weather='curl wttr.in/London'
+alias tpm='swtpm socket --tpmstate dir=/tmp/emulated_tpm --ctrl type=unixio,path=/tmp/emulated_tpm/swtpm-sock --log level=20 --tpm2'
 
 # Alias definitions.
 # You may want to put all your additions into a separate file like
