@@ -330,7 +330,7 @@ install_qemu(){
         clear
 
         echo "Installing QEMU/KVM"
-        sudo pacman -S libvirt virt-manager edk2-ovmf qemu iptables-nft dnsmasq dmidecode
+        sudo pacman -S libvirt virt-manager edk2-ovmf qemu iptables-nft dnsmasq dmidecode swtpm
 
         # Enable Virtualization Technology for Directed I/O in rEFInd config as boot param
         # module_blacklist=xpad                                 - allows XBOX controller to be passed through to VM
@@ -363,6 +363,18 @@ EOT
         sudo systemctl enable --now virtlogd.socket
         sudo virsh net-autostart default
         sudo virsh net-start default
+
+        # WINDOWS 11 Bypass
+        # =================
+        # TPM 
+        # swtpm socket --tpmstate dir=/tmp/emulated_tpm --ctrl type=unixio,path=/tmp/emulated_tpm/swtpm-sock --log level=20 --tpm2
+        # Pass through a TMP device as emulated TIS
+        #
+        # Secure boot
+        # Use the /usr/share/edk2-ovmf/x64/OVMF_CODE.secboot.fd
+        #
+        # Regedit hack (for upgrading from Windows 10 ONLY)
+        # HKEY_LOCAL_MACHINE\SYSTEM\Setup\MoSetup > New > DWORD (32-bit) Value. Name the value “AllowUpgradesWithUnsupportedTPMOrCPU" set it to 1
 }
 
 install_dev(){
