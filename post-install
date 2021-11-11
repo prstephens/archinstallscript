@@ -298,7 +298,6 @@ install_spotify(){
         echo "Installing Spotify..."
         curl -sS https://download.spotify.com/debian/pubkey_0D811D58.gpg | gpg --import -
         yay -S spotify
-        sudo chmod -R 777 /opt/spotify
 }
 
 install_profile-sync-daemon(){
@@ -323,7 +322,7 @@ install_apps(){
         yay -S google-chrome code onlyoffice-bin gimp vlc kodi dropbox handbrake
 
         install_spotify
-        #dinstall_profile-sync-daemon
+        #install_profile-sync-daemon
 }
 
 install_qemu(){

@@ -126,6 +126,13 @@ extrestore()
     cp -r $HOME/data/gnome-extensions $HOME/.local/share/gnome-shell/extensions
 }
 
+vm()
+{
+    sudo /$HOME/data/qemu/cpu-gov-performance
+	sudo virsh attach-device win11 --file /home/paul/data/qemu/attach-mouse.xml --live
+	sudo virsh attach-device win11 --file /home/paul/data/qemu/attach-bluetooth.xml --live
+}
+
 # some more ls aliases
 alias c='clear'
 alias cdev='cd ~/data/dev'
