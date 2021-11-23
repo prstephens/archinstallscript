@@ -125,7 +125,7 @@ install_gnome(){
         clear
         
         echo "Installing Gnome.."
-        sudo pacman -S gnome gnome-tweaks firefox flatpak nemo nemo-fileroller nemo-preview gtk-engine-murrine sassc seahorse gnome-notes
+        sudo pacman -S gnome gnome-tweaks firefox flatpak nemo nemo-fileroller nemo-preview gtk-engine-murrine sassc seahorse gnome-notes gparted
         yay -S chrome-gnome-shell fancontrol-gui pamac-aur
 
         # xscreensaver settings - 10 min timeout - GL matrix 
@@ -319,7 +319,7 @@ install_apps(){
         clear
 
         echo "Installing Chrome, VS Code, WPS Office, Gimp..."
-        yay -S google-chrome code onlyoffice-bin gimp vlc kodi dropbox handbrake
+        yay -S google-chrome code onlyoffice-bin gimp vlc kodi dropbox handbrake rpi-imager-bin
 
         install_spotify
         #install_profile-sync-daemon

@@ -126,11 +126,23 @@ extrestore()
     cp -r $HOME/data/gnome-extensions $HOME/.local/share/gnome-shell/extensions
 }
 
+
 vm()
 {
-    sudo /$HOME/data/qemu/cpu-gov-performance
+    read -p "Wanna set the govoner to performance? [Y/n]: " perf
+    if [ $perf = 'y' ]
+    then
+        for file in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do echo "performance" | sudo tee -a $file; done
+    fi
+
+    sudo virsh start win11
 	sudo virsh attach-device win11 --file /home/paul/data/qemu/attach-mouse.xml --live
 	sudo virsh attach-device win11 --file /home/paul/data/qemu/attach-bluetooth.xml --live
+}
+
+powersave() 
+{
+    for file in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do echo "powersave" | sudo tee -a $file; done
 }
 
 # some more ls aliases
@@ -158,7 +170,7 @@ alias in='yay -S'
 alias l='ls -CF'
 alias la='ls -A'
 alias ll='ls -alh'
-alias loadbash='. ~/.bashrc'
+alias lb='. ~/.bashrc'
 alias logs='sudo find /var/log -type f -exec file {} \; | grep '\''text'\'' | cut -d'\'' '\'' -f1 | sed -e'\''s/:$//g'\'' | grep -v '\''[0-9]$'\'' | xargs tail -f'
 alias ls='ls --color=auto'
 alias moon='curl wttr.in/moon'
@@ -177,6 +189,7 @@ alias update='yay -Syu'
 alias vmbackup='sudo virsh dumpxml'
 alias weather='curl wttr.in/London'
 alias tpm='swtpm socket --tpmstate dir=/tmp/emulated_tpm --ctrl type=unixio,path=/tmp/emulated_tpm/swtpm-sock --log level=20 --tpm2'
+alias cpu='sudo i7z'
 
 # Alias definitions.
 # You may want to put all your additions into a separate file like
