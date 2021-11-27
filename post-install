@@ -126,7 +126,7 @@ install_gnome(){
         
         echo "Installing Gnome.."
         sudo pacman -S gnome gnome-tweaks firefox flatpak nemo nemo-fileroller nemo-preview gtk-engine-murrine sassc seahorse gnome-notes gparted
-        yay -S chrome-gnome-shell fancontrol-gui pamac-aur
+        yay -S chrome-gnome-shell fancontrol-gui pamac-aur bpytop-git
 
         # xscreensaver settings - 10 min timeout - GL matrix 
         curl -sL $BASE_URL/sweet/.xscreensaver -o $HOME/.xscreensaver
