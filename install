@@ -372,6 +372,14 @@ EOT
         arch-chroot /mnt systemctl enable sshd
 }
 
+rebootpc(){
+        if (whiptail --backtitle "${BACKTITLE}" --yesno "Reboot?" --defaultno 8 78) then
+                clear
+                umount -a
+                reboot
+        fi
+}
+
 nvidia-config(){
         pacstrap /mnt nvidia-dkms nvidia-settings nvidia-utils
 
