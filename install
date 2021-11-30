@@ -201,8 +201,8 @@ performinstall(){
         mount $rootdev /mnt
 
         echo "Starting install.."
-        pacstrap /mnt ${package_list} | tr -d '\n'
-        #pacstrap /mnt base base-devel linux-firmware linux-zen linux-zen-headers dkms intel-ucode refind efibootmgr ntfs-3g networkmanager dnsutils usbutils reflector nfs-utils xorg xorg-server xorg-xinit xf86-video-intel mesa vulkan-intel nano nano-syntax-highlighting sudo git bluez bluez-utils pulseaudio rxvt-unicode wget cups hplip python-pyqt5 archlinux-keyring pacman-contrib openssh ncdu glances htop i7z
+        
+        pacstrap /mnt $(< /tmp/packages)
 
         # Generate fstab
         genfstab -U /mnt >> /mnt/etc/fstab
@@ -442,16 +442,6 @@ dependencies(){
 
 getpackagelist(){
         curl -sL $BASE_URL/packages -o /tmp/packages
-        sed -i '/^\s*$/d' /tmp/packages
-        sed -i '/^#/ d' /tmp/packages
-
-        # base packages REQUIRED
-        package_list="base base-devel linux-firmware"
-
-        while read line
-        do
-                package_list="$package_list $(echo $line | sed 's/"//g')"
-        done < /tmp/packages
 }
 
 initialise(){

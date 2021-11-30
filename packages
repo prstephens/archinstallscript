@@ -1,3 +1,6 @@
+base
+base-devel
+linux-firmware
 linux-zen
 linux-zen-headers
 dkms
