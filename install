@@ -246,49 +246,6 @@ EOT
  
 }
 
-setupuser(){
-        # Create new user
-        arch-chroot /mnt useradd -m -G wheel $user
-        arch-chroot /mnt sed -i 's/# %wheel ALL=(ALL) ALL/%wheel ALL=(ALL) ALL/' /etc/sudoers
-        echo "Defaults insults" >> /mnt/etc/sudoers
-        echo "${user} ALL=(ALL) NOPASSWD: /usr/bin/mount" >> /mnt/etc/sudoers
-        echo "${user} ALL=(ALL) NOPASSWD: /usr/bin/umount" >> /mnt/etc/sudoers
-        echo "${user} ALL=(ALL) NOPASSWD: /usr/bin/sed" >> /mnt/etc/sudoers
-
-        # Set root password
-        echo "Setting user and root password..."
-        echo "${user}:${password}" | arch-chroot /mnt chpasswd
-        echo "root:${password}" | arch-chroot /mnt chpasswd
-
-        # config files
-        echo "Getting some sweet config files..."
-        arch-chroot /mnt curl -sL $BASE_URL/sweet/.Xresources -o /home/$user/.Xresources
-        arch-chroot /mnt curl -sL $BASE_URL/sweet/.bashrc -o /home/$user/.bashrc
-        arch-chroot /mnt chown $user:$user /home/$user/.Xresources
-        arch-chroot /mnt chown $user:$user /home/$user/.bashrc
-        arch-chroot /mnt curl -sL $BASE_URL/sweet/issue -o /etc/issue
-
-        # set custom pacman.conf 
-        arch-chroot /mnt mv /etc/pacman.conf /etc/pacman.conf.bak
-        arch-chroot /mnt curl -sL $BASE_URL/sweet/pacman.conf -o /etc/pacman.conf
-        
-        # Copy post-install file to /home/$user
-        echo "Copy post-install file to /home/${user}..."
-        arch-chroot /mnt curl -sL $BASE_URL/post-install -o /home/$user/post-install
-        arch-chroot /mnt chown $user:$user /home/$user/post-install
-        arch-chroot /mnt chmod a+x /home/$user/post-install
-
-        # Add shell-option to ~/.inputrc to enable case-insensitive tab completion
-        if [ ! -a /mnt/home/$user/.inputrc ]; then echo '$include /etc/inputrc' > /mnt/home/$user/.inputrc; fi
-        echo 'set completion-ignore-case On' >> /mnt/home/$user/.inputrc
-        arch-chroot /mnt chown $user:$user /home/$user/.inputrc
-
-        # Create user xinit config file 
-        echo "Creating .xinitrc file..."
-        head -n -5 /mnt/etc/X11/xinit/xinitrc >> /mnt/home/$user/.xinitrc
-        arch-chroot /mnt chown $user:$user /home/$user/.xinitrc      
-}
-
 configuration(){
         clear
 
@@ -370,6 +327,49 @@ EOT
         arch-chroot /mnt systemctl enable reflector.timer
         arch-chroot /mnt systemctl enable fstrim.timer
         arch-chroot /mnt systemctl enable sshd
+}
+
+setupuser(){
+        # Create new user
+        arch-chroot /mnt useradd -m -G wheel $user
+        arch-chroot /mnt sed -i 's/# %wheel ALL=(ALL) ALL/%wheel ALL=(ALL) ALL/' /etc/sudoers
+        echo "Defaults insults" >> /mnt/etc/sudoers
+        echo "${user} ALL=(ALL) NOPASSWD: /usr/bin/mount" >> /mnt/etc/sudoers
+        echo "${user} ALL=(ALL) NOPASSWD: /usr/bin/umount" >> /mnt/etc/sudoers
+        echo "${user} ALL=(ALL) NOPASSWD: /usr/bin/sed" >> /mnt/etc/sudoers
+
+        # Set root password
+        echo "Setting user and root password..."
+        echo "${user}:${password}" | arch-chroot /mnt chpasswd
+        echo "root:${password}" | arch-chroot /mnt chpasswd
+
+        # config files
+        echo "Getting some sweet config files..."
+        arch-chroot /mnt curl -sL $BASE_URL/sweet/.Xresources -o /home/$user/.Xresources
+        arch-chroot /mnt curl -sL $BASE_URL/sweet/.bashrc -o /home/$user/.bashrc
+        arch-chroot /mnt chown $user:$user /home/$user/.Xresources
+        arch-chroot /mnt chown $user:$user /home/$user/.bashrc
+        arch-chroot /mnt curl -sL $BASE_URL/sweet/issue -o /etc/issue
+
+        # set custom pacman.conf 
+        arch-chroot /mnt mv /etc/pacman.conf /etc/pacman.conf.bak
+        arch-chroot /mnt curl -sL $BASE_URL/sweet/pacman.conf -o /etc/pacman.conf
+        
+        # Copy post-install file to /home/$user
+        echo "Copy post-install file to /home/${user}..."
+        arch-chroot /mnt curl -sL $BASE_URL/post-install -o /home/$user/post-install
+        arch-chroot /mnt chown $user:$user /home/$user/post-install
+        arch-chroot /mnt chmod a+x /home/$user/post-install
+
+        # Add shell-option to ~/.inputrc to enable case-insensitive tab completion
+        if [ ! -a /mnt/home/$user/.inputrc ]; then echo '$include /etc/inputrc' > /mnt/home/$user/.inputrc; fi
+        echo 'set completion-ignore-case On' >> /mnt/home/$user/.inputrc
+        arch-chroot /mnt chown $user:$user /home/$user/.inputrc
+
+        # Create user xinit config file 
+        echo "Creating .xinitrc file..."
+        head -n -5 /mnt/etc/X11/xinit/xinitrc >> /mnt/home/$user/.xinitrc
+        arch-chroot /mnt chown $user:$user /home/$user/.xinitrc      
 }
 
 rebootpc(){
