@@ -330,7 +330,6 @@ EOT
 }
 
 setupuser(){
-        # Create new user
         arch-chroot /mnt useradd -m -G wheel $user
         arch-chroot /mnt sed -i 's/# %wheel ALL=(ALL) ALL/%wheel ALL=(ALL) ALL/' /etc/sudoers
         echo "Defaults insults" >> /mnt/etc/sudoers
