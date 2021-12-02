@@ -242,7 +242,7 @@ resolution 1920 1080
 timeout 5
 default_selection Microsoft
 include themes/Matrix-rEFInd/theme.conf
-EOT  
+EOT
  
 }
 
