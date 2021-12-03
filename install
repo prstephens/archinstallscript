@@ -384,51 +384,6 @@ rebootpc(){
         fi
 }
 
-nvidia-config(){
-        pacstrap /mnt nvidia-dkms nvidia-settings nvidia-utils
-
-        arch-chroot /mnt curl -sL $BASE_URL/sweet/xorg.conf -o /etc/X11/xorg.conf
-
-        arch-chroot /mnt sed -i 's/^MODULES=.*$/MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)/' /etc/mkinitcpio.conf
-        arch-chroot /mnt mkinitcpio -P
-
-        cat <<EOT > /mnt/etc/X11/xorg.conf.d/20-nvidia.conf
-Section "OutputClass"
-Identifier "intel"
-MatchDriver "i915"
-Driver "modesetting"
-EndSection
-
-Section "OutputClass"
-Identifier "nvidia"
-MatchDriver "nvidia-drm"
-Driver "nvidia"
-Option "AllowEmptyInitialConfiguration"
-Option "PrimaryGPU" "yes"
-ModulePath "/usr/lib/nvidia/xorg"
-ModulePath "/usr/lib/xorg/modules"
-EndSection
-EOT
-
-        # NVIDIA pacman hook configuration - update initramfs after driver update
-        cat <<EOT > /mnt/etc/pacman.d/hooks/nvidia.hook
-[Trigger]
-Operation=Install
-Operation=Upgrade
-Operation=Remove
-Type=Package
-Target=nvidia-dkms
-Target=linux-zen
-
-[Action]
-Description=Update Nvidia module in initcpio
-Depends=mkinitcpio
-When=PostTransaction
-NeedsTargets
-Exec=/bin/sh -c 'while read -r trg; do case $trg in linux-zen) exit 0; esac; done; /usr/bin/mkinitcpio -P'
-EOT
-}
-
 finish(){
         whiptail --backtitle "$BACKTITLE" --msgbox --title "Congratulations" "Install Complete\n\nReturn to main menu and select 'Finsh and Reboot'" 0 78
         nextitem="5)"
