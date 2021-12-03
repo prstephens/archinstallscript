@@ -172,9 +172,15 @@ getuserinfo(){
 }
 
 performinstall(){
-        whiptail --backtitle "${BACKTITLE}" --title "Are you sure?" --yesno "${msg}" 0 78 3>&1 1>&2 2>&3
-        if [ ! "$?" = "0" ]; then
+        whiptail --backtitle "${BACKTITLE}" --title "Are these values correct?" --yesno "${msg}" 0 78 3>&1 1>&2 2>&3
+        if ([ ! "$?" = "0" ];) then
 		mainmenu "1)"
+	fi
+
+        if (whiptail --backtitle "${BACKTITLE}" --title "### WARNING ###" --yesno "Do you want to format ${bootdev}? \n\nTHIS COULD ERASE EXISITING OPERATING SYSTEM BOOTLOADERS" --defaultno 0 78) then
+		mkfs.fat -F 32 ${bootdev}
+        else
+                mainmenu "1)"
 	fi
         
         clear
@@ -182,6 +188,7 @@ performinstall(){
         timedatectl set-ntp true
 
         # Setup the partitions
+        echo "### STARTING INSTALL ###"
         read -p "You are about to wipe ${rootdev}? [y/N]: " wipe
         if [ $wipe = 'y' ]
         then
@@ -218,8 +225,6 @@ installbootloader(){
         ROOTUUID=$(blkid -s UUID -o value $rootdev)
 
         arch-chroot /mnt mkdir /boot/efi
-
-        # mount windows EFI boot (on sda1)
         arch-chroot /mnt mount $bootdev /boot/efi
 
         # clean it up before install
