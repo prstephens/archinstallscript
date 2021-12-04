@@ -254,10 +254,10 @@ installbootloader(){
         # clean it up before install
         [[ -d /mnt/boot/efi/EFI/refind ]] && rm -rdf /mnt/boot/efi/EFI/refind
 
-        arch-chroot /mnt refind-install
+        arch-chroot /mnt refind-install $bootdev --alldrivers
 
         cat <<EOT > /mnt/boot/refind_linux.conf
-"Boot with standard options"  "rw root=UUID=${ROOTUUID} quiet loglevel=3 rd.udev.log_priority=3 initrd=boot\intel-ucode.img initrd=boot\initramfs-linux-zen.img"
+"Boot with standard options"  "rw root=UUID=${ROOTUUID} quiet loglevel=3 rd.udev.log_priority=3 rootflags=subvol=@ initrd=@\boot\intel-ucode.img initrd=@\boot\initramfs-linux-zen.img"
 "Boot to single-user mode"    "rw root=UUID=${ROOTUUID} loglevel=3 quiet single"
 "Boot with minimal options"   "rw root=UUID=${ROOTUUID}"
 EOT
@@ -267,6 +267,7 @@ EOT
         arch-chroot /mnt git clone https://github.com/prstephens/Matrix-rEFInd.git /boot/efi/EFI/refind/themes/Matrix-rEFInd
 
         cat <<EOT > /mnt/boot/efi/EFI/refind/refind.conf
+also_scan_dirs +,@/boot
 resolution 1920 1080
 timeout 5
 default_selection Microsoft
