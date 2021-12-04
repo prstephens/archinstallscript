@@ -192,7 +192,7 @@ performinstall(){
         read -p "You are about to wipe ${rootdev}? [y/N]: " wipe
         if [ $wipe = 'y' ]
         then
-                mkfs.ext4 $rootdev
+                mkfs.btrfs $rootdev
         else
                 echo "Install stopped"
                 exit
@@ -206,6 +206,30 @@ performinstall(){
 
         #root
         mount $rootdev /mnt
+
+        #BTRFS subvolumes
+        btrfs su cr /mnt/@
+        btrfs su cr /mnt/@home
+        btrfs su cr /mnt/@var
+        btrfs su cr /mnt/@opt
+        btrfs su cr /mnt/@tmp
+        btrfs su cr /mnt/@.snapshots
+        umount /mnt
+
+        mount -o noatime,commit=120,compress=zstd,space_cache,subvol=@ $rootdev /mnt
+        
+        # You need to manually create folder to mount the other subvolumes at
+        mkdir /mnt/{home,var,opt,tmp,.snapshots}
+
+        mount -o noatime,commit=120,compress=zstd,space_cache,subvol=@home $rootdev /mnt/home
+
+        mount -o noatime,commit=120,compress=zstd,space_cache,subvol=@opt $rootdev /mnt/opt
+
+        mount -o noatime,commit=120,compress=zstd,space_cache,subvol=@tmp $rootdev /mnt/tmp
+
+        mount -o noatime,commit=120,compress=zstd,space_cache,subvol=@.snapshots $rootdev /mnt/.snapshots
+
+        mount -o subvol=@var $rootdev /mnt/var
 
         echo "Starting install.."
         
