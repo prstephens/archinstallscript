@@ -219,7 +219,7 @@ performinstall(){
         mount -o noatime,commit=120,compress=zstd,space_cache,subvol=@ $rootdev /mnt
         
         # You need to manually create folder to mount the other subvolumes at
-        mkdir /mnt/{home,var,opt,tmp,.snapshots}
+        mkdir /mnt/{boot,home,var,opt,tmp,.snapshots}
 
         mount -o noatime,commit=120,compress=zstd,space_cache,subvol=@home $rootdev /mnt/home
 
@@ -231,6 +231,9 @@ performinstall(){
 
         mount -o subvol=@var $rootdev /mnt/var
 
+        mkdir /mnt/boot/efi
+        mount $bootdev /mnt/boot/efi
+
         echo "Starting install.."
         
         pacstrap /mnt $(< /tmp/packages)
@@ -238,8 +241,8 @@ performinstall(){
         # Generate fstab
         genfstab -U /mnt >> /mnt/etc/fstab
 
-        sudo sed -i 's/^MODULES=.*$/MODULES=(btrfs)/' /etc/mkinitcpio.conf
-        sudo mkinitcpio -P
+        sed -i 's/^MODULES=.*$/MODULES=(btrfs)/' /mnt/etc/mkinitcpio.conf
+        arch-chroot /mnt mkinitcpio -P
 }
 
 installbootloader(){
@@ -250,9 +253,6 @@ installbootloader(){
         echo "Installing rEFInd..."
 
         ROOTUUID=$(blkid -s UUID -o value $rootdev)
-
-        arch-chroot /mnt mkdir /boot/efi
-        arch-chroot /mnt mount $bootdev /boot/efi
 
         # clean it up before install
         [[ -d /mnt/boot/efi/EFI/refind ]] && rm -rdf /mnt/boot/efi/EFI/refind
