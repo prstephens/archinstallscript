@@ -237,6 +237,9 @@ performinstall(){
 
         # Generate fstab
         genfstab -U /mnt >> /mnt/etc/fstab
+
+        sudo sed -i 's/^MODULES=.*$/MODULES=(btrfs)/' /etc/mkinitcpio.conf
+        sudo mkinitcpio -P
 }
 
 installbootloader(){
