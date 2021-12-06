@@ -231,8 +231,7 @@ performinstall(){
 
         mount -o subvol=@var $rootdev /mnt/var
 
-        mkdir /mnt/boot/efi
-        mount $bootdev /mnt/boot/efi
+        mount $bootdev /mnt/boot
 
         echo "Starting install.."
         
@@ -242,6 +241,7 @@ performinstall(){
         genfstab -U /mnt >> /mnt/etc/fstab
 
         sed -i 's/^MODULES=.*$/MODULES=(btrfs)/' /mnt/etc/mkinitcpio.conf
+
         arch-chroot /mnt mkinitcpio -P
 }
 
@@ -255,9 +255,12 @@ installbootloader(){
         ROOTUUID=$(blkid -s UUID -o value $rootdev)
 
         # clean it up before install
-        [[ -d /mnt/boot/efi/EFI/refind ]] && rm -rdf /mnt/boot/efi/EFI/refind
+        [[ -d /mnt/boot/EFI/refind ]] && rm -rdf /mnt/boot/EFI/refind
 
-        arch-chroot /mnt refind-install $bootdev --alldrivers
+        arch-chroot /mnt refind-install
+
+        mkdir /mnt/boot/EFI/refind/drivers_x64
+        cp /mnt/usr/share/refind/drivers_x64/btrfs_x64.efi /mnt/boot/EFI/refind/drivers_x64/btrfs_x64.efi
 
         cat <<EOT > /mnt/boot/refind_linux.conf
 "Boot with standard options"  "rw root=UUID=${ROOTUUID} quiet loglevel=3 rd.udev.log_priority=3 rootflags=subvol=@ initrd=@\boot\intel-ucode.img initrd=@\boot\initramfs-linux-zen.img"
@@ -266,14 +269,12 @@ installbootloader(){
 EOT
 
         # Morpheous theme for refind 
-        arch-chroot /mnt mkdir /boot/efi/EFI/refind/themes
-        arch-chroot /mnt git clone https://github.com/prstephens/Matrix-rEFInd.git /boot/efi/EFI/refind/themes/Matrix-rEFInd
+        arch-chroot /mnt mkdir /boot/EFI/refind/themes
+        arch-chroot /mnt git clone https://github.com/prstephens/Matrix-rEFInd.git /boot/EFI/refind/themes/Matrix-rEFInd
 
-        cat <<EOT > /mnt/boot/efi/EFI/refind/refind.conf
+        cat <<EOT > /mnt/boot/EFI/refind/refind.conf
 also_scan_dirs +,@/boot
-resolution 1920 1080
 timeout 5
-default_selection Microsoft
 include themes/Matrix-rEFInd/theme.conf
 EOT
  
