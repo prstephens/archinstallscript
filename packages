@@ -3,7 +3,6 @@ base-devel
 linux-firmware
 linux-zen
 linux-zen-headers
-btrfs-progs
 dkms
 intel-ucode
 refind

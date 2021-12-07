@@ -192,7 +192,7 @@ performinstall(){
         read -p "You are about to wipe ${rootdev}? [y/N]: " wipe
         if [ $wipe = 'y' ]
         then
-                mkfs.btrfs $rootdev
+                mkfs.ext4 $rootdev
         else
                 echo "Install stopped"
                 exit
@@ -207,42 +207,12 @@ performinstall(){
         #root
         mount $rootdev /mnt
 
-        #BTRFS subvolumes
-        btrfs su cr /mnt/@
-        btrfs su cr /mnt/@home
-        btrfs su cr /mnt/@var
-        btrfs su cr /mnt/@opt
-        btrfs su cr /mnt/@tmp
-        btrfs su cr /mnt/@.snapshots
-        umount /mnt
-
-        mount -o noatime,commit=120,compress=zstd,space_cache,subvol=@ $rootdev /mnt
-        
-        # You need to manually create folder to mount the other subvolumes at
-        mkdir /mnt/{boot,home,var,opt,tmp,.snapshots}
-
-        mount -o noatime,commit=120,compress=zstd,space_cache,subvol=@home $rootdev /mnt/home
-
-        mount -o noatime,commit=120,compress=zstd,space_cache,subvol=@opt $rootdev /mnt/opt
-
-        mount -o noatime,commit=120,compress=zstd,space_cache,subvol=@tmp $rootdev /mnt/tmp
-
-        mount -o noatime,commit=120,compress=zstd,space_cache,subvol=@.snapshots $rootdev /mnt/.snapshots
-
-        mount -o subvol=@var $rootdev /mnt/var
-
-        mount $bootdev /mnt/boot
-
         echo "Starting install.."
         
         pacstrap /mnt $(< /tmp/packages)
 
         # Generate fstab
         genfstab -U /mnt >> /mnt/etc/fstab
-
-        sed -i 's/^MODULES=.*$/MODULES=(btrfs)/' /mnt/etc/mkinitcpio.conf
-
-        arch-chroot /mnt mkinitcpio -P
 }
 
 installbootloader(){
@@ -254,27 +224,28 @@ installbootloader(){
 
         ROOTUUID=$(blkid -s UUID -o value $rootdev)
 
+        arch-chroot /mnt mkdir /boot/efi
+        arch-chroot /mnt mount $bootdev /boot/efi
+
         # clean it up before install
-        [[ -d /mnt/boot/EFI/refind ]] && rm -rdf /mnt/boot/EFI/refind
+        [[ -d /mnt/boot/efi/EFI/refind ]] && rm -rdf /mnt/boot/efi/EFI/refind
 
         arch-chroot /mnt refind-install
 
-        mkdir /mnt/boot/EFI/refind/drivers_x64
-        cp /mnt/usr/share/refind/drivers_x64/btrfs_x64.efi /mnt/boot/EFI/refind/drivers_x64/btrfs_x64.efi
-
         cat <<EOT > /mnt/boot/refind_linux.conf
-"Boot with standard options"  "rw root=UUID=${ROOTUUID} quiet loglevel=3 rd.udev.log_priority=3 rootflags=subvol=@ initrd=@\boot\intel-ucode.img initrd=@\boot\initramfs-linux-zen.img"
+"Boot with standard options"  "rw root=UUID=${ROOTUUID} quiet loglevel=3 rd.udev.log_priority=3 initrd=boot\intel-ucode.img initrd=boot\initramfs-linux-zen.img"
 "Boot to single-user mode"    "rw root=UUID=${ROOTUUID} loglevel=3 quiet single"
 "Boot with minimal options"   "rw root=UUID=${ROOTUUID}"
 EOT
 
         # Morpheous theme for refind 
-        arch-chroot /mnt mkdir /boot/EFI/refind/themes
-        arch-chroot /mnt git clone https://github.com/prstephens/Matrix-rEFInd.git /boot/EFI/refind/themes/Matrix-rEFInd
+        arch-chroot /mnt mkdir /boot/efi/EFI/refind/themes
+        arch-chroot /mnt git clone https://github.com/prstephens/Matrix-rEFInd.git /boot/efi/EFI/refind/themes/Matrix-rEFInd
 
-        cat <<EOT > /mnt/boot/EFI/refind/refind.conf
-also_scan_dirs +,@/boot
+        cat <<EOT > /mnt/boot/efi/EFI/refind/refind.conf
+resolution 1920 1080
 timeout 5
+default_selection Microsoft
 include themes/Matrix-rEFInd/theme.conf
 EOT
  
@@ -343,11 +314,9 @@ EOT
 Description=Pacman mirrorlist update
 Wants=network-online.target
 After=network-online.target nss-lookup.target
-
 [Service]
 Type=oneshot
 ExecStart=/usr/bin/reflector -c GB -l 25 --age 12 -p http -p https --sort rate --save /etc/pacman.d/mirrorlist
-
 [Install]
 WantedBy=multi-user.target
 EOT
