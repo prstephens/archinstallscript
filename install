@@ -192,7 +192,7 @@ performinstall(){
         read -p "You are about to wipe ${rootdev}? [y/N]: " wipe
         if [ $wipe = 'y' ]
         then
-                mkfs.ext4 $rootdev
+                mkfs.btrfs $rootdev
         else
                 echo "Install stopped"
                 exit
@@ -207,6 +207,32 @@ performinstall(){
         #root
         mount $rootdev /mnt
 
+        #BTRFS subvolumes
+        btrfs su cr /mnt/@
+        btrfs su cr /mnt/@home
+        btrfs su cr /mnt/@var
+        btrfs su cr /mnt/@opt
+        btrfs su cr /mnt/@tmp
+        btrfs su cr /mnt/@snapshots
+        umount /mnt
+
+        mount -o noatime,commit=120,compress=lzo,space_cache,subvol=@ $rootdev /mnt
+        
+        # You need to manually create folder to mount the other subvolumes at
+        mkdir /mnt/{boot,home,var,opt,tmp,.snapshots}
+
+        mount -o noatime,commit=120,compress=lzo,space_cache=v2,subvol=@home $rootdev /mnt/home
+
+        mount -o noatime,commit=120,compress=lzo,space_cache=v2,subvol=@opt $rootdev /mnt/opt
+
+        mount -o noatime,commit=120,compress=zlzostd,space_cache=v2,subvol=@tmp $rootdev /mnt/tmp
+
+        mount -o noatime,commit=120,compress=lzo,space_cache=v2,subvol=@snapshots $rootdev /mnt/.snapshots
+
+        mount -o noatime,commit=120,compress=lzo,space_cache=v2,subvol=@var $rootdev /mnt/var
+
+        mount $bootdev /mnt/boot
+
         echo "Starting install.."
         
         pacstrap /mnt $(< /tmp/packages)
@@ -216,39 +242,9 @@ performinstall(){
 }
 
 installbootloader(){
-        # Install bootloader
-        # rEFInd
         clear
-
-        echo "Installing rEFInd..."
-
-        ROOTUUID=$(blkid -s UUID -o value $rootdev)
-
-        arch-chroot /mnt mkdir /boot/efi
-        arch-chroot /mnt mount $bootdev /boot/efi
-
-        # clean it up before install
-        [[ -d /mnt/boot/efi/EFI/refind ]] && rm -rdf /mnt/boot/efi/EFI/refind
-
-        arch-chroot /mnt refind-install
-
-        cat <<EOT > /mnt/boot/refind_linux.conf
-"Boot with standard options"  "rw root=UUID=${ROOTUUID} quiet loglevel=3 rd.udev.log_priority=3 initrd=boot\intel-ucode.img initrd=boot\initramfs-linux-zen.img"
-"Boot to single-user mode"    "rw root=UUID=${ROOTUUID} loglevel=3 quiet single"
-"Boot with minimal options"   "rw root=UUID=${ROOTUUID}"
-EOT
-
-        # Morpheous theme for refind 
-        arch-chroot /mnt mkdir /boot/efi/EFI/refind/themes
-        arch-chroot /mnt git clone https://github.com/prstephens/Matrix-rEFInd.git /boot/efi/EFI/refind/themes/Matrix-rEFInd
-
-        cat <<EOT > /mnt/boot/efi/EFI/refind/refind.conf
-resolution 1920 1080
-timeout 5
-default_selection Microsoft
-include themes/Matrix-rEFInd/theme.conf
-EOT
- 
+        arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
+        arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
 }
 
 configuration(){
@@ -299,6 +295,10 @@ EOT
 
         # PulseAudio
         arch-chroot /mnt sed -i '/load-module module-suspend-on-idle/ s/^#*/#/' /etc/pulse/default.pa
+
+        #add btrfs to modules
+        sed -i 's/^MODULES=.*$/MODULES=(btrfs)/' /mnt/etc/mkinitcpio.conf
+        arch-chroot /mnt mkinitcpio -P
 
         # Intel X11 config
         cat <<EOT > /mnt/etc/X11/xorg.conf.d/20-intel.conf 

@@ -3,10 +3,13 @@ base-devel
 linux-firmware
 linux-zen
 linux-zen-headers
+snapper
+grub
+efibootmgr
+mtools
+dosfstools
 dkms
 intel-ucode
-refind
-efibootmgr
 ntfs-3g
 networkmanager
 dnsutils
