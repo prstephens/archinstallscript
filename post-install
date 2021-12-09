@@ -126,7 +126,7 @@ install_gnome(){
         
         echo "Installing Gnome.."
         sudo pacman -S gnome gnome-tweaks firefox flatpak nemo nemo-fileroller nemo-preview gtk-engine-murrine sassc seahorse gnome-notes gparted
-        yay -S chrome-gnome-shell fancontrol-gui pamac-aur bpytop-git
+        yay -S chrome-gnome-shell fancontrol-gui pamac-aur bpytop-git snap-pac-grub snapper-gui
 
         # xscreensaver settings - 10 min timeout - GL matrix 
         curl -sL $BASE_URL/sweet/.xscreensaver -o $HOME/.xscreensaver
@@ -336,7 +336,7 @@ install_qemu(){
         # default_hugepagesz=1G hugepagesz=1G hugepages=8       - pre-allocates 8GB RAM for VM using 1GB Hugepages
         sudo sed -i.bak 's/linux-zen.img[^"]*/& intel_iommu=on iommu=pt video=efifb:off pci=realloc module_blacklist=xpad default_hugepagesz=1G hugepagesz=1G hugepages=8/' /boot/refind_linux.conf
 
-        sudo sed -i 's/^MODULES=.*$/MODULES=(vfio_pci vfio vfio_iommu_type1 vfio_virqfd)/' /etc/mkinitcpio.conf
+        sudo sed -i 's/^MODULES=.*$/MODULES=(btrfs vfio_pci vfio vfio_iommu_type1 vfio_virqfd)/' /etc/mkinitcpio.conf
         sudo mkinitcpio -P
 
         sudo usermod -a -G libvirt $USER
