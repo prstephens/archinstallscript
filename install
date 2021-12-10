@@ -290,7 +290,7 @@ EOT
         # PulseAudio
         arch-chroot /mnt sed -i '/load-module module-suspend-on-idle/ s/^#*/#/' /etc/pulse/default.pa
 
-        #add btrfs to modules
+        # add btrfs to modules
         sed -i 's/^MODULES=.*$/MODULES=(btrfs)/' /mnt/etc/mkinitcpio.conf
         arch-chroot /mnt mkinitcpio -P
 
@@ -315,26 +315,8 @@ ExecStart=/usr/bin/reflector -c GB -l 25 --age 12 -p http -p https --sort rate -
 WantedBy=multi-user.target
 EOT
 
-        #snapper config
-        arch-chroot /mnt umount /.snapshots
-        arch-chroot /mnt rm -r /.snapshots
-        arch-chroot /mnt snapper -c root create-config /
-        arch-chroot /mnt btrfs subvolume delete /.snapshots
-        arch-chroot /mnt mkdir /.snapshots
-        arch-chroot /mnt mount -a
-        arch-chroot /mnt chmod 750 /.snapshots
-        
-        sed -i 's/^ALLOW_USERS=.*$/ALLOW_USERS="paul"/' /mnt/etc/snapper/configs/root
-        sed -i 's/^TIMELINE_LIMIT_HOURLY=.*$/TIMELINE_LIMIT_HOURLY="5"/' /mnt/etc/snapper/configs/root
-        sed -i 's/^TIMELINE_LIMIT_DAILY=.*$/TIMELINE_LIMIT_DAILY="7"/' /mnt/etc/snapper/configs/root
-        sed -i 's/^TIMELINE_LIMIT_WEEKLY=.*$/TIMELINE_LIMIT_WEEKLY="0"/' /mnt/etc/snapper/configs/root
-        sed -i 's/^TIMELINE_LIMIT_MONTHLY=.*$/TIMELINE_LIMIT_MONTHLY="0"/' /mnt/etc/snapper/configs/root
-        sed -i 's/^TIMELINE_LIMIT_YEARLY=.*$/TIMELINE_LIMIT_YEARLY="0"/' /mnt/etc/snapper/configs/root
-
         # Enable services
         echo "Enabling services..."
-        arch-chroot /mnt systemctl enable snapper-timeline.timer
-        arch-chroot /mnt systemctl enable snapper-cleanup.timer
         arch-chroot /mnt systemctl enable NetworkManager.service
         arch-chroot /mnt systemctl enable bluetooth.service
         arch-chroot /mnt systemctl enable cups.service

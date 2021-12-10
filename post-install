@@ -126,7 +126,7 @@ install_gnome(){
         
         echo "Installing Gnome.."
         sudo pacman -S gnome gnome-tweaks firefox flatpak nemo nemo-fileroller nemo-preview gtk-engine-murrine sassc seahorse gnome-notes gparted
-        yay -S chrome-gnome-shell fancontrol-gui pamac-aur bpytop-git snap-pac-grub snapper-gui
+        yay -S chrome-gnome-shell fancontrol-gui pamac-aur bpytop-git snapper-gui
 
         # xscreensaver settings - 10 min timeout - GL matrix 
         curl -sL $BASE_URL/sweet/.xscreensaver -o $HOME/.xscreensaver
@@ -408,24 +408,46 @@ updatemirrors(){
         } | whiptail --gauge --title "$BACKTITLE" "Ranking Mirrors..." 8 78 0
 }
 
-install_yay(){
+initialise(){
+        # install yay
         git clone https://aur.archlinux.org/yay.git $HOME/yay
         cd $HOME/yay
         makepkg -si
         cd ..
+
+        # snapper config
+        sudo umount /.snapshots
+        sudo rm -r /.snapshots
+        sudo snapper -c root create-config /
+        sudo btrfs subvolume delete /.snapshots
+        sudo mkdir /.snapshots
+        sudo mount -a
+        sudo chmod 750 /.snapshots
+
+        sudo sed -i 's/^ALLOW_USERS=.*$/ALLOW_USERS="paul"/' /etc/snapper/configs/root
+        sudo sed -i 's/^TIMELINE_LIMIT_HOURLY=.*$/TIMELINE_LIMIT_HOURLY="5"/' /etc/snapper/configs/root
+        sudo sed -i 's/^TIMELINE_LIMIT_DAILY=.*$/TIMELINE_LIMIT_DAILY="7"/' /etc/snapper/configs/root
+        sudo sed -i 's/^TIMELINE_LIMIT_WEEKLY=.*$/TIMELINE_LIMIT_WEEKLY="0"/' /etc/snapper/configs/root
+        sudo sed -i 's/^TIMELINE_LIMIT_MONTHLY=.*$/TIMELINE_LIMIT_MONTHLY="0"/' /etc/snapper/configs/root
+        sudo sed -i 's/^TIMELINE_LIMIT_YEARLY=.*$/TIMELINE_LIMIT_YEARLY="0"/' /etc/snapper/configs/root
+
+        sudo systemctl enable --now snapper-timeline.timer
+        sudo systemctl enable --now snapper-cleanup.timer
+
+        yay -S snap-pac-grub
+
+        # optimise yay when building packages
+        sudo sed -i 's/^#MAKEFLAGS="-j2"/MAKEFLAGS="-j$(nproc)"/' /etc/makepkg.conf
+        sudo sed -i "s/^PKGEXT=.*$/PKGEXT='.pkg.tar'/" /etc/makepkg.conf
+
+        # git credentials
+        git config --global credential.helper store
+        git config --global user.email "pr.stephens@gmail.com"
+        git config --global user.name "prstephens"
 }
 
 # --------------------------------------------------------
 
-[[ ! -d $HOME/yay ]] && install_yay
-
-# optimise yay when building packages
-sudo sed -i 's/^#MAKEFLAGS="-j2"/MAKEFLAGS="-j$(nproc)"/' /etc/makepkg.conf
-sudo sed -i "s/^PKGEXT=.*$/PKGEXT='.pkg.tar'/" /etc/makepkg.conf
-
-# git credentials
-git config --global credential.helper store
-git config --global user.email "pr.stephens@gmail.com"
-git config --global user.name "prstephens"
+[[ ! -d $HOME/yay ]] && initialise
 
 mainmenu
