@@ -238,7 +238,11 @@ performinstall(){
 installbootloader(){
         clear
         arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
+        arch-chroot /mnt sed -i 's/^GRUB_GFXMODE=.*$/GRUB_GFXMODE=1920x1080x32/' /etc/default/grub
         arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
+
+        # boot params
+        # rd.systemd.show_status=false nowatchdog mitigations=off
 }
 
 configuration(){
@@ -246,11 +250,23 @@ configuration(){
 
         # Set Cloudfare as our DNS
         cat <<EOT > /mnt/etc/resolv.conf
+options timeout:1
+options single-request
+
 nameserver 1.1.1.1
 nameserver 1.0.0.1
+nameserver 8.8.8.8
 EOT
 
         chattr +i /mnt/etc/resolv.conf
+
+        cat <<EOT >> /mnt/etc/NetworkManager/NetworkManager.conf
+[main]
+dns=none
+systemd-resolved=false
+EOT
+
+        
 
         cat <<EOT >> /mnt/etc/hosts
 192.168.1.192   rainbowdash.localdomain rainbowdash
@@ -291,7 +307,7 @@ EOT
         arch-chroot /mnt sed -i '/load-module module-suspend-on-idle/ s/^#*/#/' /etc/pulse/default.pa
 
         # add btrfs to modules
-        sed -i 's/^MODULES=.*$/MODULES=(btrfs)/' /mnt/etc/mkinitcpio.conf
+        sed -i 's/^MODULES=.*$/MODULES=(i915 btrfs)/' /mnt/etc/mkinitcpio.conf
         arch-chroot /mnt mkinitcpio -P
 
         # Intel X11 config
@@ -315,6 +331,19 @@ ExecStart=/usr/bin/reflector -c GB -l 25 --age 12 -p http -p https --sort rate -
 WantedBy=multi-user.target
 EOT
 
+        cat <<EOT > /mnt/etc/modprobe.d/blacklist.conf
+blacklist iTCO_wdt
+blacklist pcspkr
+blacklist joydev
+blacklist mousedev
+blacklist mac_hid
+blacklist uvcvideo
+EOT
+        # for 11th cpu or lower
+        cat <<EOT > /mnt/etc/modprobe.d/i915.conf
+options i915 enable_guc=2
+EOT
+
         # Enable services
         echo "Enabling services..."
         arch-chroot /mnt systemctl enable NetworkManager.service
@@ -324,6 +353,9 @@ EOT
         arch-chroot /mnt systemctl enable reflector.timer
         arch-chroot /mnt systemctl enable fstrim.timer
         arch-chroot /mnt systemctl enable sshd
+
+        arch-chroot /mnt systemctl mask lvm2-monitor
+        arch-chroot /mnt systemctl mask systemd-random-seed
 }
 
 setupuser(){

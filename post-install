@@ -60,9 +60,8 @@ mainmenu(){
 
 install_fonts(){
         echo "Installing fonts..."
-        #yay -S nerd-fonts-complete
-        yay -S otf-san-francisco
-
+        yay -S apple-fonts
+        
         # Copy Windows fonts over
         echo "Copying Windows fonts..."
         sudo mkdir /usr/share/fonts/windowsfonts
@@ -77,7 +76,7 @@ install_preload(){
         echo "Installing preload..."
         yay -S preload
         sudo systemctl enable --now preload
-}
+} 
 
 restore_bigsur(){
         konsave -i $HOME/bigsur.knsv
@@ -125,7 +124,7 @@ install_gnome(){
         clear
         
         echo "Installing Gnome.."
-        sudo pacman -S gnome gnome-tweaks firefox flatpak nemo nemo-fileroller nemo-preview gtk-engine-murrine sassc seahorse gnome-notes gparted
+        sudo pacman -S gnome gnome-tweaks xscreensaver firefox flatpak nemo nemo-fileroller nemo-preview gtk-engine-murrine sassc seahorse gnome-notes gparted
         yay -S chrome-gnome-shell fancontrol-gui pamac-aur bpytop-git snapper-gui
 
         # xscreensaver settings - 10 min timeout - GL matrix 
@@ -336,7 +335,7 @@ install_qemu(){
         # default_hugepagesz=1G hugepagesz=1G hugepages=8       - pre-allocates 8GB RAM for VM using 1GB Hugepages
         sudo sed -i.bak 's/linux-zen.img[^"]*/& intel_iommu=on iommu=pt video=efifb:off pci=realloc module_blacklist=xpad default_hugepagesz=1G hugepagesz=1G hugepages=8/' /boot/refind_linux.conf
 
-        sudo sed -i 's/^MODULES=.*$/MODULES=(btrfs vfio_pci vfio vfio_iommu_type1 vfio_virqfd)/' /etc/mkinitcpio.conf
+        sudo sed -i 's/^MODULES=.*$/MODULES=(i915 btrfs vfio_pci vfio vfio_iommu_type1 vfio_virqfd)/' /etc/mkinitcpio.conf
         sudo mkinitcpio -P
 
         sudo usermod -a -G libvirt $USER
@@ -423,6 +422,8 @@ initialise(){
         sudo mkdir /.snapshots
         sudo mount -a
         sudo chmod 750 /.snapshots
+        sudo chmod a+rx /.snapshots
+        sudo chown :paul /.snapshots
 
         sudo sed -i 's/^ALLOW_USERS=.*$/ALLOW_USERS="paul"/' /etc/snapper/configs/root
         sudo sed -i 's/^TIMELINE_LIMIT_HOURLY=.*$/TIMELINE_LIMIT_HOURLY="5"/' /etc/snapper/configs/root
@@ -435,6 +436,22 @@ initialise(){
         sudo systemctl enable --now snapper-cleanup.timer
 
         yay -S snap-pac-grub
+
+        sudo mkdir /etc/pacman.d/hooks
+        sudo bash -c 'sudo cat <<EOT >> /etc/pacman.d/hooks/50-bootbackup.hook
+[Trigger]
+Operation = Upgrade
+Operation = Install
+Operation = Remove
+Type = Path
+Target = boot/*
+
+[Action]
+Depends = rsync
+Description = Backing up /boot...
+When = PreTransaction
+Exec = /usr/bin/rsync -a --delete /boot /.bootbackup
+EOT'
 
         # optimise yay when building packages
         sudo sed -i 's/^#MAKEFLAGS="-j2"/MAKEFLAGS="-j$(nproc)"/' /etc/makepkg.conf

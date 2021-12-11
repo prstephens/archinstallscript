@@ -34,6 +34,7 @@ rxvt-unicode
 wget
 cups
 hplip
+rsync
 python-pyqt5
 archlinux-keyring
 pacman-contrib
