@@ -318,8 +318,7 @@ install_qemu(){
         # Enable Virtualization Technology for Directed I/O in rEFInd config as boot param
         # module_blacklist=xpad                                 - allows XBOX controller to be passed through to VM
         # default_hugepagesz=1G hugepagesz=1G hugepages=8       - pre-allocates 8GB RAM for VM using 1GB Hugepages
-        sudo sed -i.bak 's/linux-zen.img[^"]*/& intel_iommu=on iommu=pt video=efifb:off pci=realloc module_blacklist=xpad default_hugepagesz=1G hugepagesz=1G hugepages=8/' /boot/refind_linux.conf
-
+        sudo sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT=.*$/GRUB_CMDLINE_LINUX_DEFAULT="quiet loglevel=3 rd.systemd.show_status=false nowatchdog mitigations=off intel_iommu=on iommu=pt video=efifb:off pci=realloc module_blacklist=xpad default_hugepagesz=1G hugepagesz=1G hugepages=8"/' /etc/default/grub
         sudo sed -i 's/^MODULES=.*$/MODULES=(i915 btrfs vfio_pci vfio vfio_iommu_type1 vfio_virqfd)/' /etc/mkinitcpio.conf
         sudo mkinitcpio -P
 

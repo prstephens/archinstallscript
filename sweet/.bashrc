@@ -126,7 +126,6 @@ extrestore()
     cp -r $HOME/data/gnome-extensions $HOME/.local/share/gnome-shell/extensions
 }
 
-
 vm()
 {
     read -p "Wanna set the govoner to performance? [Y/n]: " perf
