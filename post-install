@@ -78,24 +78,12 @@ install_preload(){
         sudo systemctl enable --now preload
 } 
 
-restore_bigsur(){
-        konsave -i $HOME/bigsur.knsv
-        konsave -a 1
-}
-
 install_plasma(){    
         clear
         
         echo "Installing Plasma.."
         sudo pacman -S plasma-meta ark dolphin xscreensaver konsole sshfs kvantum-qt5
         yay -S latte-dock plasma5-applets-kde-arch-update-notifier
-        
-        # konsave
-        sudo pacman -S python-pip
-        sudo python -m pip install konsave
-
-        # mac os big sur dark theme with latte config. complete restore.
-        curl -sL $BASE_URL/sweet/bigsur.knsv -o $HOME/bigsur.knsv
 
         # xscreensaver settings - 10 min timeout - GL matrix 
         curl -sL $BASE_URL/sweet/.xscreensaver -o $HOME/.xscreensaver
@@ -115,9 +103,6 @@ EOT
         
         install_fonts
         install_preload
-
-        # apply MacOs bigsur theme
-        restore_bigsur
 }
 
 install_gnome(){

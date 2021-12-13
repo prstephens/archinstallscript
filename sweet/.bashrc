@@ -145,6 +145,16 @@ powersave()
     for file in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do echo "powersave" | sudo tee -a $file; done
 }
 
+omm(){
+    shopt -s nullglob
+    for g in `find /sys/kernel/iommu_groups/* -maxdepth 0 -type d | sort -V`; do
+        echo "IOMMU Group ${g##*/}:"
+        for d in $g/devices/*; do
+            echo -e "\t$(lspci -nns ${d##*/})"
+        done;
+    done;
+}
+
 # some more ls aliases
 alias c='clear'
 alias cdev='cd ~/data/dev'
