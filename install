@@ -334,6 +334,7 @@ blacklist joydev
 blacklist mousedev
 blacklist mac_hid
 blacklist uvcvideo
+blacklist xpad
 EOT
         # for 11th cpu or lower
         cat <<EOT > /mnt/etc/modprobe.d/i915.conf

@@ -72,12 +72,6 @@ install_fonts(){
         sudo umount /windows10
 }
 
-install_preload(){
-        echo "Installing preload..."
-        yay -S preload
-        sudo systemctl enable --now preload
-} 
-
 install_plasma(){    
         clear
         
@@ -102,7 +96,6 @@ EOT
         echo '[[ ! $DISPLAY && $XDG_VTNR -eq 1 ]] && exec startx' >> $HOME/.bash_profile
         
         install_fonts
-        install_preload
 }
 
 install_gnome(){
@@ -110,7 +103,7 @@ install_gnome(){
         
         echo "Installing Gnome.."
         sudo pacman -S gnome gnome-tweaks xscreensaver firefox flatpak nemo nemo-fileroller nemo-preview gtk-engine-murrine sassc seahorse gnome-notes gparted
-        yay -S chrome-gnome-shell fancontrol-gui pamac-aur bpytop-git snapper-gui
+        yay -S chrome-gnome-shell fancontrol-gui pamac-aur bpytop-git snapper-gui etcher-bin
 
         # xscreensaver settings - 10 min timeout - GL matrix 
         curl -sL $BASE_URL/sweet/.xscreensaver -o $HOME/.xscreensaver
@@ -147,7 +140,6 @@ EOT
         echo '[[ ! $DISPLAY && $XDG_VTNR -eq 1 ]] && exec startx' >> $HOME/.bash_profile
         
         install_fonts
-        install_preload
 
         # missing firmware for the mkinitcpio warnings
         yay -S aic94xx-firmware wd719x-firmware upd72020x-fw
@@ -280,7 +272,7 @@ EOT
 
 install_spotify(){
         echo "Installing Spotify..."
-        curl -sS https://download.spotify.com/debian/pubkey_0D811D58.gpg | gpg --import -
+        curl -sS https://download.spotify.com/debian/pubkey_5E3C45D7B312C643.gpg | gpg --import -
         yay -S spotify
 }
 
@@ -318,7 +310,7 @@ install_qemu(){
         # Enable Virtualization Technology for Directed I/O in rEFInd config as boot param
         # module_blacklist=xpad                                 - allows XBOX controller to be passed through to VM
         # default_hugepagesz=1G hugepagesz=1G hugepages=8       - pre-allocates 8GB RAM for VM using 1GB Hugepages
-        sudo sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT=.*$/GRUB_CMDLINE_LINUX_DEFAULT="quiet loglevel=3 rd.systemd.show_status=false nowatchdog mitigations=off intel_iommu=on iommu=pt video=efifb:off pci=realloc module_blacklist=xpad default_hugepagesz=1G hugepagesz=1G hugepages=8"/' /etc/default/grub
+        sudo sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT=.*$/GRUB_CMDLINE_LINUX_DEFAULT="quiet loglevel=3 rd.systemd.show_status=false nowatchdog mitigations=off intel_iommu=on iommu=pt video=efifb:off pci=realloc default_hugepagesz=1G hugepagesz=1G hugepages=8"/' /etc/default/grub
         sudo sed -i 's/^MODULES=.*$/MODULES=(i915 btrfs vfio_pci vfio vfio_iommu_type1 vfio_virqfd)/' /etc/mkinitcpio.conf
         sudo mkinitcpio -P
 
