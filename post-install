@@ -105,30 +105,27 @@ install_gnome(){
         sudo pacman -S gnome gnome-tweaks xscreensaver firefox flatpak nemo nemo-fileroller nemo-preview gtk-engine-murrine sassc seahorse gnome-notes gparted
         yay -S chrome-gnome-shell fancontrol-gui pamac-aur bpytop-git snapper-gui etcher-bin
 
+        # missing firmware for the mkinitcpio warnings
+        yay -S aic94xx-firmware wd719x-firmware upd72020x-fw
+
+        # install flatpak user repo
+        flatpak --user remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+
+        # install GKraken for NZXT pump configuration
+        flatpak install flathub com.leinardi.gkraken
+
         # xscreensaver settings - 10 min timeout - GL matrix 
         curl -sL $BASE_URL/sweet/.xscreensaver -o $HOME/.xscreensaver
         if [ ! -d $HOME/.config/autostart/ ];then mkdir $HOME/.config/autostart;fi
         curl -sL $BASE_URL/sweet/xscreensaver.desktop -o $HOME/.config/autostart/xscreensaver.desktop
 
-        xdg-mime default nemo.desktop inode/directory application/x-gnome-saved-search
-        gsettings set org.cinnamon.desktop.default-applications.terminal exec urxvt
-        gsettings set org.cinnamon.desktop.default-applications.terminal exec-arg -e
-
         # Orchis-pink-dark theme
         git clone https://github.com/prstephens/Orchis-theme.git /tmp/Orchis-theme
         /tmp/Orchis-theme/install.sh -d $HOME/.themes -t pink -c dark
-        gsettings set org.gnome.desktop.interface gtk-theme Orchis-pink-dark-compact
         
         # Tela icon theme
         git clone https://github.com/prstephens/Tela-icon-theme.git /tmp/Tela-icon-theme
         /tmp/Tela-icon-theme/install.sh -d $HOME/.icons pink
-        gsettings set org.gnome.desktop.interface icon-theme Tela-pink-dark
-
-        #install flatpak user repo
-        flatpak --user remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-
-        #install GKraken for NZXT pump configuration
-        flatpak install flathub com.leinardi.gkraken
 
         # xinit config
         sudo cat <<EOT >> $HOME/.xinitrc
@@ -141,8 +138,21 @@ EOT
         
         install_fonts
 
-        # missing firmware for the mkinitcpio warnings
-        yay -S aic94xx-firmware wd719x-firmware upd72020x-fw
+        # set some nice defaults
+        gsettings set org.gnome.desktop.interface gtk-theme Orchis-pink-dark-compact
+        gsettings set org.gnome.desktop.interface icon-theme Tela-pink-dark
+
+        xdg-mime default nemo.desktop inode/directory application/x-gnome-saved-search
+        gsettings set org.cinnamon.desktop.default-applications.terminal exec urxvt
+        gsettings set org.cinnamon.desktop.default-applications.terminal exec-arg -e
+
+        gsettings set org.gnome.desktop.interface font-name "SF Pro Display 11"
+        gsettings set org.gnome.desktop.interface document-font-name "SF Pro Display 11"
+        gsettings set org.gnome.desktop.interface monospace-font-name "Source Code Pro 9"
+        gsettings set org.gnome.desktop.wm.preferences titlebar-font "SF Pro Display 11"
+
+        gsettings set org.gnome.desktop.wm.preferences button-layout "close,minimize,maximize:"
+        gsettings set org.gnome.mutter center-new-windows "true"
 
         whiptail --backtitle "${BACKTITLE}" --title "GDM" --yesno "Do you want to enable GDM?" 0 78 3>&1 1>&2 2>&3
         if [ "$?" = "0" ]; then
@@ -294,7 +304,7 @@ install_profile-sync-daemon(){
 install_apps(){
         clear
 
-        echo "Installing Chrome, VS Code, WPS Office, Gimp..."
+        echo "Installing Chrome, VS Code, OnlyOffice, Gimp..."
         yay -S google-chrome code onlyoffice-bin gimp vlc kodi dropbox handbrake rpi-imager-bin
 
         install_spotify
