@@ -214,16 +214,16 @@ performinstall(){
         btrfs su cr /mnt/@snapshots
         umount /mnt
 
-        mount -o noatime,commit=120,compress=lzo,space_cache=v2,subvol=@ $rootdev /mnt
+        mount -o noatime,commit=120,compress=zstd,space_cache=v2,subvol=@ $rootdev /mnt
         
         # You need to manually create folders to mount the other subvolumes at
         mkdir -p /mnt/{boot,home,var/log,.snapshots}
 
-        mount -o noatime,commit=120,compress=lzo,space_cache=v2,subvol=@home $rootdev /mnt/home
+        mount -o noatime,commit=120,compress=zstd,space_cache=v2,subvol=@home $rootdev /mnt/home
 
-        mount -o noatime,commit=120,compress=lzo,space_cache=v2,subvol=@var_log $rootdev /mnt/var/log
+        mount -o noatime,commit=120,compress=zstd,space_cache=v2,subvol=@var_log $rootdev /mnt/var/log
 
-        mount -o noatime,commit=120,compress=lzo,space_cache=v2,subvol=@snapshots $rootdev /mnt/.snapshots
+        mount -o noatime,commit=120,compress=zstd,space_cache=v2,subvol=@snapshots $rootdev /mnt/.snapshots
 
         mount $bootdev /mnt/boot
 
