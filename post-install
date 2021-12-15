@@ -154,6 +154,8 @@ EOT
         gsettings set org.gnome.desktop.wm.preferences button-layout "close,minimize,maximize:"
         gsettings set org.gnome.mutter center-new-windows "true"
 
+        gsettings set org.gnome.desktop.input-sources sources "[('xkb', 'gb')]"
+
         # add dash to dock extension
         git clone https://github.com/micheleg/dash-to-dock.git /tmp/dash-to-dock
         cd /tmp/dash-to-dock
