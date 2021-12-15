@@ -154,6 +154,25 @@ EOT
         gsettings set org.gnome.desktop.wm.preferences button-layout "close,minimize,maximize:"
         gsettings set org.gnome.mutter center-new-windows "true"
 
+        # add dash to dock extension
+        git clone https://github.com/micheleg/dash-to-dock.git /tmp/dash-to-dock
+        cd /tmp/dash-to-dock
+        make
+        make install
+        cd
+
+        # add arch updater extension
+        yay -S gnome-shell-extension-arch-update
+
+        # check updates command:
+        # /bin/sh -c "(/usr/bin/checkupdates; /usr/bin/yay -Qqu --color never | sed 's/Get .*//') | sort -u -t' ' -k1,1"
+
+        # update command
+        # urxvt -e sh -c "yay -Syu ; echo Done - Press enter to exit; read"
+
+        # package manager
+        # pamac-manager
+
         whiptail --backtitle "${BACKTITLE}" --title "GDM" --yesno "Do you want to enable GDM?" 0 78 3>&1 1>&2 2>&3
         if [ "$?" = "0" ]; then
 		sudo systemctl enable --now gdm
