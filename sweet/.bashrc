@@ -135,8 +135,19 @@ vm()
     fi
 
     sudo virsh start win11
-	sudo virsh attach-device win11 --file /home/paul/data/qemu/attach-mouse.xml --live
-	sudo virsh attach-device win11 --file /home/paul/data/qemu/attach-bluetooth.xml --live
+    sudo virsh attach-device win11 --file /home/paul/data/qemu/attach-mouse.xml --live
+    sudo virsh attach-device win11 --file /home/paul/data/qemu/attach-bluetooth.xml --live
+}
+
+freevm()
+{
+    echo 0 | sudo tee /sys/devices/system/node/node0/hugepages/hugepages-1048576kB/nr_hugepages
+}
+
+kr(){
+    echo "Rebooting the Kernel..."
+    sudo kexec -l /boot/vmlinuz-linux-zen --initrd=/boot/initramfs-linux-zen.img --reuse-cmdline
+    sudo systemctl kexec
 }
 
 powersave() 

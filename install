@@ -394,7 +394,13 @@ setupuser(){
         # Create user xinit config file 
         echo "Creating .xinitrc file..."
         head -n -5 /mnt/etc/X11/xinit/xinitrc >> /mnt/home/$user/.xinitrc
-        arch-chroot /mnt chown $user:$user /home/$user/.xinitrc      
+        arch-chroot /mnt chown $user:$user /home/$user/.xinitrc    
+
+        # BBC Micro console font :)
+        arch-chroot /mnt curl -sL $BASE_URL/fonts/console/* -o /usr/share/kbd/consolefonts/  
+        arch-chroot /mnt chmod 644 /usr/share/kbd/consolefonts/bedstead-*.*
+        arch-chroot /mnt chmod 644 /usr/share/kbd/consolefonts/acorn.psf.gz
+        echo "FONT=bedstead-10" >> /mnt/etc/vconsole.conf
 }
 
 rebootpc(){
