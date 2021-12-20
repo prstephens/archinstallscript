@@ -5,6 +5,8 @@ linux-zen
 linux-zen-headers
 snapper
 grub
+grub-btrfs
+btrfs-progs
 efibootmgr
 mtools
 dosfstools
@@ -43,4 +45,4 @@ ncdu
 glances
 htop
 i7z
-kexec-tools
+neofetch

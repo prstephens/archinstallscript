@@ -128,12 +128,13 @@ extrestore()
 
 vm()
 {
-    read -p "Wanna set the govoner to performance? [Y/n]: " perf
+    read -p "Wanna set the governor to performance? [Y/n]: " perf
     if [ $perf = 'y' ]
     then
         for file in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do echo "performance" | sudo tee -a $file; done
     fi
 
+    sudo virsh allocpages 1G 8
     sudo virsh start win11
     sudo virsh attach-device win11 --file /home/paul/data/qemu/attach-mouse.xml --live
     sudo virsh attach-device win11 --file /home/paul/data/qemu/attach-bluetooth.xml --live
@@ -141,18 +142,22 @@ vm()
 
 freevm()
 {
-    echo 0 | sudo tee /sys/devices/system/node/node0/hugepages/hugepages-1048576kB/nr_hugepages
-}
-
-kr(){
-    echo "Rebooting the Kernel..."
-    sudo kexec -l /boot/vmlinuz-linux-zen --initrd=/boot/initramfs-linux-zen.img --reuse-cmdline
-    sudo systemctl kexec
+    sudo virsh allocpages 1G 0
+    read -p "Wanna set the governor to powersave? [Y/n]: " perf
+    if [ $perf = 'y' ]
+    then
+        for file in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do echo "powersave" | sudo tee -a $file; done
+    fi
 }
 
 powersave() 
 {
     for file in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do echo "powersave" | sudo tee -a $file; done
+}
+
+turbo() 
+{
+    for file in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do echo "performance" | sudo tee -a $file; done
 }
 
 omm(){

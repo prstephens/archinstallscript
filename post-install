@@ -22,9 +22,10 @@ mainmenu(){
         options=()
         options+=("1)" "Plasma DE")
         options+=("2)" "Gnome DE")
-        options+=("3)" "Applications")
-        options+=("4)" "QEMU/KVM")
-        options+=("5)" "Java Development Environment")
+        options+=("3)" "Install Xanmod-tt Kernel")
+        options+=("4)" "Applications")
+        options+=("5)" "QEMU/KVM")
+        options+=("6)" "Java Development Environment")
 
         sel=$(whiptail --backtitle "${BACKTITLE}" --title "Arch Linux Post Installer" --menu "" --cancel-button "Exit" --default-item "${nextitem}" 0 0 0 \
             "${options[@]}" \
@@ -40,16 +41,20 @@ mainmenu(){
                     nextitem="3)"
                 ;;
                 "3)")
-                    install_apps
+                    install_xanmod
                     nextitem="4)"
                 ;;
                 "4)")
-                    install_qemu
+                    install_apps
                     nextitem="5)"
                 ;;
                 "5)")
+                    install_qemu
+                    nextitem="6)"
+                ;;
+                "6)")
                     install_dev
-                    nextitem="5)"
+                    nextitem="6)"
                 ;;
             esac
             mainmenu "${nextitem}"
@@ -103,7 +108,7 @@ install_gnome(){
         
         echo "Installing Gnome.."
         sudo pacman -S gnome gnome-tweaks xscreensaver firefox flatpak nemo nemo-fileroller nemo-preview gtk-engine-murrine sassc seahorse gnome-notes gparted
-        yay -S chrome-gnome-shell fancontrol-gui pamac-aur bpytop-git snapper-gui etcher-bin
+        yay -S chrome-gnome-shell fancontrol-gui pamac-aur bpytop-git snapper-gui etcher-bin firefox-extension-gnome-shell-integration
 
         # missing firmware for the mkinitcpio warnings
         yay -S aic94xx-firmware wd719x-firmware upd72020x-fw
@@ -179,6 +184,12 @@ EOT
         if [ "$?" = "0" ]; then
 		sudo systemctl enable --now gdm
 	fi
+}
+
+install_xanmod(){
+        clear
+        # _microarchitecture=98 - Native Intel CPU
+        env _microarchitecture=98 yay -S linux-xanmod-tt linux-xanmod-tt-headers
 }
 
 change-gdm-wallpaper(){
@@ -329,7 +340,6 @@ install_apps(){
         yay -S google-chrome code onlyoffice-bin gimp vlc kodi dropbox handbrake rpi-imager-bin
 
         install_spotify
-        #install_profile-sync-daemon
 }
 
 install_qemu(){
@@ -340,8 +350,8 @@ install_qemu(){
 
         # Enable Virtualization Technology for Directed I/O in rEFInd config as boot param
         # module_blacklist=xpad                                 - allows XBOX controller to be passed through to VM
-        # default_hugepagesz=1G hugepagesz=1G hugepages=8       - pre-allocates 8GB RAM for VM using 1GB Hugepages
-        sudo sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT=.*$/GRUB_CMDLINE_LINUX_DEFAULT="quiet loglevel=3 rd.systemd.show_status=false nowatchdog mitigations=off intel_iommu=on iommu=pt video=efifb:off pci=realloc default_hugepagesz=1G hugepagesz=1G hugepages=8"/' /etc/default/grub
+        # default_hugepagesz=1G hugepagesz=1G                   - pre-allocates RAM for VM using 1GB Hugepages
+        sudo sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT=.*$/GRUB_CMDLINE_LINUX_DEFAULT="quiet loglevel=3 rd.systemd.show_status=false nowatchdog mitigations=off intel_iommu=on iommu=pt video=efifb:off pci=realloc default_hugepagesz=1G hugepagesz=1G"/' /etc/default/grub
         sudo sed -i 's/^MODULES=.*$/MODULES=(i915 btrfs vfio_pci vfio vfio_iommu_type1 vfio_virqfd)/' /etc/mkinitcpio.conf
         sudo mkinitcpio -P
 
@@ -421,6 +431,10 @@ initialise(){
         makepkg -si
         cd ..
 
+        # optimise yay when building packages
+        sudo sed -i 's/^#MAKEFLAGS="-j2"/MAKEFLAGS="-j$(nproc)"/' /etc/makepkg.conf
+        sudo sed -i "s/^PKGEXT=.*$/PKGEXT='.pkg.tar'/" /etc/makepkg.conf
+
         # snapper config
         sudo umount /.snapshots
         sudo rm -r /.snapshots
@@ -442,8 +456,6 @@ initialise(){
         sudo systemctl enable --now snapper-timeline.timer
         sudo systemctl enable --now snapper-cleanup.timer
 
-        yay -S snap-pac-grub
-
         sudo mkdir /etc/pacman.d/hooks
         sudo bash -c 'sudo cat <<EOT >> /etc/pacman.d/hooks/50-bootbackup.hook
 [Trigger]
@@ -460,9 +472,13 @@ When = PreTransaction
 Exec = /usr/bin/rsync -a --delete /boot /.bootbackup
 EOT'
 
-        # optimise yay when building packages
-        sudo sed -i 's/^#MAKEFLAGS="-j2"/MAKEFLAGS="-j$(nproc)"/' /etc/makepkg.conf
-        sudo sed -i "s/^PKGEXT=.*$/PKGEXT='.pkg.tar'/" /etc/makepkg.conf
+        yay -S snap-pac-grub
+
+        # config for booting a snapshot in read only
+        sudo cp /lib/initcpio/hooks/grub-btrfs-overlayfs /etc/initcpio/hooks
+        sudo cp /lib/initcpio/install/grub-btrfs-overlayfs /etc/initcpio/install
+        sudo sed -i 's/^HOOKS=.*$/HOOKS=(base udev autodetect modconf block filesystems keyboard fsck grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
+        sudo mkinitcpio -P
 
         # git credentials
         git config --global credential.helper store
