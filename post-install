@@ -425,15 +425,19 @@ updatemirrors(){
 }
 
 initialise(){
+
+        # optimise yay when building packages
+        sudo sed -i 's/^#MAKEFLAGS="-j2"/MAKEFLAGS="-j$(nproc)"/' /etc/makepkg.conf
+        sudo sed -i "s/^PKGEXT=.*$/PKGEXT='.pkg.tar'/" /etc/makepkg.conf
+
         # install yay
         git clone https://aur.archlinux.org/yay.git $HOME/yay
         cd $HOME/yay
         makepkg -si
         cd ..
 
-        # optimise yay when building packages
-        sudo sed -i 's/^#MAKEFLAGS="-j2"/MAKEFLAGS="-j$(nproc)"/' /etc/makepkg.conf
-        sudo sed -i "s/^PKGEXT=.*$/PKGEXT='.pkg.tar'/" /etc/makepkg.conf
+        # remove annoying yay questions
+        yay --save --answerdiff None --answerclean None --removemake 
 
         # snapper config
         sudo umount /.snapshots
@@ -456,23 +460,10 @@ initialise(){
         sudo systemctl enable --now snapper-timeline.timer
         sudo systemctl enable --now snapper-cleanup.timer
 
-        sudo mkdir /etc/pacman.d/hooks
-        sudo bash -c 'sudo cat <<EOT >> /etc/pacman.d/hooks/50-bootbackup.hook
-[Trigger]
-Operation = Upgrade
-Operation = Install
-Operation = Remove
-Type = Path
-Target = boot/*
+        yay -S snap-pac-grub snapper-rollback
 
-[Action]
-Depends = rsync
-Description = Backing up /boot...
-When = PreTransaction
-Exec = /usr/bin/rsync -a --delete /boot /.bootbackup
-EOT'
-
-        yay -S snap-pac-grub
+        # put root dev into snapper-rollback.conf
+        echo "dev=${rootdev}" | sudo tee -a /etc/snapper-rollback.conf
 
         # config for booting a snapshot in read only
         sudo cp /lib/initcpio/hooks/grub-btrfs-overlayfs /etc/initcpio/hooks
@@ -489,5 +480,7 @@ EOT'
 # --------------------------------------------------------
 
 [[ ! -d $HOME/yay ]] && initialise
+
+rootdev=/root/dev # changed on the fly during install
 
 mainmenu

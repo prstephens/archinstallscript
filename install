@@ -490,6 +490,7 @@ setupuser(){
         # Copy post-install file to /home/$user
         echo "Copy post-install file to /home/${user}..."
         arch-chroot /mnt curl -sL $BASE_URL/post-install -o /home/$user/post-install
+        arch-chroot /mnt sed -i "s|^rootdev=.*$|rootdev=${rootdev}|" /home/$user/post-install
         arch-chroot /mnt chown $user:$user /home/$user/post-install
         arch-chroot /mnt chmod a+x /home/$user/post-install
 
