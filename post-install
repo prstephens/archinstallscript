@@ -137,9 +137,6 @@ export XDG_SESSION_TYPE=x11
 export GDK_BACKEND=x11
 exec gnome-session
 EOT
-
-        echo '[[ ! $DISPLAY && $XDG_VTNR -eq 1 ]] && exec startx' >> $HOME/.bash_profile
-        
         install_fonts
 
         # set some nice defaults
@@ -182,7 +179,8 @@ EOT
 	sudo systemctl enable gdm
 
         # create a snapshot
-        sudo snapper -c root create --description "### FRESH INSTALL - Including Gnome ###"
+        for i in `seq 2 50`; do sudo snapper delete $i; done;
+        sudo snapper -c root create --description "### FRESH INSTALL - Including Gnome ###" # ID 2
         grub-mkconfig -o /boot/grub/grub.cfg
 }
 
@@ -477,7 +475,8 @@ initialise(){
         git config --global user.name "prstephens"
 
         # create a snapshot
-        sudo snapper -c root create --description "### FRESH INSTALL - Base ###"
+        for i in `seq 1 50`; do sudo snapper delete $i; done;
+        sudo snapper -c root create --description "### FRESH INSTALL - Base ###" #ID 1
         sudo grub-mkconfig -o /boot/grub/grub.cfg
 }
 
