@@ -94,7 +94,6 @@ install_plasma(){
 
         # xinit config
         sudo cat <<EOT >> $HOME/.xinitrc
-nvidia-settings --load-config-only &
 export DESKTOP_SESSION=plasma
 exec startplasma-x11
 EOT
@@ -180,10 +179,10 @@ EOT
         # package manager
         # pamac-manager
 
-        whiptail --backtitle "${BACKTITLE}" --title "GDM" --yesno "Do you want to enable GDM?" 0 78 3>&1 1>&2 2>&3
-        if [ "$?" = "0" ]; then
-		sudo systemctl enable --now gdm
-	fi
+	sudo systemctl enable gdm
+
+        # create a snapshot
+        sudo snapper -c root create --description "### FRESH INSTALL - Including Gnome ###"
 }
 
 install_xanmod(){
@@ -460,7 +459,7 @@ initialise(){
         sudo systemctl enable --now snapper-timeline.timer
         sudo systemctl enable --now snapper-cleanup.timer
 
-        yay -S snap-pac-grub snapper-rollback
+        yay -S snap-pac-grub snapper-rollback snp
 
         # put root dev into snapper-rollback.conf
         echo "dev=${rootdev}" | sudo tee -a /etc/snapper-rollback.conf
@@ -475,6 +474,9 @@ initialise(){
         git config --global credential.helper store
         git config --global user.email "pr.stephens@gmail.com"
         git config --global user.name "prstephens"
+
+        # create a snapshot
+        sudo snapper -c root create --description "### FRESH INSTALL - Base ###"
 }
 
 # --------------------------------------------------------
