@@ -183,6 +183,7 @@ EOT
 
         # create a snapshot
         sudo snapper -c root create --description "### FRESH INSTALL - Including Gnome ###"
+        grub-mkconfig -o /boot/grub/grub.cfg
 }
 
 install_xanmod(){
@@ -477,6 +478,7 @@ initialise(){
 
         # create a snapshot
         sudo snapper -c root create --description "### FRESH INSTALL - Base ###"
+        sudo grub-mkconfig -o /boot/grub/grub.cfg
 }
 
 # --------------------------------------------------------
