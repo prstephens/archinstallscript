@@ -181,7 +181,7 @@ EOT
         # create a snapshot
         for i in `seq 2 50`; do sudo snapper delete $i; done;
         sudo snapper -c root create --description "### FRESH INSTALL - Including Gnome ###" # ID 2
-        grub-mkconfig -o /boot/grub/grub.cfg
+        sudo grub-mkconfig -o /boot/grub/grub.cfg
 }
 
 install_xanmod(){
