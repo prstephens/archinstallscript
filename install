@@ -192,6 +192,7 @@ performinstall(){
         read -p "You are about to wipe ${rootdev}? [y/N]: " wipe
         if [ $wipe = 'y' ]
         then
+                wipefs -a $rootdev
                 mkfs.btrfs $rootdev
         else
                 echo "Install stopped"
