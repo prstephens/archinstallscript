@@ -437,37 +437,10 @@ initialise(){
         # remove annoying yay questions
         yay --save --answerdiff None --answerclean None --removemake 
 
-        # snapper config
-        sudo umount /.snapshots
-        sudo rm -r /.snapshots
-        sudo snapper -c root create-config /
-        sudo btrfs subvolume delete /.snapshots
-        sudo mkdir /.snapshots
-        sudo mount -a
-        sudo chmod 750 /.snapshots
-        sudo chmod a+rx /.snapshots
-        sudo chown :paul /.snapshots
-
-        sudo sed -i 's/^ALLOW_USERS=.*$/ALLOW_USERS="paul"/' /etc/snapper/configs/root
-        sudo sed -i 's/^TIMELINE_LIMIT_HOURLY=.*$/TIMELINE_LIMIT_HOURLY="5"/' /etc/snapper/configs/root
-        sudo sed -i 's/^TIMELINE_LIMIT_DAILY=.*$/TIMELINE_LIMIT_DAILY="7"/' /etc/snapper/configs/root
-        sudo sed -i 's/^TIMELINE_LIMIT_WEEKLY=.*$/TIMELINE_LIMIT_WEEKLY="0"/' /etc/snapper/configs/root
-        sudo sed -i 's/^TIMELINE_LIMIT_MONTHLY=.*$/TIMELINE_LIMIT_MONTHLY="0"/' /etc/snapper/configs/root
-        sudo sed -i 's/^TIMELINE_LIMIT_YEARLY=.*$/TIMELINE_LIMIT_YEARLY="0"/' /etc/snapper/configs/root
-
-        sudo systemctl enable --now snapper-timeline.timer
-        sudo systemctl enable --now snapper-cleanup.timer
-
         yay -S snap-pac-grub snapper-rollback snp
 
         # put root dev into snapper-rollback.conf
         echo "dev=${rootdev}" | sudo tee -a /etc/snapper-rollback.conf
-
-        # config for booting a snapshot in read only
-        sudo cp /lib/initcpio/hooks/grub-btrfs-overlayfs /etc/initcpio/hooks
-        sudo cp /lib/initcpio/install/grub-btrfs-overlayfs /etc/initcpio/install
-        sudo sed -i 's/^HOOKS=.*$/HOOKS=(base udev autodetect modconf block filesystems keyboard fsck grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
-        sudo mkinitcpio -P
 
         # git credentials
         git config --global credential.helper store

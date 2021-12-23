@@ -192,6 +192,7 @@ performinstall(){
         read -p "You are about to wipe ${rootdev}? [y/N]: " wipe
         if [ $wipe = 'y' ]
         then
+                wipefs -a $rootdev
                 mkfs.btrfs $rootdev
         else
                 echo "Install stopped"
@@ -411,7 +412,6 @@ EOT
 
         # add btrfs to modules
         sed -i 's/^MODULES=.*$/MODULES=(i915 btrfs)/' /mnt/etc/mkinitcpio.conf
-        arch-chroot /mnt mkinitcpio -P
 
         # Intel X11 config
         cat <<EOT > /mnt/etc/X11/xorg.conf.d/20-intel.conf 
@@ -448,6 +448,40 @@ EOT
 options i915 enable_guc=2
 EOT
 
+        # BBC Micro console font :)
+        arch-chroot /mnt curl -sL $BASE_URL/fonts/acorn/console/bedstead-10.psf.gz -o /usr/share/kbd/consolefonts/bedstead-10.psf.gz
+        arch-chroot /mnt curl -sL $BASE_URL/fonts/acorn/console/bedstead-20.psf.gz -o /usr/share/kbd/consolefonts/bedstead-20.psf.gz
+        arch-chroot /mnt curl -sL $BASE_URL/fonts/acorn/console/acorn.psf.gz -o /usr/share/kbd/consolefonts/acorn.psf.gz
+        arch-chroot /mnt chmod 644 /usr/share/kbd/consolefonts/bedstead-*.*
+        arch-chroot /mnt chmod 644 /usr/share/kbd/consolefonts/acorn.psf.gz
+        echo "FONT=bedstead-10" >> /mnt/etc/vconsole.conf
+
+        # snapper config
+        arch-chroot /mnt umount /.snapshots
+        arch-chroot /mnt rm -r /.snapshots
+        arch-chroot /mnt snapper -c root create-config /
+        arch-chroot /mnt btrfs subvolume delete /.snapshots
+        arch-chroot /mnt mkdir /.snapshots
+        arch-chroot /mnt mount -a
+        arch-chroot /mnt chmod 750 /.snapshots
+        arch-chroot /mnt chmod a+rx /.snapshots
+        arch-chroot /mnt chown :$user /.snapshots
+
+        arch-chroot /mnt sed -i 's/^ALLOW_USERS=.*$/ALLOW_USERS="paul"/' /etc/snapper/configs/root
+        arch-chroot /mnt sed -i 's/^TIMELINE_LIMIT_HOURLY=.*$/TIMELINE_LIMIT_HOURLY="5"/' /etc/snapper/configs/root
+        arch-chroot /mnt sed -i 's/^TIMELINE_LIMIT_DAILY=.*$/TIMELINE_LIMIT_DAILY="7"/' /etc/snapper/configs/root
+        arch-chroot /mnt sed -i 's/^TIMELINE_LIMIT_WEEKLY=.*$/TIMELINE_LIMIT_WEEKLY="0"/' /etc/snapper/configs/root
+        arch-chroot /mnt sed -i 's/^TIMELINE_LIMIT_MONTHLY=.*$/TIMELINE_LIMIT_MONTHLY="0"/' /etc/snapper/configs/root
+        arch-chroot /mnt sed -i 's/^TIMELINE_LIMIT_YEARLY=.*$/TIMELINE_LIMIT_YEARLY="0"/' /etc/snapper/configs/root
+
+        # config for booting a snapshot in read only
+        arch-chroot /mnt cp /lib/initcpio/hooks/grub-btrfs-overlayfs /etc/initcpio/hooks
+        arch-chroot /mnt cp /lib/initcpio/install/grub-btrfs-overlayfs /etc/initcpio/install
+        arch-chroot /mnt sed -i 's/^HOOKS=.*$/HOOKS=(base udev autodetect modconf block filesystems keyboard fsck grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
+
+        # ### Make the Boot files ###
+        arch-chroot /mnt mkinitcpio -P
+
         # Enable services
         echo "Enabling services..."
         arch-chroot /mnt systemctl enable NetworkManager.service
@@ -457,6 +491,8 @@ EOT
         arch-chroot /mnt systemctl enable reflector.timer
         arch-chroot /mnt systemctl enable fstrim.timer
         arch-chroot /mnt systemctl enable sshd
+        arch-chroot /mnt systemctl enable snapper-timeline.timer
+        arch-chroot /mnt systemctl enable snapper-cleanup.timer
 
         arch-chroot /mnt systemctl mask lvm2-monitor
         arch-chroot /mnt systemctl mask systemd-random-seed
@@ -502,15 +538,7 @@ setupuser(){
         # Create user xinit config file 
         echo "Creating .xinitrc file..."
         head -n -5 /mnt/etc/X11/xinit/xinitrc >> /mnt/home/$user/.xinitrc
-        arch-chroot /mnt chown $user:$user /home/$user/.xinitrc    
-
-        # BBC Micro console font :)
-        arch-chroot /mnt curl -sL $BASE_URL/fonts/acorn/console/bedstead-10.psf.gz -o /usr/share/kbd/consolefonts/bedstead-10.psf.gz
-        arch-chroot /mnt curl -sL $BASE_URL/fonts/acorn/console/bedstead-20.psf.gz -o /usr/share/kbd/consolefonts/bedstead-20.psf.gz
-        arch-chroot /mnt curl -sL $BASE_URL/fonts/acorn/console/acorn.psf.gz -o /usr/share/kbd/consolefonts/acorn.psf.gz
-        arch-chroot /mnt chmod 644 /usr/share/kbd/consolefonts/bedstead-*.*
-        arch-chroot /mnt chmod 644 /usr/share/kbd/consolefonts/acorn.psf.gz
-        echo "FONT=bedstead-10" >> /mnt/etc/vconsole.conf
+        arch-chroot /mnt chown $user:$user /home/$user/.xinitrc
 }
 
 rebootpc(){
