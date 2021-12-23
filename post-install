@@ -460,14 +460,14 @@ initialise(){
 
         yay -S snap-pac-grub snapper-rollback snp
 
-        # put root dev into snapper-rollback.conf
-        echo "dev=${rootdev}" | sudo tee -a /etc/snapper-rollback.conf
-
         # config for booting a snapshot in read only
         sudo cp /lib/initcpio/hooks/grub-btrfs-overlayfs /etc/initcpio/hooks
         sudo cp /lib/initcpio/install/grub-btrfs-overlayfs /etc/initcpio/install
         sudo sed -i 's/^HOOKS=.*$/HOOKS=(base udev autodetect modconf block filesystems keyboard fsck grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
         sudo mkinitcpio -P
+
+        # put root dev into snapper-rollback.conf
+        echo "dev=${rootdev}" | sudo tee -a /etc/snapper-rollback.conf
 
         # git credentials
         git config --global credential.helper store
