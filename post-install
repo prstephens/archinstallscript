@@ -142,6 +142,7 @@ EOT
         # set some nice defaults
         gsettings set org.gnome.desktop.interface gtk-theme Orchis-pink-dark-compact
         gsettings set org.gnome.desktop.interface icon-theme Tela-pink-dark
+        gsettings set org.gnome.shell.extensions.user-theme name "Orchis-pink-dark"
 
         xdg-mime default nemo.desktop inode/directory application/x-gnome-saved-search
         gsettings set org.cinnamon.desktop.default-applications.terminal exec urxvt
@@ -325,9 +326,10 @@ install_profile-sync-daemon(){
         systemctl --user enable --now psd.service
 
         # asd config
+        sudo pacman -S anything-sync-daemon
         sudo sed -i "s/^WHATTOSYNC=.*$/WHATTOSYNC=('\/home\/paul\/.cache')/" /etc/asd.conf
         sudo sed -i 's/^#USE_OVERLAYFS=.*$/USE_OVERLAYFS="yes"/' /etc/asd.conf
-        sudo sed -i 's/^#VOLATILE=.*$/VOLATILE="/dev/shm")/' /etc/asd.conf
+        sudo sed -i 's/^#VOLATILE=.*$/VOLATILE="\/dev\/shm")/' /etc/asd.conf
         sudo systemctl enable --now asd
 }
 
