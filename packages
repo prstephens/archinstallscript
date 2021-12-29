@@ -5,6 +5,7 @@ linux-zen
 linux-zen-headers
 snapper
 grub
+os-prober
 grub-btrfs
 btrfs-progs
 efibootmgr

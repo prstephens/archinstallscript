@@ -473,7 +473,6 @@ EOT
         arch-chroot /mnt systemctl enable NetworkManager.service
         arch-chroot /mnt systemctl enable bluetooth.service
         arch-chroot /mnt systemctl enable cups.service
-        arch-chroot /mnt systemctl enable reflector
         arch-chroot /mnt systemctl enable reflector.timer
         arch-chroot /mnt systemctl enable fstrim.timer
         arch-chroot /mnt systemctl enable sshd
