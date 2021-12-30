@@ -44,7 +44,7 @@
       <stimer state="on"/>
       <reset state="on"/>
       <vendor_id state="on" value="0123456789ab"/>
-      <frequencies state='on'/>
+      <frequencies state="on"/>
     </hyperv>
     <kvm>
       <hidden state="on"/>
