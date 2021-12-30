@@ -152,8 +152,8 @@ choosepartitions(){
 }
 
 getuserinfo(){
-        hostname=$(whiptail --backtitle "$BACKTITLE" --inputbox "Enter hostname:" 8 78 3>&1 1>&2 2>&3)
-        user=$(whiptail --backtitle "$BACKTITLE" --inputbox "Enter admin username:" 8 78 3>&1 1>&2 2>&3)
+        hostname=$(whiptail --backtitle "$BACKTITLE" --inputbox "Enter hostname:" 8 50 3>&1 1>&2 2>&3)
+        user=$(whiptail --backtitle "$BACKTITLE" --inputbox "Enter admin username:" 8 50 3>&1 1>&2 2>&3)
 
         password="x"
         password2="xx"
@@ -161,8 +161,8 @@ getuserinfo(){
 
         while [[ "$password" != "$password2" ]]; do
 
-            password=$(whiptail --backtitle "$BACKTITLE" --passwordbox "${passphrase_invalid_message}Please enter the admin password:" 8 78 3>&1 1>&2 2>&3)
-            password2=$(whiptail --backtitle "$BACKTITLE" --passwordbox "Please repeat the admin password:" 8 78 3>&1 1>&2 2>&3)
+            password=$(whiptail --backtitle "$BACKTITLE" --passwordbox "${passphrase_invalid_message}Please enter the admin password:" 8 50 3>&1 1>&2 2>&3)
+            password2=$(whiptail --backtitle "$BACKTITLE" --passwordbox "Please repeat the admin password:" 8 50 3>&1 1>&2 2>&3)
             passphrase_invalid_message="Passwords do not match! "
 
         done

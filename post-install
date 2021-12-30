@@ -106,8 +106,8 @@ install_gnome(){
         clear
         
         echo "Installing Gnome.."
-        sudo pacman -S gnome gnome-tweaks xscreensaver firefox flatpak nemo nemo-fileroller nemo-preview gtk-engine-murrine sassc seahorse gnome-notes gparted
-        yay -S chrome-gnome-shell fancontrol-gui pamac-aur bpytop-git snapper-gui etcher-bin firefox-extension-gnome-shell-integration
+        sudo pacman -S gnome gnome-tweaks xscreensaver firefox flatpak nemo nemo-fileroller nemo-preview gtk-engine-murrine sassc seahorse gparted
+        yay -S chrome-gnome-shell fancontrol-gui pamac-aur bpytop-git snapper-gui etcher-bin firefox-extension-gnome-shell-integration sticky
 
         # missing firmware for the mkinitcpio warnings
         yay -S aic94xx-firmware wd719x-firmware upd72020x-fw
@@ -130,6 +130,14 @@ install_gnome(){
         # Tela icon theme
         git clone https://github.com/prstephens/Tela-icon-theme.git /tmp/Tela-icon-theme
         /tmp/Tela-icon-theme/install.sh -d $HOME/.icons pink
+
+        # Fluent gtk theme
+        git clone https://github.com/prstephens/Fluent-gtk-theme.git /tmp/Fluent-gtk-theme
+        /tmp/Fluent-gtk-theme/install.sh  -t pink -c dark -s compact -i arch --tweaks round noborder square
+
+        # fluent icons
+        git clone https://github.com/prstephens/Fluent-icon-theme.git /tmp/Fluent-icon-theme
+        /tmp/Fluent-icon-theme/install.sh -r pink
 
         # xinit config
         sudo cat <<EOT >> $HOME/.xinitrc
