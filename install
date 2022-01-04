@@ -179,8 +179,6 @@ performinstall(){
 
         if (whiptail --backtitle "${BACKTITLE}" --title "### WARNING ###" --yesno "Do you want to format ${bootdev}? \n\nTHIS COULD ERASE EXISITING OPERATING SYSTEM BOOTLOADERS" --defaultno 0 78) then
 		mkfs.fat -F 32 ${bootdev}
-        else
-                mainmenu "1)"
 	fi
         
         clear
