@@ -1,9 +1,0 @@
-[Desktop Entry]
-Version=1.0
-Name=Reboot to Windowz
-GenericName=Web Browser
-Exec=/home/paul/data/scripts/rebootwindowz
-Icon=windows
-Terminal=true
-Type=Application
-MimeType=text/html;text/xml;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;application/x-xpinstall;application/pdf;application/json;
