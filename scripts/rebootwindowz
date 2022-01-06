@@ -3,11 +3,11 @@
 if [ "$1" == "r" ]
 then
 	echo "resetting to linux..."
-	sudo sed -i 's/^GRUB_DEFAULT=.*$/GRUB_DEFAULT="1>2"/' /etc/default/grub
+	sudo sed -i s'/default=.*$/default="1>2"/g' /boot/grub/grub.cfg
 	exit 0
 fi
 
-sudo sed -i 's/^GRUB_DEFAULT=.*$/GRUB_DEFAULT="3"/' /etc/default/grub
+sudo sed -i s'/default=.*$/default="3"/g' /boot/grub/grub.cfg
 ans=$(zenity --question --text="Do you want to reboot to Windowz?")
 rc=$?
 if [[ rc -eq 0 ]]

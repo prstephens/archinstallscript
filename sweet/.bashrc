@@ -217,6 +217,7 @@ alias tpm='swtpm socket --tpmstate dir=/tmp/emulated_tpm --ctrl type=unixio,path
 alias cpu='sudo i7z'
 alias top='bpytop'
 alias snap='sudo snapper -c root create --description'
+alias scrub='sudo btrfs scrub start -B /'
 
 # Alias definitions.
 # You may want to put all your additions into a separate file like

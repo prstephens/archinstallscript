@@ -106,7 +106,7 @@ install_gnome(){
         clear
         
         echo "Installing Gnome.."
-        sudo pacman -S gnome gnome-tweaks xscreensaver firefox flatpak nemo nemo-fileroller nemo-preview gtk-engine-murrine sassc seahorse gparted
+        sudo pacman -S gnome gnome-tweaks xscreensaver firefox flatpak nemo nemo-fileroller nemo-preview gtk-engine-murrine sassc seahorse gparted grub-customizer
         yay -S chrome-gnome-shell fancontrol-gui pamac-aur bpytop-git snapper-gui etcher-bin firefox-extension-gnome-shell-integration
 
         # missing firmware for the mkinitcpio warnings
@@ -184,6 +184,9 @@ EOT
 
         # package manager
         # pamac-manager
+
+        # Remove some trash from Gnome
+        sudo pacman -Rs epiphany nautilus gnome-music cheese totem gnome-books
 
 	sudo systemctl enable gdm
 
@@ -468,6 +471,7 @@ initialise(){
 
         sudo systemctl enable --now snapper-timeline.timer
         sudo systemctl enable --now snapper-cleanup.timer
+        sudo systemctl enable --now btrfs-scrub@-.timer
 
         yay -S snap-pac-grub snapper-rollback snp
 
