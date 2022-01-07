@@ -29,6 +29,15 @@ nano
 nano-syntax-highlighting
 sudo
 git
+go
+pigz
+pbzip2
+lrzip
+unrar
+zip
+lzip
+lzop
+p7zip
 bluez
 bluez-utils
 pulseaudio
@@ -43,7 +52,5 @@ archlinux-keyring
 pacman-contrib
 openssh
 ncdu
-glances
 htop
 i7z
-neofetch

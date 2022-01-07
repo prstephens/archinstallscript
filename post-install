@@ -202,126 +202,6 @@ install_xanmod(){
         env _microarchitecture=98 yay -S linux-xanmod-tt linux-xanmod-tt-headers
 }
 
-change-gdm-wallpaper(){
-        clear
-        if [ -z "$1" ]; then
-                echo "Usage: ./change-gdm-wallpaper <path/to/picture.png>"
-        fi
-
-        if [ ! -f $1 ]; then
-                echo Error: could not find file $1
-        fi
-
-        PIC=$1
-        WORKDIR=${HOME}/change-gdm-wallpaper-tmp
-        DATE=$(date +"%Y-%m-%d_%T")
-
-        if [ ! -d $WORKDIR ]; then
-                mkdir -p $WORKDIR/theme
-        fi
-
-        cd "${WORKDIR}/theme"
-        mkdir -p backups
-
-        IFS='/' read -r -a array <<< "$PIC"
-        cp $PIC .
-        PIC=${array[-1]}
-        chmod 777 $PIC
-
-        SHARE=/usr/share/gnome-shell/
-        GRESOURCE=gnome-shell-theme.gresource
-        CSS=gnome-shell.css
-        XMLRES=gnome-shell-theme.gresource.xml
-
-        echo Backing up ${SHARE}${GRESOURCE}...
-        cp ${SHARE}${GRESOURCE} "backups/${GRESOURCE}.bak.${DATE}"
-        cp ${SHARE}${GRESOURCE} $GRESOURCE
-        printf "Unpacking binary resource..."
-        for r in `gresource list ${SHARE}${GRESOURCE}`; do
-                r=${r#\/org\/gnome\/shell/}
-                if [ ! -d $WORKDIR/${r%/*} ]; then
-                        mkdir -p $WORKDIR/${r%/*}
-                fi
-        done
-
-        for r in `gresource list ${SHARE}${GRESOURCE}`; do
-                printf "."
-                gresource extract ${SHARE}${GRESOURCE} $r >$WORKDIR/${r#\/org\/gnome\/shell/}
-        done
-        echo
-
-        echo "creating ${XMLRES}..."
-
-        cat <<EOT > ${XMLRES}
-<?xml version="1.0" encoding="UTF-8"?>
-<gresources>
-<gresource prefix="/org/gnome/shell/theme">
-<file>calendar-today.svg</file>
-<file>checkbox-focused.svg</file>
-<file>checkbox-off-focused.svg</file>
-<file>checkbox-off.svg</file>
-<file>checkbox.svg</file>
-<file>workspace-placeholder.svg</file>
-<file>gnome-shell.css</file>
-<file>gnome-shell-high-contrast.css</file>
-<file>icons/scalable/status/eye-not-looking-symbolic.svg</file>
-<file>icons/scalable/status/eye-open-negative-filled-symbolic.svg</file>
-<file>icons/scalable/status/message-indicator-symbolic.svg</file>
-<file>icons/scalable/status/keyboard-enter-symbolic.svg</file>
-<file>icons/scalable/status/keyboard-hide-symbolic.svg</file>
-<file>icons/scalable/status/keyboard-layout-filled-symbolic.svg</file>
-<file>icons/scalable/status/keyboard-shift-filled-symbolic.svg</file>
-<file>icons/scalable/status/keyboard-caps-lock-filled-symbolic.svg</file>
-<file>icons/scalable/actions/color-pick.svg</file>
-<file>icons/scalable/actions/pointer-double-click-symbolic.svg</file>
-<file>icons/scalable/actions/pointer-drag-symbolic.svg</file>
-<file>icons/scalable/actions/pointer-primary-click-symbolic.svg</file>
-<file>icons/scalable/actions/pointer-secondary-click-symbolic.svg</file>
-<file>no-events.svg</file>
-<file>no-notifications.svg</file>
-<file>pad-osd.css</file>
-<file>process-working.svg</file>
-<file>toggle-off-dark.svg</file>
-<file>toggle-off-hc.svg</file>
-<file>toggle-off.svg</file>
-<file>toggle-on-dark.svg</file>
-<file>toggle-on-hc.svg</file>
-<file>toggle-on.svg</file>
-<file>${PIC}</file>
-</gresource>
-</gresources>
-EOT
-
-        WORKDIR="${WORKDIR}/theme/"
-
-        if [ -f $CSS ]; then
-                echo Backing up $CSS...
-                cp $CSS "backups/${CSS}.bak.${DATE}"
-                sed -i 's/#lockDialogGroup/#lockDialogGroup-old/' $CSS
-                printf "#lockDialogGroup {\n    background: #2e3436 url(${PIC});\n    background-repeat: no-repeat;\n    background-size: cover; }\n" >> $CSS
-
-                # change blue accent colour to nice pink
-                sed -i 's/#1b6acb/#f981b6/g' $CSS
-                sed -i 's/#1c6fd4/#f56898/g' $CSS
-                sed -i 's/#629fea/#f56898/g' $CSS
-                sed -i 's/rgba(188, 214, 246, 0.3)/rgba(249, 129, 182, 0.3)/g' $CSS
-        else
-                echo Error: could not find file $CSS
-                exit 1
-        fi
-
-        echo 'Edit any file now before installation then hit ENTER to continue...'
-        read
-
-        echo Compiling binary resources...
-        glib-compile-resources $XMLRES
-        echo Copying binary resources over to ${SHARE}...
-        sudo cp $GRESOURCE "${SHARE}${GRESOURCE}"
-        sudo cp $CSS "${SHARE}${CSS}"
-
-        busctl --user call org.gnome.Shell /org/gnome/Shell org.gnome.Shell Eval s 'Meta.restart("Restarting…")'
-}
-
 install_spotify(){
         echo "Installing Spotify..."
         curl -sS https://download.spotify.com/debian/pubkey_5E3C45D7B312C643.gpg | gpg --import -
@@ -441,6 +321,23 @@ initialise(){
         # optimise yay when building packages
         sudo sed -i 's/^#MAKEFLAGS="-j2"/MAKEFLAGS="-j$(nproc)"/' /etc/makepkg.conf
         sudo sed -i "s/^PKGEXT=.*$/PKGEXT='.pkg.tar'/" /etc/makepkg.conf
+
+        sudo sed -i 's/^CFLAGS.*/CFLAGS="-march=native -mtune=native -O2 -pipe -fstack-protector-strong --param=ssp-buffer-size=4 -fno-plt"/' /etc/makepkg.conf
+        
+        sudo sed -i 's/^#RUSTFLAGS.*/RUSTFLAGS="-C opt-level=2 -C target-cpu=native"/' /etc/makepkg.conf
+        sudo sed -i 's/^#BUILDDIR.*/BUILDDIR=\/tmp\/makepkg/' /etc/makepkg.conf
+        sudo sed -i 's/^COMPRESSGZ.*/COMPRESSGZ=(pigz -c -f -n)/' /etc/makepkg.conf
+        sudo sed -i 's/^COMPRESSBZ2.*/COMPRESSBZ2=(pbzip2 -c -f)/' /etc/makepkg.conf
+        sudo sed -i 's/^COMPRESSXZ.*/COMPRESSXZ=(xz -T "$(getconf _NPROCESSORS_ONLN)" -c -z --best -)/' /etc/makepkg.conf
+        sudo sed -i 's/^COMPRESSZST.*/COMPRESSZST=(zstd -c -z -q --ultra -T0 -22 -)/' /etc/makepkg.conf
+        sudo sed -i 's/^COMPRESSLZ.*/COMPRESSLZ=(lzip -c -f)/' /etc/makepkg.conf
+        sudo sed -i 's/^COMPRESSLRZ.*/COMPRESSLRZ=(lrzip -9 -q)/' /etc/makepkg.conf
+        sudo sed -i 's/^COMPRESSLZO.*/COMPRESSLZO=(lzop -q --best)/' /etc/makepkg.conf
+        sudo sed -i 's/^COMPRESSZ.*/COMPRESSZ=(compress -c -f)/' /etc/makepkg.conf
+        sudo sed -i 's/^COMPRESSLZ4.*/COMPRESSLZ4=(lz4 -q --best)/' /etc/makepkg.conf
+
+        whiptail --backtitle "$BACKTITLE" --msgbox --title "Warning" "Please manually correct the MAKEFLAGS line in /etc/makepkg.conf" 0 78
+        sudo nano /etc/makepkg.conf
 
         # install yay
         git clone https://aur.archlinux.org/yay.git $HOME/yay
