@@ -22,10 +22,11 @@ mainmenu(){
         options=()
         options+=("1)" "Plasma DE")
         options+=("2)" "Gnome DE")
-        options+=("3)" "Install Xanmod-tt Kernel")
-        options+=("4)" "Applications")
-        options+=("5)" "QEMU/KVM")
-        options+=("6)" "Java Development Environment")
+        options+=("3)" "Apply MacOs WhiteSur theme (Gnome)")
+        options+=("4)" "Install Xanmod-tt Kernel")
+        options+=("5)" "Applications")
+        options+=("6)" "QEMU/KVM")
+        options+=("7)" "Java Development Environment")
 
         sel=$(whiptail --backtitle "${BACKTITLE}" --title "Arch Linux Post Installer" --menu "" --cancel-button "Exit" --default-item "${nextitem}" 0 0 0 \
             "${options[@]}" \
@@ -41,20 +42,24 @@ mainmenu(){
                     nextitem="3)"
                 ;;
                 "3)")
-                    install_xanmod
+                    install_whitesur
                     nextitem="4)"
                 ;;
                 "4)")
-                    install_apps
+                    install_xanmod
                     nextitem="5)"
                 ;;
                 "5)")
-                    install_qemu
+                    install_apps
                     nextitem="6)"
                 ;;
                 "6)")
+                    install_qemu
+                    nextitem="7)"
+                ;;
+                "7)")
                     install_dev
-                    nextitem="6)"
+                    nextitem="7)"
                 ;;
             esac
             mainmenu "${nextitem}"
@@ -166,6 +171,9 @@ EOT
 
         gsettings set org.gnome.desktop.input-sources sources "[('xkb', 'gb')]"
 
+        # Remove 'Utilities' folder in app grid so all apps are in view
+        gsettings set org.gnome.desktop.app-folders folder-children "['YaST']"
+
         # add dash to dock extension
         git clone https://github.com/micheleg/dash-to-dock.git /tmp/dash-to-dock
         cd /tmp/dash-to-dock
@@ -194,6 +202,25 @@ EOT
         for i in `seq 2 50`; do sudo snapper delete $i; done;
         sudo snapper -c root create --description "### FRESH INSTALL - Including Gnome ###" # ID 2
         sudo grub-mkconfig -o /boot/grub/grub.cfg
+}
+
+install_whitesur(){
+
+        git clone https://github.com/prstephens/WhiteSur-gtk-theme.git $HOME/WhiteSur-gtk-theme
+        $HOME/WhiteSur-gtk-theme/install.sh -c dark -t pink -i arch -HD --round -m
+        sudo $HOME/WhiteSur-gtk-theme/tweaks.sh -g -c dark -i arch
+        $HOME/WhiteSur-gtk-theme/tweaks.sh -f monterey
+
+        git clone https://github.com/prstephens/WhiteSur-icon-theme.git /tmp/WhiteSur-icon-theme
+        /tmp/WhiteSur-icon-theme/install.sh -t pink -b
+
+        https://github.com/prstephens/WhiteSur-cursors.git /tmp/WhiteSur-cursors
+        /tmp/WhiteSur-cursors/install.sh
+
+        gsettings set org.gnome.desktop.interface gtk-theme WhiteSur-dark-pink
+        gsettings set org.gnome.desktop.interface icon-theme WhiteSur-pink-dark
+        gsettings set org.gnome.desktop.interface cursor-theme WhiteSur-cursors
+        gsettings set org.gnome.shell.extensions.user-theme name WhiteSur-dark-pink
 }
 
 install_xanmod(){
