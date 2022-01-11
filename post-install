@@ -231,6 +231,8 @@ install_whitesur(){
         gsettings set org.gnome.desktop.interface icon-theme WhiteSur-pink-dark
         gsettings set org.gnome.desktop.interface cursor-theme WhiteSur-cursors
         gsettings set org.gnome.shell.extensions.user-theme name WhiteSur-dark-pink
+
+        gsettings set org.gnome.desktop.background picture-uri 'file:///usr/share/backgrounds/Monterey/Monterey-timed.xml'
 }
 
 install_xanmod(){
