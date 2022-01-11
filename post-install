@@ -11,6 +11,11 @@
 BACKTITLE="Arch Installer v3"
 BASE_URL="https://raw.githubusercontent.com/prstephens/archinstallscript/master/"
 
+set -e
+set -u
+set -o pipefail
+#set -x #toggle for debug. Will print all commands.
+
 # --------------------------------------------------------
 
 mainmenu(){
@@ -267,7 +272,7 @@ install_apps(){
         clear
 
         echo "Installing Chrome, VS Code, OnlyOffice, Gimp..."
-        yay -S google-chrome code onlyoffice-bin gimp vlc kodi dropbox handbrake rpi-imager-bin
+        yay -S google-chrome code onlyoffice-bin gimp vlc kodi dropbox handbrake rpi-imager-bin geary
 
         install_spotify
 }

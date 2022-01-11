@@ -8,6 +8,11 @@
 # license   : LGPL-3.0 (http://opensource.org/licenses/lgpl-3.0.html)
 # referance : https://wiki.archlinux.org/index.php/Installation_guide
 
+set -e
+set -u
+set -o pipefail
+#set -x #toggle for debug. Will print all commands.
+
 # Globals
 BACKTITLE="Arch Installer v3"
 MIRRORLIST_URL="https://archlinux.org/mirrorlist/?country=GB&protocol=https&use_mirror_status=on"
@@ -144,9 +149,7 @@ choosepartitions(){
 	msg=${msg}"Boot     : "${bootdev}"\n"
 	msg=${msg}"Swap     : "${swapdev}"\n"
 	msg=${msg}"Root     : "${rootdev}"\n\n"
-	if (whiptail --backtitle "${BACKTITLE}" --title "Are these values correct?" --yesno "${msg}" 0 78) then
-		mainmenu "3)"
-        else
+	if !(whiptail --backtitle "${BACKTITLE}" --title "Are these values correct?" --yesno "${msg}" 0 78) then
                 choosepartitions
         fi
 }
@@ -536,7 +539,6 @@ rebootpc(){
 
 finish(){
         whiptail --backtitle "$BACKTITLE" --msgbox --title "Congratulations" "Install Complete\n\nReturn to main menu and select 'Finsh and Reboot'" 0 78
-        nextitem="5)"
 }
 
 # --------------------------------------------------------
