@@ -196,6 +196,11 @@ EOT
         # Remove some trash from Gnome
         sudo pacman -Rs epiphany nautilus gnome-music cheese totem gnome-books
 
+        # extract extensions and turn them on
+        curl -sL $BASE_URL/sweet/gnome-extensions.tar.gz -o /tmp/gnome-extensions.tar.gz
+        tar -zxf /tmp/gnome-extensions.tar.gz -C /
+        gsettings set org.gnome.shell disable-user-extensions false
+
 	sudo systemctl enable gdm
 
         # create a snapshot
@@ -207,9 +212,14 @@ EOT
 install_whitesur(){
 
         git clone https://github.com/prstephens/WhiteSur-gtk-theme.git $HOME/WhiteSur-gtk-theme
-        $HOME/WhiteSur-gtk-theme/install.sh -c dark -t pink -i arch -HD --round -m
-        sudo $HOME/WhiteSur-gtk-theme/tweaks.sh -g -c dark -i arch
-        $HOME/WhiteSur-gtk-theme/tweaks.sh -f monterey
+        cd $HOME/WhiteSur-gtk-theme
+        ./install.sh -c dark -t pink -i arch -HD --round -m
+        sudo ./tweaks.sh -g -c dark -i arch
+        ./tweaks.sh -f monterey
+        git checkout wallpapers
+        ./install-wallpapers.sh
+        sudo ./install-gnome-backgrounds.sh
+        cd
 
         git clone https://github.com/prstephens/WhiteSur-icon-theme.git /tmp/WhiteSur-icon-theme
         /tmp/WhiteSur-icon-theme/install.sh -t pink -b
