@@ -33,7 +33,7 @@ mainmenu(){
         options+=("" "")
         options+=("5)" "Finish and reboot")
 
-        sel=$(whiptail --backtitle "${BACKTITLE}" --title "Main Menu" --menu "" --cancel-button "Exit" --default-item "${nextitem}" 20 78 0\
+        sel=$(whiptail --backtitle "${BACKTITLE}" --title "Main Menu" --menu "" --fb --cancel-button "Exit" --default-item "${nextitem}" 20 78 0\
                 "${options[@]}" \
                 3>&1 1>&2 2>&3)
         if [ "$?" = "0" ]; then
@@ -87,7 +87,7 @@ selectdisk(){
                 options+=("${item}" "")
         done
         IFS=$IFS_ORIG
-        result=$(whiptail --backtitle "${BACKTITLE}" --title "${1}" --menu "" 0 78 0 "${options[@]}" 3>&1 1>&2 2>&3)
+        result=$(whiptail --backtitle "${BACKTITLE}" --title "${1}" --menu "" --fb 0 78 0 "${options[@]}" 3>&1 1>&2 2>&3)
         if [ "$?" != "0" ]
         then
                 return 1
@@ -114,7 +114,7 @@ choosepartitions(){
                         options+=("${item}" "")
                 fi
         done
-	bootdev=$(whiptail --backtitle "${BACKTITLE}" --title "Select Boot partition" --menu "${itemsinfo}" --default-item "${bootdev}" 0 78 0 \
+	bootdev=$(whiptail --backtitle "${BACKTITLE}" --title "Select Boot partition" --menu "${itemsinfo}" --fb --default-item "${bootdev}" 0 78 0 \
 		"none" "-" \
 		"${options[@]}" \
 		3>&1 1>&2 2>&3)
@@ -125,7 +125,7 @@ choosepartitions(){
 			bootdev=
 		fi
 	fi
-	swapdev=$(whiptail --backtitle "${BACKTITLE}" --title "Select Swap partition" --menu "${itemsinfo}" --default-item "${swapdev}" 0 78 0 \
+	swapdev=$(whiptail --backtitle "${BACKTITLE}" --title "Select Swap partition" --menu "${itemsinfo}" --fb --default-item "${swapdev}" 0 78 0 \
 		"none" "-" \
 		"${options[@]}" \
 		3>&1 1>&2 2>&3)
@@ -136,7 +136,7 @@ choosepartitions(){
 			swapdev=
 		fi
 	fi
-	rootdev=$(whiptail --backtitle "${BACKTITLE}" --title "Select Root partition" --menu "${itemsinfo}" --default-item "${rootdev}" 0 78 0 \
+	rootdev=$(whiptail --backtitle "${BACKTITLE}" --title "Select Root partition" --menu "${itemsinfo}" --fb --default-item "${rootdev}" 0 78 0 \
 		"${options[@]}" \
 		3>&1 1>&2 2>&3)
 	if [ ! "$?" = "0" ]; then
@@ -148,14 +148,14 @@ choosepartitions(){
 	msg=${msg}"Boot     : "${bootdev}"\n"
 	msg=${msg}"Swap     : "${swapdev}"\n"
 	msg=${msg}"Root     : "${rootdev}"\n\n"
-	if !(whiptail --backtitle "${BACKTITLE}" --title "Are these values correct?" --yesno "${msg}" 0 78) then
+	if !(whiptail --backtitle "${BACKTITLE}" --title "Are these values correct?" --fb --yesno "${msg}" 0 78) then
                 choosepartitions
         fi
 }
 
 getuserinfo(){
-        hostname=$(whiptail --backtitle "$BACKTITLE" --inputbox "Enter hostname:" 8 50 3>&1 1>&2 2>&3)
-        user=$(whiptail --backtitle "$BACKTITLE" --inputbox "Enter admin username:" 8 50 3>&1 1>&2 2>&3)
+        hostname=$(whiptail --backtitle "$BACKTITLE" --inputbox "Enter hostname:" --fb 8 50 3>&1 1>&2 2>&3)
+        user=$(whiptail --backtitle "$BACKTITLE" --inputbox "Enter admin username:" --fb 8 50 3>&1 1>&2 2>&3)
 
         password="x"
         password2="xx"
@@ -163,8 +163,8 @@ getuserinfo(){
 
         while [[ "$password" != "$password2" ]]; do
 
-            password=$(whiptail --backtitle "$BACKTITLE" --passwordbox "${passphrase_invalid_message}Please enter the admin password:" 8 50 3>&1 1>&2 2>&3)
-            password2=$(whiptail --backtitle "$BACKTITLE" --passwordbox "Please repeat the admin password:" 8 50 3>&1 1>&2 2>&3)
+            password=$(whiptail --backtitle "$BACKTITLE" --passwordbox "${passphrase_invalid_message}Please enter the admin password:" --fb 8 50 3>&1 1>&2 2>&3)
+            password2=$(whiptail --backtitle "$BACKTITLE" --passwordbox "Please repeat the admin password:" --fb 8 50 3>&1 1>&2 2>&3)
             passphrase_invalid_message="Passwords do not match! "
 
         done
@@ -174,12 +174,12 @@ getuserinfo(){
 }
 
 performinstall(){
-        whiptail --backtitle "${BACKTITLE}" --title "Are these values correct?" --yesno "${msg}" 0 78 3>&1 1>&2 2>&3
+        whiptail --backtitle "${BACKTITLE}" --title "Are these values correct?" --yesno "${msg}" --fb 0 78 3>&1 1>&2 2>&3
         if ([ ! "$?" = "0" ];) then
 		mainmenu "1)"
 	fi
 
-        if (whiptail --backtitle "${BACKTITLE}" --title "### WARNING ###" --yesno "Do you want to format ${bootdev}? \n\nTHIS COULD ERASE EXISITING OPERATING SYSTEM BOOTLOADERS" --defaultno 0 78) then
+        if (whiptail --backtitle "${BACKTITLE}" --title "### WARNING ###" --yesno "Do you want to format ${bootdev}? \n\nTHIS COULD ERASE EXISITING OPERATING SYSTEM BOOTLOADERS" --defaultno --fb 0 78) then
 		mkfs.fat -F 32 ${bootdev}
 	fi
         
@@ -527,7 +527,7 @@ setupuser(){
 }
 
 rebootpc(){
-        if (whiptail --backtitle "${BACKTITLE}" --yesno "Reboot?" --defaultno 8 78) then
+        if (whiptail --backtitle "${BACKTITLE}" --yesno "Reboot?" --defaultno --fb 8 78) then
                 clear
                 umount -a
                 reboot
@@ -535,7 +535,7 @@ rebootpc(){
 }
 
 finish(){
-        whiptail --backtitle "$BACKTITLE" --msgbox --title "Congratulations" "Install Complete\n\nReturn to main menu and select 'Finsh and Reboot'" 0 78
+        whiptail --backtitle "$BACKTITLE" --msgbox --title "Congratulations" "Install Complete\n\nReturn to main menu and select 'Finsh and Reboot'" --fb 0 78
 }
 
 # --------------------------------------------------------
@@ -543,7 +543,7 @@ finish(){
 checkconnection(){
         if [[ $(ping -q -w1 -c1 google.com &>/dev/null && echo online || echo offline) == "offline" ]]; 
             then
-                whiptail --backtitle "$BACKTITLE" --msgbox --title "No Network Connection" "You need to be connected to the Internet.\n\nInstallation stopped." 0 78
+                whiptail --backtitle "$BACKTITLE" --msgbox --title "No Network Connection" "You need to be connected to the Internet.\n\nInstallation stopped." --fb 0 78
                 exit
         fi
 }
