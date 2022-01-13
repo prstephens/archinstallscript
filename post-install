@@ -219,7 +219,7 @@ EOT
         tar -zxf /tmp/gnome-extensions.tar.gz -C /
         gsettings set org.gnome.shell disable-user-extensions false
 
-	sudo systemctl enable gdm
+	    sudo systemctl enable gdm
 
         # create a snapshot
         for i in `seq 2 50`; do sudo snapper delete $i; done;

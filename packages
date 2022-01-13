@@ -15,6 +15,7 @@ dkms
 intel-ucode
 ntfs-3g
 networkmanager
+nordvpn-bin
 dnsutils
 usbutils
 reflector
