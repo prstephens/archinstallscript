@@ -470,11 +470,6 @@ EOT
         # ### Make the Boot files ###
         arch-chroot /mnt mkinitcpio -P
 
-        # NordVPN 
-        arch-chroot /mnt groupadd -r nordvpn
-        arch-chroot /mnt gpasswd -a $user nordvpn
-        arch-chroot /mtn nordvpn whitelist add subnet 192.168.1.0/24
-
         # Enable services
         echo "Enabling services..."
         arch-chroot /mnt systemctl enable NetworkManager.service
@@ -483,7 +478,6 @@ EOT
         arch-chroot /mnt systemctl enable reflector.timer
         arch-chroot /mnt systemctl enable fstrim.timer
         arch-chroot /mnt systemctl enable sshd
-        arch-chroot /mnt systemctl enable nordvpnd.service
 
         arch-chroot /mnt systemctl mask lvm2-monitor
         arch-chroot /mnt systemctl mask systemd-random-seed

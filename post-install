@@ -317,6 +317,11 @@ install_apps(){
         echo "Installing Chrome, VS Code, OnlyOffice, Gimp..."
         yay -S google-chrome code onlyoffice-bin gimp vlc kodi dropbox handbrake rpi-imager-bin geary
 
+        # NordVPN 
+        arch-chroot /mnt groupadd -r nordvpn
+        arch-chroot /mnt gpasswd -a $user nordvpn
+        arch-chroot /mtn nordvpn whitelist add subnet 192.168.1.0/24
+
         install_spotify
 }
 
