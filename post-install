@@ -115,6 +115,7 @@ whitesur_menu(){
         options=()
         options+=("1)" "Install WhiteSur theme")
         options+=("2)" "Apply WhiteSur Theme")
+        options+=("3)" "Apply WhiteSur Nord Theme")
         
         sel=$(whiptail --backtitle "${BACKTITLE}" --fb --title "Select Theme to install" --menu "" --cancel-button "< Back" --default-item "${nextitem}" 0 0 0 \
             "${options[@]}" \
@@ -127,6 +128,10 @@ whitesur_menu(){
                 ;;
                 "2)")
                     apply_whitesur
+                    nextitem="3)"
+                ;;
+                "3)")
+                    apply_whitesur_nord
                     nextitem="3)"
                 ;;
             esac
@@ -324,7 +329,8 @@ install_whitesur(){
 
         git clone https://github.com/prstephens/WhiteSur-gtk-theme.git $HOME/WhiteSur-gtk-theme
         cd $HOME/WhiteSur-gtk-theme
-        ./install.sh -c dark -t pink -i arch -HD --round -m
+        ./install.sh -c dark -t pink -i arch -HD -m -o normal
+        ./install.sh -c dark --nord -i arch -HD -m -o normal -n WhiteSur-nord
         sudo ./tweaks.sh -g -c dark -i arch
         ./tweaks.sh -f monterey
         git checkout wallpapers
@@ -346,6 +352,11 @@ apply_whitesur(){
         gsettings set org.gnome.shell.extensions.user-theme name WhiteSur-dark-pink
 
         gsettings set org.gnome.desktop.background picture-uri 'file:///usr/share/backgrounds/Monterey/Monterey-timed.xml'
+}
+
+apply_whitesur_nord(){
+        gsettings set org.gnome.desktop.interface gtk-theme WhiteSur-nord-dark
+        gsettings set org.gnome.shell.extensions.user-theme name WhiteSur-nord-dark
 }
 
 install_orchis(){
