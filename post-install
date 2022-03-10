@@ -203,7 +203,7 @@ catppuccin_menu(){
 
 install_fonts(){
         echo "Installing fonts..."
-        yay -S apple-fonts
+        yay -S apple-fonts nerd-fonts-cascadia-code
         
         # Copy Windows fonts over
         echo "Copying Windows fonts..."

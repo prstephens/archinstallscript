@@ -106,7 +106,9 @@ sink()
 
 lspac()
 {
-    sudo pacman -Qei $(pacman -Qu|cut -d" " -f 1)|awk ' BEGIN {FS=":"}/^Name/{printf("\033[1;36m%s\033[1;37m", $2)}/^Description/{print $2}'
+    sudo pacman -Qei $(pacman -Qu|cut -d" " -f 1)|awk ' BEGIN {FS=":"}/^Name/{printf("\033[1;36m%s\033[1;37m", $2)}/^Description/{print $2}' &&
+    echo "AUR: " &&
+    sudo pacman -Qmi $(pacman -Qu|cut -d" " -f 1)|awk ' BEGIN {FS=":"}/^Name/{printf("\033[1;32m%s\033[1;37m", $2)}/^Description/{print $2}'
 }
 
 cheat()
