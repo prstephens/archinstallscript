@@ -485,7 +485,7 @@ EOT
 
 setupuser(){
         arch-chroot /mnt useradd -m -G wheel $user
-        arch-chroot /mnt sed -i 's/# %wheel ALL=(ALL) ALL/%wheel ALL=(ALL) ALL/' /etc/sudoers
+        arch-chroot /mnt sed -i 's/# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
         echo "Defaults insults" >> /mnt/etc/sudoers
         echo "${user} ALL=(ALL) NOPASSWD: /usr/bin/mount" >> /mnt/etc/sudoers
         echo "${user} ALL=(ALL) NOPASSWD: /usr/bin/umount" >> /mnt/etc/sudoers
