@@ -205,14 +205,17 @@ install_fonts(){
         echo "Installing fonts..."
         yay -S apple-fonts nerd-fonts-cascadia-code
         
-        # Copy Windows fonts over
-        echo "Copying Windows fonts..."
-        sudo mkdir /usr/share/fonts/windowsfonts
-        sudo mkdir /windows10
-        sudo mount /dev/sda3 /windows10
-        sudo cp /windows10/Windows/Fonts/* /usr/share/fonts/windowsfonts
+        echo "Windows fonts..."
+
+        curl -sL $BASE_URL/fonts/windows/windowsfonts.tar.gz.partaa -o $HOME/windowsfonts.tar.gz.partaa
+        curl -sL $BASE_URL/fonts/windows/windowsfonts.tar.gz.partab -o $HOME/windowsfonts.tar.gz.partab
+        curl -sL $BASE_URL/fonts/windows/windowsfonts.tar.gz.partac -o $HOME/windowsfonts.tar.gz.partac
+
+        cat $HOME/windowsfonts.tar.gz.parta* > $HOME/windowsfonts.tar.gz
+
+        sudo tar -zxvf $HOME/windowsfonts.tar.gz -C /
+
         fc-cache -f
-        sudo umount /windows10
 }
 
 install_plasma(){    
