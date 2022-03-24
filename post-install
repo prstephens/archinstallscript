@@ -207,13 +207,13 @@ install_fonts(){
         
         echo "Windows fonts..."
 
-        curl -sL $BASE_URL/fonts/windows/windowsfonts.tar.gz.partaa -o $HOME/windowsfonts.tar.gz.partaa
-        curl -sL $BASE_URL/fonts/windows/windowsfonts.tar.gz.partab -o $HOME/windowsfonts.tar.gz.partab
-        curl -sL $BASE_URL/fonts/windows/windowsfonts.tar.gz.partac -o $HOME/windowsfonts.tar.gz.partac
+        curl -sL $BASE_URL/fonts/windows/windowsfonts.tar.gz.partaa -o /tmp/windowsfonts.tar.gz.partaa
+        curl -sL $BASE_URL/fonts/windows/windowsfonts.tar.gz.partab -o /tmp/windowsfonts.tar.gz.partab
+        curl -sL $BASE_URL/fonts/windows/windowsfonts.tar.gz.partac -o /tmp/windowsfonts.tar.gz.partac
 
-        cat $HOME/windowsfonts.tar.gz.parta* > $HOME/windowsfonts.tar.gz
+        cat /tmp/windowsfonts.tar.gz.parta* > /tmp/windowsfonts.tar.gz
 
-        sudo tar -zxvf $HOME/windowsfonts.tar.gz -C /
+        sudo tar -zxvf /tmp/windowsfonts.tar.gz -C /
 
         fc-cache -f
 }
@@ -419,9 +419,10 @@ install_profile-sync-daemon(){
         sed -i 's/^#BROWSERS=.*$/BROWSERS=(google-chrome firefox)/' $HOME/.config/psd/psd.conf
         sed -i 's/^#USE_OVERLAYFS=.*$/USE_OVERLAYFS="yes"/' $HOME/.config/psd/psd.conf
         echo "$USER ALL=(ALL) NOPASSWD: /usr/bin/psd-overlay-helper" | sudo tee -a /etc/sudoers
-        systemctl --user enable --now psd.service
+        systemctl --user enable --now psd.service  
+}
 
-        # asd config
+install_anything-sync-daemon(){
         sudo pacman -S anything-sync-daemon
         sudo sed -i "s/^WHATTOSYNC=.*$/WHATTOSYNC=('\/home\/paul\/.cache')/" /etc/asd.conf
         sudo sed -i 's/^#USE_OVERLAYFS=.*$/USE_OVERLAYFS="yes"/' /etc/asd.conf
@@ -435,11 +436,6 @@ install_apps(){
         echo "Installing Chrome, VS Code, OnlyOffice, Gimp..."
         yay -S google-chrome code onlyoffice-bin gimp vlc kodi dropbox handbrake rpi-imager-bin geary
 
-        # NordVPN 
-        arch-chroot /mnt groupadd -r nordvpn
-        arch-chroot /mnt gpasswd -a $user nordvpn
-        arch-chroot /mtn nordvpn whitelist add subnet 192.168.1.0/24
-
         install_spotify
 }
 
@@ -449,8 +445,7 @@ install_qemu(){
         echo "Installing QEMU/KVM"
         sudo pacman -S libvirt virt-manager edk2-ovmf qemu iptables-nft dnsmasq dmidecode swtpm
 
-        # Enable Virtualization Technology for Directed I/O in rEFInd config as boot param
-        # module_blacklist=xpad                                 - allows XBOX controller to be passed through to VM
+        # Enable Virtualization Technology for Directed I/O in grub config as boot param
         # default_hugepagesz=1G hugepagesz=1G                   - pre-allocates RAM for VM using 1GB Hugepages
         sudo sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT=.*$/GRUB_CMDLINE_LINUX_DEFAULT="quiet loglevel=3 rd.systemd.show_status=false nowatchdog mitigations=off intel_iommu=on iommu=pt video=efifb:off pci=realloc default_hugepagesz=1G hugepagesz=1G"/' /etc/default/grub
         sudo sed -i 's/^MODULES=.*$/MODULES=(i915 btrfs vfio_pci vfio vfio_iommu_type1 vfio_virqfd)/' /etc/mkinitcpio.conf
