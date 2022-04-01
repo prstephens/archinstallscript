@@ -335,7 +335,6 @@ install_popshell(){
 }
 
 install_whitesur(){
-
         git clone https://github.com/prstephens/WhiteSur-gtk-theme.git $HOME/WhiteSur-gtk-theme
         cd $HOME/WhiteSur-gtk-theme
         ./install.sh -c dark -t pink -i arch -HD -m -o normal
@@ -387,11 +386,13 @@ apply_orchis(){
 
 install_catppuccin(){
         yay -S catppuccin-gtk-theme
+        git clone https://github.com/prstephens/Fluent-icon-theme.git /tmp/Fluent-icon-theme
+        /tmp/Fluent-icon-theme/install.sh -r -b -d $HOME/.icons pink
 }
 
 apply_catppuccin(){
         gsettings set org.gnome.desktop.interface gtk-theme Catppuccin-red
-        gsettings set org.gnome.desktop.interface icon-theme Zafiro-icons
+        gsettings set org.gnome.desktop.interface icon-theme Fluent-pink-dark
         gsettings set org.gnome.shell.extensions.user-theme name Catppuccin-red
 }
 
