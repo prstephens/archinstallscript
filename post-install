@@ -248,10 +248,12 @@ install_gnome(){
         
         echo "Installing Gnome.."
         sudo pacman -S gnome gnome-tweaks xscreensaver firefox flatpak nemo nemo-fileroller nemo-preview gtk-engine-murrine sassc seahorse gparted grub-customizer
-        yay -S chrome-gnome-shell fancontrol-gui pamac-aur bpytop-git snapper-gui etcher-bin firefox-extension-gnome-shell-integration mutter-rounded rar
-
+        yay -S chrome-gnome-shell fancontrol-gui pamac-aur bpytop-git snapper-gui etcher-bin firefox-extension-gnome-shell-integration mutter-rounded rar dconf-editor
+        
         # missing firmware for the mkinitcpio warnings
         yay -S aic94xx-firmware wd719x-firmware upd72020x-fw
+
+        install_popshell
 
         # install flatpak user repo
         flatpak --user remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
@@ -302,15 +304,10 @@ EOT
 
         # add arch updater extension
         yay -S gnome-shell-extension-arch-update
-
-        # check updates command:
-        # /bin/sh -c "(/usr/bin/checkupdates; /usr/bin/yay -Qqu --color never | sed 's/Get .*//') | sort -u -t' ' -k1,1"
-
-        # update command
-        # urxvt -e sh -c "yay -Syu ; echo Done - Press enter to exit; read"
-
-        # package manager
-        # pamac-manager
+        gsettings set org.gnome.shell.extensions.arch-update check-cmd "/bin/sh -c ""(/usr/bin/checkupdates; /usr/bin/yay -Qqu --color never | sed 's/Get .*//') | sort -u -t' ' -k1,1"""
+        gsettings set org.gnome.shell.extensions.arch-update update-cmd 'urxvt -e sh -c "yay -Syu ; echo Done - Press enter to exit; read"'
+        gsettings set org.gnome.shell.extensions.arch-update package-manager 'pamac-manager'
+        gsettings set org.gnome.shell.extensions.arch-update use-buildin-icons true
 
         # Remove some trash from Gnome
         sudo pacman -Rs epiphany nautilus gnome-music cheese totem gnome-books gnome-software vino gnome-boxes
@@ -326,6 +323,15 @@ EOT
         for i in `seq 2 50`; do sudo snapper delete $i; done;
         sudo snapper -c root create --description "### FRESH INSTALL - Including Gnome ###" # ID 2
         sudo grub-mkconfig -o /boot/grub/grub.cfg
+}
+
+install_popshell(){
+        yay -S typescript gnome-shell-extension-pop-shell-git
+        git clone https://github.com/pop-os/shell.git /tmp/shell
+        cd /tmp/shell
+        make local-install
+        cd
+        gsettings --schemadir ~/.local/share/gnome-shell/extensions/pop-shell@system76.com/schemas set org.gnome.shell.extensions.pop-shell activate-launcher "['<Super>space']"
 }
 
 install_whitesur(){
@@ -366,12 +372,9 @@ apply_whitesur_nord(){
 }
 
 install_orchis(){
-
-        # Orchis-pink-dark theme
         git clone https://github.com/prstephens/Orchis-theme.git /tmp/Orchis-theme
         /tmp/Orchis-theme/install.sh -d $HOME/.themes -t pink -c dark
         
-        # Tela icon theme
         git clone https://github.com/prstephens/Tela-icon-theme.git /tmp/Tela-icon-theme
         /tmp/Tela-icon-theme/install.sh -d $HOME/.icons pink
 }
@@ -379,17 +382,16 @@ install_orchis(){
 apply_orchis(){
         gsettings set org.gnome.desktop.interface gtk-theme Orchis-pink-dark-compact
         gsettings set org.gnome.desktop.interface icon-theme Tela-pink-dark
-        gsettings set org.gnome.shell.extensions.user-theme name Orchis-pink-dark
+        gsettings set org.gnome.shell.extensions.user-theme name Orchis-pink-dark-compact
 }
 
 install_catppuccin(){
-
         yay -S catppuccin-gtk-theme
 }
 
 apply_catppuccin(){
         gsettings set org.gnome.desktop.interface gtk-theme Catppuccin-red
-        gsettings set org.gnome.desktop.interface icon-theme Fluent-dark
+        gsettings set org.gnome.desktop.interface icon-theme Zafiro-icons
         gsettings set org.gnome.shell.extensions.user-theme name Catppuccin-red
 }
 
