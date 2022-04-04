@@ -31,7 +31,8 @@ mainmenu(){
         options+=("3)" "Setup user and root password")
         options+=("4)" "Install")
         options+=("" "")
-        options+=("5)" "Finish and reboot")
+        options+=("5)" "Fix - Re-install fstab")
+        options+=("6)" "Finish and reboot")
 
         sel=$(whiptail --backtitle "${BACKTITLE}" --title "Main Menu" --menu "" --fb --cancel-button "Exit" --default-item "${nextitem}" 20 78 0\
                 "${options[@]}" \
@@ -59,8 +60,12 @@ mainmenu(){
                                 nextitem="5)"
                         ;;
                         "5)")
+                                generate_fstab
+                                nextitem="6)"
+                        ;;
+                        "6)")
                                 rebootpc
-                                nextitem="5)"
+                                nextitem="6)"
                         ;;
                 esac
                 mainmenu "${nextitem}"
@@ -226,13 +231,19 @@ performinstall(){
 
         mount -o noatime,commit=120,compress=zstd,space_cache=v2,subvol=@snapshots $rootdev /mnt/.snapshots
 
-        mount $bootdev /mnt/boot/efi
+        if [ ! "${bootdev}" = "" ]
+        then
+                mount $bootdev /mnt/boot/efi
+        fi
 
         echo "Starting install.."
         
         pacstrap /mnt $(< /tmp/packages)
 
-        # Generate fstab
+        generate_fstab
+}
+
+generate_fstab(){
         genfstab -U /mnt >> /mnt/etc/fstab
 }
 
