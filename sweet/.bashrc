@@ -124,7 +124,6 @@ extbackup()
 
 extrestore()
 {
-    rm -rdf $HOME/data/gnome-extensions
     cp -r $HOME/data/gnome-extensions $HOME/.local/share/gnome-shell/extensions
 }
 
