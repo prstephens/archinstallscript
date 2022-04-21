@@ -365,8 +365,8 @@ apply_whitesur(){
 }
 
 apply_whitesur_nord(){
-        gsettings set org.gnome.desktop.interface gtk-theme WhiteSur-nord-dark
-        gsettings set org.gnome.shell.extensions.user-theme name WhiteSur-nord-dark
+        gsettings set org.gnome.desktop.interface gtk-theme WhiteSur-nord-dark-nord
+        gsettings set org.gnome.shell.extensions.user-theme name WhiteSur-nord-dark-nord
         gsettings set org.gnome.desktop.interface icon-theme Zafiro-icons
 }
 

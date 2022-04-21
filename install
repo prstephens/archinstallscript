@@ -472,6 +472,10 @@ ACTION=="add|change", KERNEL=="sd[a-z]|mmcblk[0-9]*", ATTR{queue/rotational}=="0
 ACTION=="add|change", KERNEL=="sd[a-z]", ATTR{queue/rotational}=="1", ATTR{queue/scheduler}="bfq"
 EOT
 
+        # Bluetooth config
+        arch-chroot /mnt sed -i 's/^#DiscoverableTimeout = 0/DiscoverableTimeout = 0/' /etc/bluetooth/main.conf
+        arch-chroot /mnt sed -i 's/^#AutoEnable=true/AutoEnable=true/' /etc/bluetooth/main.conf
+
         # BBC Micro console font :)
         arch-chroot /mnt curl -sL $BASE_URL/fonts/acorn/console/bedstead-10.psf.gz -o /usr/share/kbd/consolefonts/bedstead-10.psf.gz
         arch-chroot /mnt curl -sL $BASE_URL/fonts/acorn/console/bedstead-20.psf.gz -o /usr/share/kbd/consolefonts/bedstead-20.psf.gz
