@@ -37,6 +37,7 @@ zip
 lzip
 lzop
 p7zip
+fd
 bluez
 bluez-utils
 pulseaudio
