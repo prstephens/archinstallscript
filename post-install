@@ -437,7 +437,7 @@ install_apps(){
         clear
 
         echo "Installing Chrome, VS Code, OnlyOffice, Gimp..."
-        yay -S google-chrome code onlyoffice-bin gimp vlc kodi dropbox handbrake rpi-imager-bin geary
+        yay -S google-chrome code onlyoffice-bin gimp vlc kodi dropbox handbrake rpi-imager-bin geary ventoy-bin
 
         install_spotify
 }
@@ -481,7 +481,8 @@ EOT
 
         # WINDOWS 11 Bypass
         # =================
-        # TPM 
+        #
+        # mkdir /tmp/emulated_tpm
         # swtpm socket --tpmstate dir=/tmp/emulated_tpm --ctrl type=unixio,path=/tmp/emulated_tpm/swtpm-sock --log level=20 --tpm2
         # Pass through a TMP device as emulated TIS
         #
