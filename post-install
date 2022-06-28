@@ -279,10 +279,10 @@ EOT
         gsettings set org.cinnamon.desktop.default-applications.terminal exec urxvt
         gsettings set org.cinnamon.desktop.default-applications.terminal exec-arg -e
 
-        gsettings set org.gnome.desktop.interface font-name "SF Pro Display 11"
-        gsettings set org.gnome.desktop.interface document-font-name "SF Pro Display 11"
+        gsettings set org.gnome.desktop.interface font-name "SF Pro Rounded Regular 11"
+        gsettings set org.gnome.desktop.interface document-font-name "SF Pro Rounded Regular 11"
         gsettings set org.gnome.desktop.interface monospace-font-name "Source Code Pro 9"
-        gsettings set org.gnome.desktop.wm.preferences titlebar-font "SF Pro Display 11"
+        gsettings set org.gnome.desktop.wm.preferences titlebar-font "SF Pro Rounded Regular 11"
 
         gsettings set org.gnome.desktop.wm.preferences button-layout "close,minimize,maximize:"
         gsettings set org.gnome.mutter center-new-windows "true"
@@ -337,19 +337,13 @@ install_popshell(){
 install_whitesur(){
         git clone https://github.com/prstephens/WhiteSur-gtk-theme.git $HOME/WhiteSur-gtk-theme
         cd $HOME/WhiteSur-gtk-theme
-        ./install.sh -c dark -t pink -i arch -HD -m -o normal
-        ./install.sh -c dark --nord -i arch -HD -m -o normal -n WhiteSur-nord
+        ./install.sh -i arch -m -o normal
+        ./install.sh --nord -i arch -m -o normal
         sudo ./tweaks.sh -g -c dark -i arch
         ./tweaks.sh -f monterey
-        git checkout wallpapers
-        ./install-wallpapers.sh
-        sudo ./install-gnome-backgrounds.sh
-        cd
 
         git clone https://github.com/prstephens/WhiteSur-icon-theme.git /tmp/WhiteSur-icon-theme
-        /tmp/WhiteSur-icon-theme/install.sh -t pink -b
-
-        git clone https://github.com/prstephens/Zafiro-icons.git $HOME/.local/share/icons/Zafiro-icons
+        /tmp/WhiteSur-icon-theme/install.sh -b
 
         git clone https://github.com/prstephens/WhiteSur-cursors.git $HOME/WhiteSur-cursors
         $HOME/WhiteSur-cursors/install.sh
@@ -360,8 +354,6 @@ apply_whitesur(){
         gsettings set org.gnome.desktop.interface icon-theme WhiteSur-pink-dark
         gsettings set org.gnome.desktop.interface cursor-theme WhiteSur-cursors
         gsettings set org.gnome.shell.extensions.user-theme name WhiteSur-dark-pink
-
-        gsettings set org.gnome.desktop.background picture-uri 'file:///usr/share/backgrounds/Monterey/Monterey-timed.xml'
 }
 
 apply_whitesur_nord(){
