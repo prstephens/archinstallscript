@@ -247,7 +247,7 @@ install_gnome(){
         clear
         
         echo "Installing Gnome.."
-        sudo pacman -S gnome gnome-tweaks xscreensaver firefox flatpak nemo nemo-fileroller nemo-preview gtk-engine-murrine sassc seahorse gparted grub-customizer
+        sudo pacman -S gnome gnome-tweaks xscreensaver firefox flatpak nemo nemo-fileroller nemo-preview gtk-engine-murrine sassc seahorse gparted grub-customizer cava
         yay -S chrome-gnome-shell fancontrol-gui pamac-aur snapper-gui etcher-bin firefox-extension-gnome-shell-integration mutter-rounded rar gdm-settings
         
         # missing firmware for the mkinitcpio warnings
@@ -307,6 +307,7 @@ EOT
 #     padding-bottom:2px;
 #     padding-right: 1px;
 #     padding-left: 1px;
+#     margin-bottom: 2px;
 # }
 
 # #dashtodockContainer .icon {
@@ -324,7 +325,7 @@ EOT
         gsettings set org.gnome.shell.extensions.arch-update use-buildin-icons true
 
         # Remove some trash from Gnome
-        sudo pacman -Rs epiphany nautilus gnome-music cheese totem gnome-books gnome-software vino gnome-boxes
+        sudo pacman -Rs epiphany gnome-music cheese totem gnome-books gnome-software vino gnome-boxes
 
 	    sudo systemctl enable gdm
 
@@ -346,10 +347,10 @@ install_popshell(){
 install_whitesur(){
         git clone https://github.com/prstephens/WhiteSur-gtk-theme.git $HOME/WhiteSur-gtk-theme
         cd $HOME/WhiteSur-gtk-theme
-        ./install.sh -i arch -m -o normal
-        ./install.sh --nord -i arch -m -o normal
+        ./install.sh -i arch -m -o normal -N glassy -s 280
         sudo ./tweaks.sh -g -c dark -i arch
         ./tweaks.sh -f monterey
+        ./tweaks.sh -F
 
         git clone https://github.com/prstephens/WhiteSur-icon-theme.git /tmp/WhiteSur-icon-theme
         /tmp/WhiteSur-icon-theme/install.sh -b
