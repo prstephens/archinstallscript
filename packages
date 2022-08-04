@@ -19,9 +19,6 @@ dnsutils
 usbutils
 reflector
 nfs-utils
-xorg
-xorg-server
-xorg-xinit
 xf86-video-intel
 mesa
 vulkan-intel

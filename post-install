@@ -25,11 +25,10 @@ mainmenu(){
         options=()
         options+=("1)" "Plasma DE")
         options+=("2)" "Gnome DE")
-        options+=("3)" "Select Gnome Theme >")
-        options+=("4)" "Install Xanmod-tt Kernel")
-        options+=("5)" "Applications")
-        options+=("6)" "QEMU/KVM")
-        options+=("7)" "Java Development Environment")
+        options+=("3)" "Install Xanmod-tt Kernel")
+        options+=("4)" "Applications")
+        options+=("5)" "QEMU/KVM")
+        options+=("6)" "Java Development Environment")
 
         sel=$(whiptail --backtitle "${BACKTITLE}" --fb --title "Arch Linux Post Installer" --menu "" --cancel-button "Exit" --default-item "${nextitem}" 0 0 0 \
             "${options[@]}" \
@@ -45,157 +44,23 @@ mainmenu(){
                     nextitem="3)"
                 ;;
                 "3)")
-                    gnome_menu "1"
+                    install_xanmod
                     nextitem="4)"
                 ;;
                 "4)")
-                    install_xanmod
+                    install_apps
                     nextitem="5)"
                 ;;
                 "5)")
-                    install_apps
+                    install_qemu
                     nextitem="6)"
                 ;;
                 "6)")
-                    install_qemu
-                    nextitem="7)"
-                ;;
-                "7)")
                     install_dev
-                    nextitem="7)"
+                    nextitem="6)"
                 ;;
             esac
             mainmenu "${nextitem}"
-        else
-            clear
-        fi
-}
-
-gnome_menu(){
-        if [ "${1}" = "" ]; then
-            nextitem="."
-        else
-            nextitem=${1}
-        fi
-        options=()
-        options+=("1)" "WhiteSur MacOs Theme >")
-        options+=("2)" "Orchis Theme >")
-        options+=("3)" "Catppuccin Theme >")
-        
-        sel=$(whiptail --backtitle "${BACKTITLE}" --fb --title "Select Theme to install" --menu "" --cancel-button "< Back" --default-item "${nextitem}" 0 0 0 \
-            "${options[@]}" \
-            3>&1 1>&2 2>&3)
-        if [ "$?" = "0" ]; then
-            case ${sel} in
-                "1)")
-                    whitesur_menu
-                    nextitem="2)"
-                ;;
-                "2)")
-                    orchis_menu
-                    nextitem="3)"
-                ;;
-                "3)")
-                    catppuccin_menu
-                    nextitem="3)"
-                ;;
-            esac
-            gnome_menu "${nextitem}"
-        else
-            clear
-        fi
-}
-
-whitesur_menu(){
-        if [ "${1}" = "" ]; then
-            nextitem="."
-        else
-            nextitem=${1}
-        fi
-        options=()
-        options+=("1)" "Install WhiteSur theme")
-        options+=("2)" "Apply WhiteSur Theme")
-        options+=("3)" "Apply WhiteSur Nord Theme")
-        
-        sel=$(whiptail --backtitle "${BACKTITLE}" --fb --title "Select Theme to install" --menu "" --cancel-button "< Back" --default-item "${nextitem}" 0 0 0 \
-            "${options[@]}" \
-            3>&1 1>&2 2>&3)
-        if [ "$?" = "0" ]; then
-            case ${sel} in
-                "1)")
-                    install_whitesur
-                    nextitem="2)"
-                ;;
-                "2)")
-                    apply_whitesur
-                    nextitem="3)"
-                ;;
-                "3)")
-                    apply_whitesur_nord
-                    nextitem="3)"
-                ;;
-            esac
-            whitesur_menu "${nextitem}"
-        else
-            clear
-        fi
-}
-
-orchis_menu(){
-        if [ "${1}" = "" ]; then
-            nextitem="."
-        else
-            nextitem=${1}
-        fi
-        options=()
-        options+=("1)" "Install Orchis theme")
-        options+=("2)" "Apply Orchis Theme")
-        
-        sel=$(whiptail --backtitle "${BACKTITLE}" --fb --title "Select Theme to install" --menu "" --cancel-button "< Back" --default-item "${nextitem}" 0 0 0 \
-            "${options[@]}" \
-            3>&1 1>&2 2>&3)
-        if [ "$?" = "0" ]; then
-            case ${sel} in
-                "1)")
-                    install_orchis
-                    nextitem="2)"
-                ;;
-                "2)")
-                    apply_orchis
-                    nextitem="3)"
-                ;;
-            esac
-            orchis_menu "${nextitem}"
-        else
-            clear
-        fi
-}
-
-catppuccin_menu(){
-        if [ "${1}" = "" ]; then
-            nextitem="."
-        else
-            nextitem=${1}
-        fi
-        options=()
-        options+=("1)" "Install Catppuccin theme")
-        options+=("2)" "Apply Catppuccin Theme")
-        
-        sel=$(whiptail --backtitle "${BACKTITLE}" --fb --title "Select Theme to install" --menu "" --cancel-button "< Back" --default-item "${nextitem}" 0 0 0 \
-            "${options[@]}" \
-            3>&1 1>&2 2>&3)
-        if [ "$?" = "0" ]; then
-            case ${sel} in
-                "1)")
-                    install_catppuccin
-                    nextitem="2)"
-                ;;
-                "2)")
-                    apply_catppuccin
-                    nextitem="3)"
-                ;;
-            esac
-            catppuccin_menu "${nextitem}"
         else
             clear
         fi
@@ -248,11 +113,9 @@ install_gnome(){
         
         echo "Installing Gnome.."
         sudo pacman -S gnome gnome-tweaks xscreensaver firefox flatpak nemo nemo-fileroller nemo-preview gtk-engine-murrine sassc seahorse gparted grub-customizer cava
-        yay -S chrome-gnome-shell fancontrol-gui pamac-aur snapper-gui etcher-bin firefox-extension-gnome-shell-integration mutter-rounded rar gdm-settings
+        yay -S chrome-gnome-shell fancontrol-gui pamac-aur snapper-gui firefox-extension-gnome-shell-integration mutter-rounded rar gdm-settings
         
-        # missing firmware for the mkinitcpio warnings
-        yay -S aic94xx-firmware wd719x-firmware upd72020x-fw
-
+        install_fonts
         install_popshell
 
         # install flatpak user repo
@@ -265,14 +128,6 @@ install_gnome(){
         curl -sL $BASE_URL/sweet/.xscreensaver -o $HOME/.xscreensaver
         if [ ! -d $HOME/.config/autostart/ ];then mkdir $HOME/.config/autostart;fi
         curl -sL $BASE_URL/sweet/xscreensaver.desktop -o $HOME/.config/autostart/xscreensaver.desktop
-
-        # xinit config
-        sudo cat <<EOT >> $HOME/.xinitrc
-export XDG_SESSION_TYPE=x11
-export GDK_BACKEND=x11
-exec gnome-session
-EOT
-        install_fonts
 
         # set some nice defaults
         xdg-mime default nemo.desktop inode/directory application/x-gnome-saved-search
@@ -317,6 +172,10 @@ EOT
 #     padding-left: 1px;
 # }
 
+##fildem fix
+#sudo ln -s /usr/lib/python3.9/site-packages/fildem /usr/lib/python3.10/site-packages 
+#sudo ln -s /usr/lib/python3.9/site-packages/fildem-0.6.7-py3.9.egg-info/ /usr/lib/python3.10/site-packages
+
         # add arch updater extension
         yay -S gnome-shell-extension-arch-update
         gsettings set org.gnome.shell.extensions.arch-update check-cmd "/bin/sh -c \"(/usr/bin/checkupdates; /usr/bin/yay -Qqu --color never | sed 's/Get .*//') | sort -u -t' ' -k1,1\""
@@ -326,6 +185,9 @@ EOT
 
         # Remove some trash from Gnome
         sudo pacman -Rs epiphany gnome-music cheese totem gnome-books gnome-software vino gnome-boxes
+
+        # Install WhiteSur apple like theme
+        install_whitesur
 
 	    sudo systemctl enable gdm
 
@@ -345,31 +207,19 @@ install_popshell(){
 }
 
 install_whitesur(){
-        git clone https://github.com/prstephens/WhiteSur-gtk-theme.git $HOME/WhiteSur-gtk-theme
-        cd $HOME/WhiteSur-gtk-theme
+        git clone https://github.com/prstephens/WhiteSur-gtk-theme.git /tmp/WhiteSur-gtk-theme
+        cd /tmp/WhiteSur-gtk-theme
         ./install.sh -i arch -m -o normal -N glassy -s 280
-        sudo ./tweaks.sh -g -c dark -i arch
+        ./tweaks -d -c Dark
         ./tweaks.sh -f monterey
         ./tweaks.sh -F
+        sudo ./tweaks.sh -g -c Dark -i arch
 
         git clone https://github.com/prstephens/WhiteSur-icon-theme.git /tmp/WhiteSur-icon-theme
-        /tmp/WhiteSur-icon-theme/install.sh -b
+        /tmp/WhiteSur-icon-theme/install.sh
 
-        git clone https://github.com/prstephens/WhiteSur-cursors.git $HOME/WhiteSur-cursors
-        $HOME/WhiteSur-cursors/install.sh
-}
-
-apply_whitesur(){
-        gsettings set org.gnome.desktop.interface gtk-theme WhiteSur-dark-pink
-        gsettings set org.gnome.desktop.interface icon-theme WhiteSur-pink-dark
-        gsettings set org.gnome.desktop.interface cursor-theme WhiteSur-cursors
-        gsettings set org.gnome.shell.extensions.user-theme name WhiteSur-dark-pink
-}
-
-apply_whitesur_nord(){
-        gsettings set org.gnome.desktop.interface gtk-theme WhiteSur-nord-dark-nord
-        gsettings set org.gnome.shell.extensions.user-theme name WhiteSur-nord-dark-nord
-        gsettings set org.gnome.desktop.interface icon-theme Zafiro-icons
+        git clone https://github.com/prstephens/WhiteSur-cursors.git /tmp/WhiteSur-cursors
+        /tmp/WhiteSur-cursors/install.sh
 }
 
 install_orchis(){
@@ -378,24 +228,6 @@ install_orchis(){
         
         git clone https://github.com/prstephens/Tela-icon-theme.git /tmp/Tela-icon-theme
         /tmp/Tela-icon-theme/install.sh -d $HOME/.icons pink
-}
-
-apply_orchis(){
-        gsettings set org.gnome.desktop.interface gtk-theme Orchis-pink-dark-compact
-        gsettings set org.gnome.desktop.interface icon-theme Tela-pink-dark
-        gsettings set org.gnome.shell.extensions.user-theme name Orchis-pink-dark-compact
-}
-
-install_catppuccin(){
-        yay -S catppuccin-gtk-theme
-        git clone https://github.com/prstephens/Fluent-icon-theme.git /tmp/Fluent-icon-theme
-        /tmp/Fluent-icon-theme/install.sh -r -b -d $HOME/.icons pink
-}
-
-apply_catppuccin(){
-        gsettings set org.gnome.desktop.interface gtk-theme Catppuccin-red
-        gsettings set org.gnome.desktop.interface icon-theme Fluent-pink-dark
-        gsettings set org.gnome.shell.extensions.user-theme name Catppuccin-red
 }
 
 install_xanmod(){
@@ -439,7 +271,7 @@ install_apps(){
         clear
 
         echo "Installing Chrome, VS Code, OnlyOffice, Gimp..."
-        yay -S google-chrome code onlyoffice-bin gimp vlc kodi dropbox handbrake rpi-imager-bin geary ventoy-bin
+        yay -S google-chrome code onlyoffice-bin gimp vlc kodi dropbox handbrake rpi-imager-bin geary ventoy-bin etcher-bin
 
         install_spotify
 }
