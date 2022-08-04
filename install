@@ -426,14 +426,6 @@ EOT
         # add btrfs to modules
         sed -i 's/^MODULES=.*$/MODULES=(i915 btrfs)/' /mnt/etc/mkinitcpio.conf
 
-        # Intel X11 config
-        cat <<EOT > /mnt/etc/X11/xorg.conf.d/20-intel.conf 
-Section "Device"
-  Identifier "Intel Graphics"
-  Driver "intel"
-EndSection
-EOT
-
         # Create the pacman mirrorlist updater service
         cat <<EOT > /mnt/etc/systemd/system/reflector.service
 [Unit]
@@ -534,11 +526,6 @@ setupuser(){
         if [ ! -a /mnt/home/$user/.inputrc ]; then echo '$include /etc/inputrc' > /mnt/home/$user/.inputrc; fi
         echo 'set completion-ignore-case On' >> /mnt/home/$user/.inputrc
         arch-chroot /mnt chown $user:$user /home/$user/.inputrc
-
-        # Create user xinit config file 
-        echo "Creating .xinitrc file..."
-        head -n -5 /mnt/etc/X11/xinit/xinitrc >> /mnt/home/$user/.xinitrc
-        arch-chroot /mnt chown $user:$user /home/$user/.xinitrc
 }
 
 rebootpc(){
@@ -568,7 +555,7 @@ updatemirrors(){
 }
 
 dependencies(){
-        pacman -Sy --noconfirm pacman-contrib
+        pacman -Sy --noconfirm pacman-contrib archlinux-keyring
 }
 
 getpackagelist(){
