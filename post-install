@@ -112,8 +112,8 @@ install_gnome(){
         clear
         
         echo "Installing Gnome.."
-        sudo pacman -S gnome gnome-tweaks xscreensaver firefox flatpak nemo nemo-fileroller nemo-preview gtk-engine-murrine sassc seahorse gparted grub-customizer cava
-        yay -S chrome-gnome-shell fancontrol-gui pamac-aur snapper-gui firefox-extension-gnome-shell-integration mutter-rounded rar gdm-settings
+        sudo pacman -S gnome gnome-tweaks xscreensaver firefox flatpak nemo nemo-fileroller nemo-preview gtk-engine-murrine sassc seahorse gparted grub-customizer
+        yay -S pamac-aur snapper-gui rar gdm-settings cava getextensions-git
         
         install_fonts
         install_popshell
@@ -151,11 +151,7 @@ install_gnome(){
         gsettings set org.gnome.mutter blur-list "['nemo', 'urxvt', 'geary', 'code-oss', 'gnome-calendar', 'gnome-contacts', 'gnome-calculator', 'gnome-control-center']"
 
         # add dash to dock extension
-        git clone https://github.com/micheleg/dash-to-dock.git /tmp/dash-to-dock
-        cd /tmp/dash-to-dock
-        make
-        make install
-        cd
+        yay -S gnome-shell-extension-dash-to-dock
 
 # #dashtodockContainer .overview-icon {
 #     padding-top:2px;
@@ -189,7 +185,7 @@ install_gnome(){
         # Install WhiteSur apple like theme
         install_whitesur
 
-	    sudo systemctl enable gdm
+	sudo systemctl enable gdm
 
         # create a snapshot
         for i in `seq 2 50`; do sudo snapper delete $i; done;
@@ -207,19 +203,20 @@ install_popshell(){
 }
 
 install_whitesur(){
-        git clone https://github.com/prstephens/WhiteSur-gtk-theme.git /tmp/WhiteSur-gtk-theme
-        cd /tmp/WhiteSur-gtk-theme
+        git clone https://github.com/prstephens/WhiteSur-gtk-theme.git $HOME/WhiteSur-gtk-theme
+        cd $HOME/WhiteSur-gtk-theme
         ./install.sh -i arch -m -o normal -N glassy -s 280
         ./tweaks -d -c Dark
         ./tweaks.sh -f monterey
         ./tweaks.sh -F
         sudo ./tweaks.sh -g -c Dark -i arch
+        cd..
 
-        git clone https://github.com/prstephens/WhiteSur-icon-theme.git /tmp/WhiteSur-icon-theme
-        /tmp/WhiteSur-icon-theme/install.sh
+        git clone https://github.com/prstephens/WhiteSur-icon-theme.git $HOME/WhiteSur-icon-theme
+        $HOME/WhiteSur-icon-theme/install.sh
 
-        git clone https://github.com/prstephens/WhiteSur-cursors.git /tmp/WhiteSur-cursors
-        /tmp/WhiteSur-cursors/install.sh
+        git clone https://github.com/prstephens/WhiteSur-cursors.git $HOME/WhiteSur-cursors
+        $HOME/WhiteSur-cursors/install.sh
 }
 
 install_orchis(){
