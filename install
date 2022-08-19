@@ -14,7 +14,6 @@ set -o pipefail
 
 # Globals
 BACKTITLE="Arch Installer v3"
-MIRRORLIST_URL="https://archlinux.org/mirrorlist/?country=GB&protocol=https&use_mirror_status=on"
 BASE_URL="https://raw.githubusercontent.com/prstephens/archinstallscript/master/"
 
 # --------------------------------------------------------
@@ -553,11 +552,11 @@ checkconnection(){
 }
 
 updatemirrors(){
-        curl -sL "$MIRRORLIST_URL" | sed -e 's/^#Server/Server/' -e '/^#/d' | rankmirrors -n 5 - > /etc/pacman.d/mirrorlist
+        reflector --verbose -c GB -l 25 --age 12 -p http -p https --sort rate --save /etc/pacman.d/mirrorlist
 }
 
 dependencies(){
-        pacman -Sy --noconfirm pacman-contrib archlinux-keyring
+        pacman -Syy --noconfirm pacman-contrib archlinux-keyring reflector
 }
 
 getpackagelist(){
