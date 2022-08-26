@@ -200,9 +200,8 @@ install_whitesur(){
         git clone https://github.com/prstephens/WhiteSur-gtk-theme.git $HOME/WhiteSur-gtk-theme
         cd $HOME/WhiteSur-gtk-theme
         ./install.sh -i arch -m -o normal -N glassy -s 280
-        ./tweaks -d -c Dark
+        ./tweaks.sh -d -c Dark
         ./tweaks.sh -f monterey
-        ./tweaks.sh -F
         sudo ./tweaks.sh -g -c Dark -i arch
         cd..
 
