@@ -39,7 +39,6 @@ bluez
 bluez-utils
 pulseaudio
 pulsemixer
-rxvt-unicode
 wget
 cups
 hplip

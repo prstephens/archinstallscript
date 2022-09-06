@@ -505,16 +505,16 @@ setupuser(){
         echo "root:${password}" | arch-chroot /mnt chpasswd
 
         # config files
-        echo "Getting some sweet config files..."
-        arch-chroot /mnt curl -sL $BASE_URL/sweet/.Xresources -o /home/$user/.Xresources
-        arch-chroot /mnt curl -sL $BASE_URL/sweet/.bashrc -o /home/$user/.bashrc
+        echo "Getting some config files..."
+        arch-chroot /mnt curl -sL $BASE_URL/configs/.Xresources -o /home/$user/.Xresources
+        arch-chroot /mnt curl -sL $BASE_URL/configs/.bashrc -o /home/$user/.bashrc
         arch-chroot /mnt chown $user:$user /home/$user/.Xresources
         arch-chroot /mnt chown $user:$user /home/$user/.bashrc
-        arch-chroot /mnt curl -sL $BASE_URL/sweet/issue -o /etc/issue
+        arch-chroot /mnt curl -sL $BASE_URL/configs/issue -o /etc/issue
 
         # set custom pacman.conf 
         arch-chroot /mnt mv /etc/pacman.conf /etc/pacman.conf.bak
-        arch-chroot /mnt curl -sL $BASE_URL/sweet/pacman.conf -o /etc/pacman.conf
+        arch-chroot /mnt curl -sL $BASE_URL/configs/pacman.conf -o /etc/pacman.conf
         
         # Copy post-install file to /home/$user
         echo "Copy post-install file to /home/${user}..."
