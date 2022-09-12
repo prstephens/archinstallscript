@@ -218,6 +218,7 @@ alias tpm='swtpm socket --tpmstate dir=/tmp/emulated_tpm --ctrl type=unixio,path
 alias cpu='sudo i7z'
 alias snap='sudo snapper -c root create --description'
 alias scrub='sudo btrfs scrub start -B /'
+alias ff='wmctrl -r :ACTIVE: -b toggle,fullscreen'
 
 # Alias definitions.
 # You may want to put all your additions into a separate file like

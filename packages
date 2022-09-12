@@ -43,10 +43,10 @@ wget
 cups
 hplip
 rsync
-python-pyqt5
 archlinux-keyring
 pacman-contrib
 openssh
 ncdu
 htop
 i7z
+tmux
