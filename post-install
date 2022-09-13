@@ -118,6 +118,15 @@ install_gnome(){
         install_fonts
         install_popshell
 
+        # Vs code icon theme - material
+        curl -s https://api.github.com/repos/PKief/vscode-material-icon-theme/releases/latest \
+        | grep "browser_download_url.*vsix" \
+        | cut -d : -f 2,3 \
+        | tr -d \" \
+        | wget -qi -
+
+        code --install-extension material-icon-theme-4.20.0.vsix
+
         # xscreensaver settings - 10 min timeout - GL matrix 
         curl -sL $BASE_URL/configs/.xscreensaver -o $HOME/.xscreensaver
         if [ ! -d $HOME/.config/autostart/ ];then mkdir $HOME/.config/autostart;fi
@@ -176,8 +185,10 @@ install_gnome(){
         # Remove some trash from Gnome
         sudo pacman -Rs epiphany gnome-music cheese totem gnome-books gnome-software vino gnome-boxes
 
-        # Install WhiteSur apple like theme
+        # Install some nice themes
         install_whitesur
+        install_catppuccin
+        install_orchis
 
         # Install Gradience - to change LibAdwaita colours
         flatpak install flathub com.github.GradienceTeam.Gradience
@@ -212,7 +223,7 @@ install_catppuccin(){
 
         # Flient icon theme - goes nice with catppuccin
         git clone https://github.com/prstephens/Fluent-icon-theme.git $HOME/Fluent-icon-theme
-        $HOME/Fluent-icon-theme/install.sh --all
+        $HOME/Fluent-icon-theme/install.sh --all -r
 }
 
 install_whitesur(){
