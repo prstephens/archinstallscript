@@ -1,50 +1,53 @@
 ! special
-URxvt.foreground: #DADAE8
-URxvt.background: #1E1E29
-URxvt.cursorColor: #B1E3AD
+URxvt.background: #24273A
+URxvt.foreground: #CAD3F5
+URxvt.cursorColor: #F4DBD6
 
 ! black
-URxvt.color0: #6E6C7E
-URxvt.color8: #6E6C7E
+URxvt.color0: #494D64
+URxvt.color8: #5B6078
 
 ! red
-URxvt.color1: #E38C8F
-URxvt.color9: #E38C8F
+URxvt.color1: #ED8796
+URxvt.color9: #ED8796
 
 ! green
-URxvt.color2: #B1E3AD
-URxvt.color10: #B1E3AD
+URxvt.color2: #A6DA95
+URxvt.color10: #A6DA95
 
 ! yellow
-URxvt.color3: #EBDDAA
-URxvt.color11: #EBDDAA
+URxvt.color3: #EED49F
+URxvt.color11: #EED49F
 
 ! blue
-URxvt.color4: #A4B9EF
-URxvt.color12: #A4B9EF
+URxvt.color4: #8AADF4
+URxvt.color12: #8AADF4
 
 ! magenta
-URxvt.color5: #C6AAE8
-URxvt.color13: #C6AAE8
+URxvt.color5: #F5BDE6
+URxvt.color13: #F5BDE6
 
 ! cyan
-URxvt.color6: #E5B4E2
-URxvt.color14: #E5B4E2
+URxvt.color6: #8BD5CA
+URxvt.color14: #8BD5CA
 
 ! white
-URxvt.color7: #DADAE8
-URxvt.color15: #DADAE8
+URxvt.color7: #B8C0E0
+URxvt.color15: #A5ADCB
 
-! URxvt SETTINGS
+URxvt.letterSpace: 0
+URxvt.lineSpace: 0
+URxvt.internalBorder: 30
+URxvt.cursorBlink: true
+URxvt.cursorUnderline: true
+URxvt.saveline: 2048
+URxvt.scrollBar: false
+URxvt.scrollBar_right: false
+URxvt.urgentOnBell: true
+URxvt.iso14755: false
 URxvt.geometry: 120x30
 URxvt.depth: 32
-!URxvt.background: pallete0
-!URxvt.letterSpace: -1
-URxvt.scrollBar: false
-URxvt.internalBorder: 30
 URxvt.clipboard.autocopy: true
-URxvt.cursorBlink: 1
-URxvt.cursorUnderline: 1
 URxvt*fading:  30
 
 URxvt.urlLauncher:                google-chrome-stable
@@ -54,6 +57,3 @@ URxvt.urlButton:                  1
 URxvt.keysym.Control-Shift-V: perl:pasta:paste
 URxvt.perl-ext-common: selection-to-clipboard,pasta
 URxvt.font: xft:CaskaydiaCove Nerd Font:pixelsize=13
-
-!URxvt.perl-ext-common:  fullscreen
-URxvt.keysym.F11:       perl:fullscreen:switch

@@ -112,7 +112,7 @@ install_gnome(){
         clear
         
         echo "Installing Gnome.."
-        sudo pacman -S gnome gnome-tweaks xscreensaver firefox nemo nemo-fileroller nemo-preview gtk-engine-murrine sassc seahorse gparted grub-customizer wmctrl
+        sudo pacman -S gnome gnome-tweaks xscreensaver firefox nemo nemo-fileroller nemo-preview gtk-engine-murrine sassc seahorse gparted grub-customizer wmctrl flatpak code
         yay -S pamac-aur snapper-gui-git rar gdm-settings cava getextensions-git coolero rxvt-unicode-256xresources
         
         install_fonts
@@ -179,6 +179,9 @@ install_gnome(){
         # Install WhiteSur apple like theme
         install_whitesur
 
+        # Install Gradience - to change LibAdwaita colours
+        flatpak install flathub com.github.GradienceTeam.Gradience
+
         # coolero
         sudo systemd-sysusers
         sudo usermod -aG coolero $USER
@@ -199,6 +202,17 @@ install_popshell(){
         make local-install
         cd
         gsettings --schemadir ~/.local/share/gnome-shell/extensions/pop-shell@system76.com/schemas set org.gnome.shell.extensions.pop-shell activate-launcher "['<Super>space']"
+}
+
+install_catppuccin(){
+        yay -S catppuccin-gtk-theme-macchiato
+
+        # code theme
+        git clone https://github.com/catppuccin/vscode.git $HOME/.vscode-oss/extensions/catppuccin-vsc
+
+        # Flient icon theme - goes nice with catppuccin
+        git clone https://github.com/prstephens/Fluent-icon-theme.git $HOME/Fluent-icon-theme
+        $HOME/Fluent-icon-theme/install.sh --all
 }
 
 install_whitesur(){
@@ -266,7 +280,7 @@ install_apps(){
         clear
 
         echo "Installing Chrome, VS Code, OnlyOffice, Gimp..."
-        yay -S google-chrome code onlyoffice-bin gimp vlc kodi dropbox handbrake rpi-imager-bin geary ventoy-bin etcher-bin
+        yay -S google-chrome onlyoffice-bin gimp vlc kodi dropbox handbrake rpi-imager-bin geary ventoy-bin etcher-bin
 
         install_spotify
 }
