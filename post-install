@@ -123,9 +123,9 @@ install_gnome(){
         | grep "browser_download_url.*vsix" \
         | cut -d : -f 2,3 \
         | tr -d \" \
-        | wget -qi -
+        | wget -O material-icons.vsix -qi -
 
-        code --install-extension material-icon-theme-4.20.0.vsix
+        code --install-extension material-icons.vsix
 
         # xscreensaver settings - 10 min timeout - GL matrix 
         curl -sL $BASE_URL/configs/.xscreensaver -o $HOME/.xscreensaver
@@ -221,7 +221,7 @@ install_catppuccin(){
         # code theme
         git clone https://github.com/catppuccin/vscode.git $HOME/.vscode-oss/extensions/catppuccin-vsc
 
-        # Flient icon theme - goes nice with catppuccin
+        # Fluent icon theme - goes nice with catppuccin
         git clone https://github.com/prstephens/Fluent-icon-theme.git $HOME/Fluent-icon-theme
         $HOME/Fluent-icon-theme/install.sh --all -r
 }
