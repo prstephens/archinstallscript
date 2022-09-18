@@ -23,12 +23,11 @@ mainmenu(){
             nextitem=${1}
         fi
         options=()
-        options+=("1)" "Plasma DE")
-        options+=("2)" "Gnome DE")
-        options+=("3)" "Install Xanmod-tt Kernel")
-        options+=("4)" "Applications")
-        options+=("5)" "QEMU/KVM")
-        options+=("6)" "Java Development Environment")
+        options+=("1)" "Gnome DE")
+        options+=("2)" "Install Xanmod-tt Kernel")
+        options+=("3)" "Applications")
+        options+=("4)" "QEMU/KVM")
+        options+=("5)" "Java Development Environment")
 
         sel=$(whiptail --backtitle "${BACKTITLE}" --fb --title "Arch Linux Post Installer" --menu "" --cancel-button "Exit" --default-item "${nextitem}" 0 0 0 \
             "${options[@]}" \
@@ -36,28 +35,24 @@ mainmenu(){
         if [ "$?" = "0" ]; then
             case ${sel} in
                 "1)")
-                    install_plasma
+                    install_gnome
                     nextitem="2)"
                 ;;
                 "2)")
-                    install_gnome
+                    install_xanmod
                     nextitem="3)"
                 ;;
                 "3)")
-                    install_xanmod
+                    install_apps
                     nextitem="4)"
                 ;;
                 "4)")
-                    install_apps
+                    install_qemu
                     nextitem="5)"
                 ;;
                 "5)")
-                    install_qemu
-                    nextitem="6)"
-                ;;
-                "6)")
                     install_dev
-                    nextitem="6)"
+                    nextitem="5)"
                 ;;
             esac
             mainmenu "${nextitem}"
@@ -81,31 +76,6 @@ install_fonts(){
         sudo tar -zxvf /tmp/windowsfonts.tar.gz -C /
 
         fc-cache -f
-}
-
-install_plasma(){    
-        clear
-        
-        echo "Installing Plasma.."
-        sudo pacman -S plasma-meta ark dolphin xscreensaver konsole sshfs kvantum-qt5
-        yay -S latte-dock plasma5-applets-kde-arch-update-notifier
-
-        # xscreensaver settings - 10 min timeout - GL matrix 
-        curl -sL $BASE_URL/configs/.xscreensaver -o $HOME/.xscreensaver
-        if [ ! -d $HOME/.config/autostart/ ];then mkdir $HOME/.config/autostart;fi
-        curl -sL $BASE_URL/configs/xscreensaver.desktop -o $HOME/.config/autostart/xscreensaver.desktop
-
-        # Dracula colour scheme for Konsole
-        curl -sL $BASE_URL/configs/Dracula.colorscheme -o $HOME/.local/konsole/Dracula.colorscheme
-
-        # xinit config
-        sudo cat <<EOT >> $HOME/.xinitrc
-export DESKTOP_SESSION=plasma
-exec startplasma-x11
-EOT
-        echo '[[ ! $DISPLAY && $XDG_VTNR -eq 1 ]] && exec startx' >> $HOME/.bash_profile
-        
-        install_fonts
 }
 
 install_gnome(){
