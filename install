@@ -15,7 +15,7 @@ set -o pipefail
 # Globals
 BACKTITLE="Arch Installer v3"
 BASE_URL="https://raw.githubusercontent.com/prstephens/archinstallscript/master/"
-USE_CRYPT = 0
+USE_CRYPT=0
 
 # --------------------------------------------------------
 
@@ -107,14 +107,12 @@ selectdisk(){
 }
 
 enableencryption(){
-        if (whiptail --backtitle "${BACKTITLE}" --title "Are you sure you want full root disk encryption?" --fb --yesno 0 78) then
-                USE_CRYPT=1
-                chooseencryptpartition
-                ROOTUUID=$(blkid -s UUID -o value $realrootdev)
-                clear
-                cryptsetup -y -v luksFormat $realrootdev
-                cryptsetup open $realrootdev cryptroot
-        fi   
+        USE_CRYPT=1
+        chooseencryptpartition
+        ROOTUUID=$(blkid -s UUID -o value $realrootdev)
+        clear
+        cryptsetup -y -v luksFormat $realrootdev
+        cryptsetup open $realrootdev cryptroot
 }
 
 chooseencryptpartition(){
