@@ -15,6 +15,7 @@ set -o pipefail
 # Globals
 BACKTITLE="Arch Installer v3"
 BASE_URL="https://raw.githubusercontent.com/prstephens/archinstallscript/master/"
+USE_CRYPT = 0
 
 # --------------------------------------------------------
 
@@ -26,6 +27,7 @@ mainmenu(){
         fi
         options=()
         options+=("1)" "Partition disk (cfdisk)")
+        options+=("1.1)" "Enable LUKS encryption (optional)")
         options+=("2)" "Select partitions to mount")
         options+=("3)" "Setup user and root password")
         options+=("4)" "Install")
@@ -40,6 +42,10 @@ mainmenu(){
                 case ${sel} in
                         "1)")
                                 diskpartcfdisk
+                                nextitem="1.1)"
+                        ;;
+                        "1.1)")
+                                enableencryption
                                 nextitem="2)"
                         ;;
                         "2)")
@@ -98,6 +104,45 @@ selectdisk(){
         fi
         echo ${result%%\ *}
         return 0    
+}
+
+enableencryption(){
+        if (whiptail --backtitle "${BACKTITLE}" --title "Are you sure you want full root disk encryption?" --fb --yesno 0 78) then
+                USE_CRYPT=1
+                chooseencryptpartition
+                ROOTUUID=$(blkid -s UUID -o value $realrootdev)
+                clear
+                cryptsetup -y -v luksFormat $realrootdev
+                cryptsetup open $realrootdev cryptroot
+        fi   
+}
+
+chooseencryptpartition(){
+	itemsinfo=$(lsblk -o NAME,SIZE,FSTYPE)
+        items=$(lsblk -p -n -l -o NAME -e 7,11)
+        deviceitems=$(lsblk -d -n -l -o NAME -e 7,11)
+        options=()
+        optionstoremove=()
+        IFS_ORIG=$IFS
+        IFS=$'\n'
+        for item in ${deviceitems}
+        do  
+                optionstoremove+=("/dev/${item}")
+        done
+        for item in ${items}
+        do  
+                if [[ ! " ${optionstoremove[@]} " =~ " ${item} " ]]; then
+                        options+=("${item}" "")
+                fi
+        done
+
+	realrootdev=$(whiptail --backtitle "${BACKTITLE}" --title "Select Root partition to encrypt" --menu "${itemsinfo}" --fb --default-item "${rootdev}" 0 78 0 \
+		"${options[@]}" \
+		3>&1 1>&2 2>&3)
+	if [ ! "$?" = "0" ]; then
+		return 1
+	fi
+	
 }
 
 choosepartitions(){
@@ -232,7 +277,12 @@ performinstall(){
 
         if [ ! "${bootdev}" = "" ]
         then
-                mount $bootdev /mnt/boot/efi
+                if [[ "$USE_CRYPT" -eq 1 ]]
+                then
+                        mount $bootdev /mnt/boot
+                else
+                        mount $bootdev /mnt/boot/efi
+                fi
         fi
 
         echo "Starting install.."
@@ -248,11 +298,19 @@ generate_fstab(){
 
 installbootloader(){
         clear
+        if [[ "$USE_CRYPT" -eq 1 ]]
+        then
+                bootdir=/boot
+                arch-chroot /mnt sed -i "s|^GRUB_CMDLINE_LINUX=.*$|GRUB_CMDLINE_LINUX=\"cryptdevice=UUID=$ROOTUUID:cryptroot root=/dev/mapper/cryptroot\"|" /etc/default/grub
+        else   
+                bootdir=/boot/efi
+        fi
+ 
         arch-chroot /mnt sed -i 's/^GRUB_GFXMODE=.*$/GRUB_GFXMODE=1920x1080x32/' /etc/default/grub
         arch-chroot /mnt sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT=.*$/GRUB_CMDLINE_LINUX_DEFAULT="quiet loglevel=3 rd.systemd.show_status=false nowatchdog mitigations=off"/' /etc/default/grub
         arch-chroot /mnt sed -i 's/^#GRUB_DISABLE_OS_PROBER=.*$/GRUB_DISABLE_OS_PROBER="false"/' /etc/default/grub
         arch-chroot /mnt os-prober
-        arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --recheck
+        arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=$bootdir --bootloader-id=GRUB --recheck
         arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
 }
 
@@ -424,6 +482,11 @@ EOT
 
         # add btrfs to modules
         sed -i 's/^MODULES=.*$/MODULES=(i915 btrfs)/' /mnt/etc/mkinitcpio.conf
+
+        if [[ "$USE_CRYPT" -eq 1 ]]
+        then
+                sed -i 's/^HOOKS=.*$/HOOKS=(base udev autodetect modconf block encrypt filesystems keyboard fsck)/' /mnt/etc/mkinitcpio.conf
+        fi
 
         # Create the pacman mirrorlist updater service
         cat <<EOT > /mnt/etc/systemd/system/reflector.service
