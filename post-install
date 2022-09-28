@@ -408,7 +408,15 @@ initialise(){
         # config for booting a snapshot in read only
         sudo cp /lib/initcpio/hooks/grub-btrfs-overlayfs /etc/initcpio/hooks
         sudo cp /lib/initcpio/install/grub-btrfs-overlayfs /etc/initcpio/install
-        sudo sed -i 's/^HOOKS=.*$/HOOKS=(base udev autodetect modconf block filesystems keyboard fsck grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
+
+        if [[ "$USE_CRYPT" -eq 1 ]]
+        then
+                sudo sed -i 's/^HOOKS=.*$/HOOKS=(base udev autodetect modconf block encrypt filesystems keyboard fsck grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
+        else
+                sudo sed -i 's/^HOOKS=.*$/HOOKS=(base udev autodetect modconf block filesystems keyboard fsck grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
+        fi
+
+
         sudo mkinitcpio -P
 
         # put root dev into snapper-rollback.conf
@@ -427,6 +435,7 @@ initialise(){
 
 # --------------------------------------------------------
 rootdev=/root/dev # changed on the fly during install
+USE_CRYPT=0 # changed on the fly during install
 
 [[ ! -d $HOME/yay ]] && initialise
 
