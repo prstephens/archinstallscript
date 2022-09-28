@@ -27,7 +27,7 @@ mainmenu(){
         fi
         options=()
         options+=("1)" "Partition disk (cfdisk)")
-        options+=("1.1)" "Enable LUKS encryption (optional)")
+        options+=("1.1)" "LVM on LUKS (optional)")
         options+=("2)" "Select partitions to mount")
         options+=("3)" "Setup user and root password")
         options+=("4)" "Install")
@@ -42,10 +42,10 @@ mainmenu(){
                 case ${sel} in
                         "1)")
                                 diskpartcfdisk
-                                nextitem="1.1)"
+                                nextitem="2)"
                         ;;
                         "1.1)")
-                                enableencryption
+                                enablelvm
                                 nextitem="2)"
                         ;;
                         "2)")
@@ -106,16 +106,24 @@ selectdisk(){
         return 0    
 }
 
-enableencryption(){
+enablelvm(){
         USE_CRYPT=1
         chooseencryptpartition
         clear
         echo "### CREATING LUKS PARTITION ON ${realrootdev} ###"
         cryptsetup -y -v luksFormat $realrootdev
         echo ""
-        echo "### OPENING ${realrootdev} to /dev/mapper/cryptroot ###"
-        cryptsetup open $realrootdev cryptroot
+        echo "### OPENING ${realrootdev} to /dev/mapper/cryptlvm ###"
+        cryptsetup open $realrootdev cryptlvm
+
         ROOTUUID=$(blkid -s UUID -o value $realrootdev)
+
+        pvcreate /dev/mapper/cryptlvm
+        vgcreate vg1 /dev/mapper/cryptlvm
+
+        lvcreate -L 4G vg1 -n swap
+        lvcreate -L 60G vg1 -n root
+        lvcreate -l 100%FREE vg1 -n home
 }
 
 chooseencryptpartition(){
@@ -147,7 +155,7 @@ chooseencryptpartition(){
 }
 
 choosepartitions(){
-	itemsinfo=$(lsblk -o NAME,SIZE,FSTYPE)
+        itemsinfo=$(lsblk -o NAME,SIZE,FSTYPE)
         items=$(lsblk -p -n -l -o NAME -e 7,11)
         deviceitems=$(lsblk -d -n -l -o NAME -e 7,11)
         options=()
@@ -164,6 +172,7 @@ choosepartitions(){
                         options+=("${item}" "")
                 fi
         done
+      
 	bootdev=$(whiptail --backtitle "${BACKTITLE}" --title "Select Boot partition" --menu "${itemsinfo}" --fb --default-item "${bootdev}" 0 78 0 \
 		"none" "-" \
 		"${options[@]}" \
@@ -175,6 +184,7 @@ choosepartitions(){
 			bootdev=
 		fi
 	fi
+
 	swapdev=$(whiptail --backtitle "${BACKTITLE}" --title "Select Swap partition" --menu "${itemsinfo}" --fb --default-item "${swapdev}" 0 78 0 \
 		"none" "-" \
 		"${options[@]}" \
@@ -186,20 +196,31 @@ choosepartitions(){
 			swapdev=
 		fi
 	fi
-	rootdev=$(whiptail --backtitle "${BACKTITLE}" --title "Select Root partition" --menu "${itemsinfo}" --fb --default-item "${rootdev}" 0 78 0 \
-		"${options[@]}" \
-		3>&1 1>&2 2>&3)
-	if [ ! "$?" = "0" ]; then
-		return 1
-	fi
-	
+
+        rootdev=$(whiptail --backtitle "${BACKTITLE}" --title "Select Root partition" --menu "${itemsinfo}" --fb --default-item "${rootdev}" 0 78 0 \
+                "${options[@]}" \
+                3>&1 1>&2 2>&3)
+        if [ ! "$?" = "0" ]; then
+                return 1
+        fi
+
+        homedev=$(whiptail --backtitle "${BACKTITLE}" --title "Select Home partition" --menu "${itemsinfo}" --fb --default-item "${homedev}" 0 78 0 \
+                "${options[@]}" \
+                3>&1 1>&2 2>&3)
+        if [ ! "$?" = "0" ]; then
+                return 1
+        fi
+        
         msg=""
-	msg=${msg}"Boot     : "${bootdev}"\n"
-	msg=${msg}"Swap     : "${swapdev}"\n"
-	msg=${msg}"Root     : "${rootdev}"\n\n"
-	if !(whiptail --backtitle "${BACKTITLE}" --title "Are these values correct?" --fb --yesno "${msg}" 0 78) then
+        msg=${msg}"Boot     : "${bootdev}"\n"
+        msg=${msg}"Swap     : "${swapdev}"\n"
+        msg=${msg}"Root     : "${rootdev}"\n"
+        msg=${msg}"Home     : "${homedev}"\n\n"
+
+        if !(whiptail --backtitle "${BACKTITLE}" --title "Are these values correct?" --fb --yesno "${msg}" 0 78) then
                 choosepartitions
         fi
+        
 }
 
 getuserinfo(){
@@ -243,6 +264,9 @@ performinstall(){
         then
                 wipefs -a $rootdev
                 mkfs.btrfs $rootdev
+
+                wipefs -a $homedev
+                mkfs.btrfs $homedev
         else
                 echo "Install stopped"
                 exit
@@ -269,21 +293,13 @@ performinstall(){
         # You need to manually create folders to mount the other subvolumes at
         mkdir -p /mnt/{boot/efi,home,var/log,.snapshots}
 
-        mount -o noatime,commit=120,compress=zstd,space_cache=v2,discard=async,subvol=@home $rootdev /mnt/home
+        mount -o noatime,commit=120,compress=zstd,space_cache=v2,discard=async,subvol=@home $homedev /mnt/home
 
         mount -o noatime,commit=120,compress=zstd,space_cache=v2,discard=async,subvol=@var_log $rootdev /mnt/var/log
 
         mount -o noatime,commit=120,compress=zstd,space_cache=v2,discard=async,subvol=@snapshots $rootdev /mnt/.snapshots
 
-        if [ ! "${bootdev}" = "" ]
-        then
-                if [[ "$USE_CRYPT" -eq 1 ]]
-                then
-                        mount $bootdev /mnt/boot
-                else
-                        mount $bootdev /mnt/boot/efi
-                fi
-        fi
+        mount $bootdev /mnt/boot
 
         echo "Starting install.."
         
@@ -301,7 +317,7 @@ installbootloader(){
         if [[ "$USE_CRYPT" -eq 1 ]]
         then
                 bootdir=/boot
-                arch-chroot /mnt sed -i "s|^GRUB_CMDLINE_LINUX=.*$|GRUB_CMDLINE_LINUX=\"cryptdevice=UUID=$ROOTUUID:cryptroot root=/dev/mapper/cryptroot\"|" /etc/default/grub
+                arch-chroot /mnt sed -i "s|^GRUB_CMDLINE_LINUX=.*$|GRUB_CMDLINE_LINUX=\"cryptdevice=UUID=$ROOTUUID:cryptroot root=/dev/vg1/root\"|" /etc/default/grub
         else   
                 bootdir=/boot/efi
         fi
@@ -485,7 +501,7 @@ EOT
 
         if [[ "$USE_CRYPT" -eq 1 ]]
         then
-                sed -i 's/^HOOKS=.*$/HOOKS=(base udev autodetect modconf block encrypt filesystems keyboard fsck)/' /mnt/etc/mkinitcpio.conf
+                sed -i 's/^HOOKS=.*$/HOOKS=(base udev autodetect modconf block encrypt lvm2 filesystems keyboard fsck)/' /mnt/etc/mkinitcpio.conf
         fi
 
         # Create the pacman mirrorlist updater service
@@ -550,7 +566,7 @@ EOT
         arch-chroot /mnt systemctl enable fstrim.timer
         arch-chroot /mnt systemctl enable sshd
 
-        arch-chroot /mnt systemctl mask lvm2-monitor
+        #arch-chroot /mnt systemctl mask lvm2-monitor
         arch-chroot /mnt systemctl mask systemd-random-seed
 }
 
