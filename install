@@ -109,10 +109,13 @@ selectdisk(){
 enableencryption(){
         USE_CRYPT=1
         chooseencryptpartition
-        ROOTUUID=$(blkid -s UUID -o value $realrootdev)
         clear
+        echo "### CREATING LUKS PARTITION ON ${realrootdev} ###"
         cryptsetup -y -v luksFormat $realrootdev
+        echo ""
+        echo "### OPENING ${realrootdev} to /dev/mapper/cryptroot ###"
         cryptsetup open $realrootdev cryptroot
+        ROOTUUID=$(blkid -s UUID -o value $realrootdev)
 }
 
 chooseencryptpartition(){
@@ -189,7 +192,6 @@ choosepartitions(){
 	if [ ! "$?" = "0" ]; then
 		return 1
 	fi
-	realrootdev=${rootdev}
 	
         msg=""
 	msg=${msg}"Boot     : "${bootdev}"\n"
