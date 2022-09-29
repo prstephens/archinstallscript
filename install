@@ -122,8 +122,7 @@ enablelvm(){
         vgcreate vg1 /dev/mapper/cryptlvm
 
         lvcreate -L 4G vg1 -n swap
-        lvcreate -L 60G vg1 -n root
-        lvcreate -l 100%FREE vg1 -n home
+        lvcreate -l 100%FREE vg1 -n root
 }
 
 chooseencryptpartition(){
