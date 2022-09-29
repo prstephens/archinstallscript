@@ -305,7 +305,7 @@ installbootloader(){
         if [[ "$USE_CRYPT" -eq 1 ]]
         then
                 bootdir=/boot
-                arch-chroot /mnt sed -i "s|^GRUB_CMDLINE_LINUX=.*$|GRUB_CMDLINE_LINUX=\"cryptdevice=UUID=$ROOTUUID:cryptroot root=/dev/vg1/root\"|" /etc/default/grub
+                arch-chroot /mnt sed -i "s|^GRUB_CMDLINE_LINUX=.*$|GRUB_CMDLINE_LINUX=\"cryptdevice=UUID=$ROOTUUID:cryptlvm root=/dev/vg1/root\"|" /etc/default/grub
         else   
                 bootdir=/boot/efi
         fi
