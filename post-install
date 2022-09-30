@@ -433,6 +433,7 @@ initialise(){
 
         if [[ "$USE_CRYPT" -eq 1 ]]
         then
+                sudo mkdir /etc/pacman.d/hooks
                 cat <<EOT | sudo tee -a /etc/pacman.d/hooks/95-bootbackup.hook
 [Trigger]
 Operation = Upgrade
