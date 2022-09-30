@@ -411,11 +411,10 @@ initialise(){
 
         if [[ "$USE_CRYPT" -eq 1 ]]
         then
-                sudo sed -i 's/^HOOKS=.*$/HOOKS=(base udev autodetect modconf block encrypt filesystems keyboard fsck grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
+                sudo sed -i 's/^HOOKS=.*$/HOOKS=(base udev autodetect modconf block encrypt lvm2 filesystems keyboard fsck grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
         else
                 sudo sed -i 's/^HOOKS=.*$/HOOKS=(base udev autodetect modconf block filesystems keyboard fsck grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
         fi
-
 
         sudo mkinitcpio -P
 
@@ -431,6 +430,25 @@ initialise(){
         for i in `seq 1 50`; do sudo snapper delete $i; done;
         sudo snapper -c root create --description "### FRESH INSTALL - Base ###" #ID 1
         sudo grub-mkconfig -o /boot/grub/grub.cfg
+
+        if [[ "$USE_CRYPT" -eq 1 ]]
+        then
+                cat <<EOT | sudo tee -a /etc/pacman.d/hooks/95-bootbackup.hook
+[Trigger]
+Operation = Upgrade
+Operation = Install
+Operation = Remove
+Type = Path
+Target = usr/lib/modules/*/vmlinuz
+
+[Action]
+Depends = rsync
+Description = Backing up /boot...
+When = PostTransaction
+Exec = /usr/bin/rsync -a --delete /boot /.bootbackup
+EOT
+        fi
+
 }
 
 # --------------------------------------------------------

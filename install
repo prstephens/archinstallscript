@@ -282,7 +282,12 @@ performinstall(){
 
         mount -o noatime,commit=120,compress=zstd,space_cache=v2,discard=async,subvol=@snapshots $rootdev /mnt/.snapshots
 
-        mount $bootdev /mnt/boot
+        if [[ "$USE_CRYPT" -eq 1 ]]
+        then
+                mount $bootdev /mnt/boot
+        else   
+                mount $bootdev /mnt/boot/efi
+        fi
 
         echo "Starting install.."
         
