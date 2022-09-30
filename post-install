@@ -325,30 +325,6 @@ install_dev(){
         yay -S postman-bin
 }
 
-checkprogress(){
-        i="0"
-        while (true)
-        do
-            proc=$(ps aux | grep -v grep | grep -e $1)
-            if [[ "$proc" == "" ]]; then break; fi
-            sleep 0.5
-            echo $i
-            i=$(expr $i + 1)
-        done
-        # If it is done then display 100%
-        echo 100
-        # Give it some time to display the progress to the user.
-        sleep 2
-}
-
-updatemirrors(){
-        curl -sL "$MIRRORLIST_URL" | sed -e 's/^#Server/Server/' -e '/^#/d' | rankmirrors -n 5 - > /etc/pacman.d/mirrorlist &
-        {
-            checkprogress "rankmirrors"
-
-        } | whiptail --gauge --title "$BACKTITLE" "Ranking Mirrors..." 8 78 0
-}
-
 initialise(){
 
         # optimise yay when building packages
