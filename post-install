@@ -433,6 +433,11 @@ initialise(){
 
         if [[ "$USE_CRYPT" -eq 1 ]]
         then
+                cat <<EOT | sudo tee -a /usr/bin/boot-backup
+#!/bin/bash
+Exec = /usr/bin/rsync -a --delete /boot /.bootbackup/$(ls -1v /.snapshots | tail -n 1)
+EOT
+                sudo chmod +x /usr/bin/boot-backup
                 sudo mkdir /etc/pacman.d/hooks
                 cat <<EOT | sudo tee -a /etc/pacman.d/hooks/95-bootbackup.hook
 [Trigger]
@@ -446,7 +451,7 @@ Target = usr/lib/modules/*/vmlinuz
 Depends = rsync
 Description = Backing up /boot...
 When = PostTransaction
-Exec = /usr/bin/rsync -a --delete /boot /.bootbackup
+Exec = /usr/bin/boot-backup
 EOT
         fi
 
