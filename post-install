@@ -409,9 +409,10 @@ initialise(){
 
         if [[ "$USE_CRYPT" -eq 1 ]]
         then
+                sudo mkdir /.bootbackup
                 cat <<EOT | sudo tee -a /usr/bin/boot-backup
 #!/bin/bash
-Exec = /usr/bin/rsync -a --delete /boot /.bootbackup/$(ls -1v /.snapshots | tail -n 1)
+/usr/bin/rsync -a --delete /boot /.bootbackup/\$(ls -1v /.snapshots | tail -n 1)
 EOT
                 sudo chmod +x /usr/bin/boot-backup
                 sudo mkdir /etc/pacman.d/hooks
