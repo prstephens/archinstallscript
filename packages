@@ -3,7 +3,6 @@ base-devel
 linux-firmware
 linux-zen
 linux-zen-headers
-lvm2
 snapper
 grub
 os-prober
