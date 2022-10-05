@@ -24,6 +24,9 @@ mainmenu(){
         fi
         options=()
         options+=("1)" "Gnome DE")
+        options+=("1.1)" "Pop!_OS Pop Shell")
+        options+=("1.2)" "Themes")
+        options+=("1.3)" "Mutter Rounded patch")
         options+=("2)" "Install Xanmod-tt Kernel")
         options+=("3)" "Applications")
         options+=("4)" "QEMU/KVM")
@@ -36,6 +39,18 @@ mainmenu(){
             case ${sel} in
                 "1)")
                     install_gnome
+                    nextitem="1.1)"
+                ;;
+                "1.1)")
+                    install_popshell
+                    nextitem="1.2)"
+                ;;
+                "1.2)")
+                    install_themes
+                    nextitem="1.3)"
+                ;;
+                "1.3)")
+                    install_mutter
                     nextitem="2)"
                 ;;
                 "2)")
@@ -78,15 +93,24 @@ install_fonts(){
         fc-cache -f
 }
 
+install_themes(){
+        install_whitesur
+        install_catppuccin
+        install_orchis
+}
+
+install_mutter(){
+        yay -S mutter-rounded
+}
+
 install_gnome(){
         clear
         
         echo "Installing Gnome.."
-        sudo pacman -S gnome gnome-tweaks xscreensaver firefox nemo nemo-fileroller nemo-preview gtk-engine-murrine sassc seahorse gparted grub-customizer wmctrl flatpak code
-        yay -S pamac-aur snapper-gui-git rar gdm-settings cava getextensions-git coolero rxvt-unicode
+        sudo pacman -S gnome gnome-tweaks xscreensaver firefox nemo nemo-fileroller nemo-preview gtk-engine-murrine sassc seahorse gparted grub-customizer wmctrl flatpak code rxvt-unicode
+        yay -S pamac-aur snapper-gui-git rar gdm-settings cava getextensions-git coolero
         
         install_fonts
-        install_popshell
 
         # Vs code icon theme - material
         curl -s https://api.github.com/repos/PKief/vscode-material-icon-theme/releases/latest \
@@ -151,11 +175,6 @@ install_gnome(){
 
         # Remove some trash from Gnome
         sudo pacman -Rs epiphany gnome-music cheese totem gnome-books gnome-software vino gnome-boxes
-
-        # Install some nice themes
-        install_whitesur
-        install_catppuccin
-        install_orchis
 
         # Install Gradience - to change LibAdwaita colours
         flatpak install flathub com.github.GradienceTeam.Gradience
