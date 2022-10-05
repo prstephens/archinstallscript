@@ -485,7 +485,7 @@ EOT
 
         if [[ "$USE_CRYPT" -eq 1 ]]
         then
-                sed -i 's/^HOOKS=.*$/HOOKS=(base udev autodetect modconf block encrypt lvm2 filesystems keyboard fsck)/' /mnt/etc/mkinitcpio.conf
+                sed -i 's/^HOOKS=.*$/HOOKS=(base udev autodetect keyboard keymap consolefont modconf block encrypt lvm2 filesystems fsck)/' /mnt/etc/mkinitcpio.conf
         fi
 
         # Create the pacman mirrorlist updater service
