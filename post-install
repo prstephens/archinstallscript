@@ -83,7 +83,7 @@ install_gnome(){
         
         echo "Installing Gnome.."
         sudo pacman -S gnome gnome-tweaks xscreensaver firefox nemo nemo-fileroller nemo-preview gtk-engine-murrine sassc seahorse gparted grub-customizer wmctrl flatpak code
-        yay -S pamac-aur snapper-gui-git rar gdm-settings cava getextensions-git coolero rxvt-unicode-256xresources
+        yay -S pamac-aur snapper-gui-git rar gdm-settings cava getextensions-git coolero rxvt-unicode
         
         install_fonts
         install_popshell
@@ -119,9 +119,6 @@ install_gnome(){
 
         # Remove 'Utilities' folder in app grid so all apps are in view
         gsettings set org.gnome.desktop.app-folders folder-children "['YaST']"
-
-        # apply blur to apps using mutter-rounded patch
-        gsettings set org.gnome.mutter blur-list "['nemo', 'urxvt', 'geary', 'code-oss', 'gnome-calendar', 'gnome-contacts', 'gnome-calculator', 'gnome-control-center']"
 
         # add dash to dock extension
         yay -S gnome-shell-extension-dash-to-dock

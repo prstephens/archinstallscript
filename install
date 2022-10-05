@@ -293,6 +293,11 @@ performinstall(){
         
         pacstrap /mnt $(< /tmp/packages)
 
+        if [[ "$USE_CRYPT" -eq 1 ]]
+        then
+                pacstrap /mnt lvm2
+        fi
+
         genfstab -U /mnt >> /mnt/etc/fstab
 }
 
@@ -550,11 +555,11 @@ EOT
         arch-chroot /mnt systemctl enable fstrim.timer
         arch-chroot /mnt systemctl enable sshd
 
-        if [[ ! "$USE_CRYPT" -eq 1 ]]
+        if [[ "$USE_CRYPT" -eq 1 ]]
         then
-                arch-chroot /mnt systemctl mask lvm2-monitor
-        else
                 arch-chroot /mnt systemctl enable lvm2-monitor
+        else
+                arch-chroot /mnt systemctl mask lvm2-monitor
         fi
 
         arch-chroot /mnt systemctl mask systemd-random-seed
