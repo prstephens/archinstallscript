@@ -219,6 +219,8 @@ alias cpu='sudo i7z'
 alias snap='sudo snapper -c root create --description'
 alias scrub='sudo btrfs scrub start -B /'
 alias ff='wmctrl -r :ACTIVE: -b toggle,fullscreen'
+alias pacsearch="yay -Slq | fzf --multi --preview 'yay -Si {1}' | xargs -ro yay -S"
+alias pacrm="yay -Qq | fzf --multi --preview 'yay -Qi {1}' | xargs -ro yay -Rns"
 
 # Alias definitions.
 # You may want to put all your additions into a separate file like
