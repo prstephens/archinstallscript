@@ -283,8 +283,6 @@ performinstall(){
         mount -o noatime,commit=120,compress=zstd,space_cache=v2,discard=async,subvol=@snapshots $rootdev /mnt/.snapshots
 
         echo "Starting install.."
-        
-        pacstrap /mnt $(< /tmp/packages)
 
         if [[ "$USE_CRYPT" -eq 1 ]]
         then
@@ -294,6 +292,8 @@ performinstall(){
                 mount $bootdev /mnt/boot/efi
         fi
 
+        pacstrap /mnt $(< /tmp/packages)
+        
         genfstab -U /mnt >> /mnt/etc/fstab
 }
 
@@ -345,7 +345,7 @@ EOT
 
         echo "Updating pacman mirrors to awesomeness..."
         # Update pacman mirror list
-        arch-chroot /mnt reflector --verbose -c GB -l 25 --age 12 -p http -p https --sort rate --save /etc/pacman.d/mirrorlist
+        arch-chroot /mnt reflector --verbose -c GB -l 25 --age 12 -p https --sort rate --save /etc/pacman.d/mirrorlist
 
         echo "Setting up spacetime continuum..."
         # Set date time
@@ -623,7 +623,7 @@ checkconnection(){
 }
 
 updatemirrors(){
-        reflector --verbose -c GB -l 25 --age 12 -p http -p https --sort rate --save /etc/pacman.d/mirrorlist
+        reflector --verbose -c GB -l 25 --age 12 -p https --sort rate --save /etc/pacman.d/mirrorlist
 }
 
 dependencies(){
