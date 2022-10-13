@@ -448,7 +448,10 @@ Exec = /usr/bin/boot-backup
 EOT
         fi
 
+        # Run the boot backup for first time so we have a copy of a working kernel 
+        sudo /usr/bin/boot-backup
 }
+
 
 # --------------------------------------------------------
 rootdev=/root/dev # changed on the fly during install
