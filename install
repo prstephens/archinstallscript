@@ -105,10 +105,10 @@ enablelvm(){
         USE_CRYPT=1
         chooseencryptpartition
         clear
-        echo "### CREATING LUKS PARTITION ON ${realrootdev} ###"
+        echo "### CREATING LUKS PARTITION ON ${realrootdev} ____________________"
         cryptsetup -y -v luksFormat $realrootdev
         echo ""
-        echo "### OPENING ${realrootdev} to /dev/mapper/cryptlvm ###"
+        echo "### OPENING ${realrootdev} to /dev/mapper/cryptlvm ____________________"
         cryptsetup open $realrootdev cryptlvm
 
         ROOTUUID=$(blkid -s UUID -o value $realrootdev)
@@ -244,7 +244,7 @@ performinstall(){
         timedatectl set-ntp true
 
         # Setup the partitions
-        echo "### STARTING INSTALL ###"
+        echo "____________________ ### STARTING INSTALL ### ____________________"
         read -p "You are about to wipe ${rootdev}? [y/N]: " wipe
         if [ $wipe = 'y' ]
         then
@@ -264,7 +264,7 @@ performinstall(){
         #root
         mount $rootdev /mnt
 
-        #BTRFS subvolumes
+        echo "### Creating BTRFS subvolumes... ____________________"
         btrfs su cr /mnt/@
         btrfs su cr /mnt/@home
         btrfs su cr /mnt/@var_log
@@ -282,23 +282,28 @@ performinstall(){
 
         mount -o noatime,commit=120,compress=zstd,space_cache=v2,discard=async,subvol=@snapshots $rootdev /mnt/.snapshots
 
-        echo "Starting install.."
-
         if [[ "$USE_CRYPT" -eq 1 ]]
         then
-                pacstrap /mnt lvm2
                 mount $bootdev /mnt/boot
         else   
                 mount $bootdev /mnt/boot/efi
         fi
 
+        echo "### Installing packages... ____________________"
         pacstrap /mnt $(< /tmp/packages)
+
+        if [[ "$USE_CRYPT" -eq 1 ]]
+        then
+                pacstrap /mnt lvm2
+        fi
         
         genfstab -U /mnt >> /mnt/etc/fstab
 }
 
 installbootloader(){
         clear
+        echo "### Installing GRUB... ____________________"
+
         if [[ "$USE_CRYPT" -eq 1 ]]
         then
                 bootdir=/boot
@@ -317,6 +322,7 @@ installbootloader(){
 
 configuration(){
         clear
+        echo "### Configuring system... ____________________"
 
         # Set Cloudfare as our DNS
         cat <<EOT > /mnt/etc/resolv.conf
@@ -562,6 +568,9 @@ EOT
 }
 
 setupuser(){
+        clear
+        echo "### Setting up user... ____________________"
+
         arch-chroot /mnt useradd -m -G wheel $user
         arch-chroot /mnt sed -i 's/# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
         echo "Defaults insults" >> /mnt/etc/sudoers
