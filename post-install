@@ -29,6 +29,7 @@ mainmenu(){
         options+=("1.3)" "Mutter Rounded patch")
         options+=("2)" "Install Xanmod-tt Kernel")
         options+=("3)" "Applications")
+        options+=("3.1)" "Nord VPN")
         options+=("4)" "QEMU/KVM")
         options+=("5)" "Java Development Environment")
 
@@ -59,6 +60,10 @@ mainmenu(){
                 ;;
                 "3)")
                     install_apps
+                    nextitem="4)"
+                ;;
+                "3.1)")
+                    install_nordvpn
                     nextitem="4)"
                 ;;
                 "4)")
@@ -173,6 +178,11 @@ install_gnome(){
         gsettings set org.gnome.shell.extensions.arch-update package-manager 'pamac-manager'
         gsettings set org.gnome.shell.extensions.arch-update use-buildin-icons true
 
+        # Turn on some extensions
+        gnome-extensions enable user-theme@gnome-shell-extensions.gcampax.github.com
+        gnome-extensions enable arch-update@RaphaelRochet
+        gnome-extensions enable dash-to-dock@micxgx.gmail.com
+
         # Remove some trash from Gnome
         sudo pacman -Rs epiphany gnome-music cheese totem gnome-books gnome-software vino gnome-boxes
 
@@ -280,6 +290,16 @@ install_apps(){
         yay -S google-chrome onlyoffice-bin gimp vlc kodi dropbox handbrake rpi-imager-bin geary ventoy-bin etcher-bin
 
         install_spotify
+}
+
+install_nordvpn(){
+        yay -S nordvpn-bin
+        sudo groupadd -r nordvpn
+        sudo gpasswd -a $USER nordvpn
+        sudo systemctl enable --now nordvpnd.service
+        nordvpn whitelist add subnet 192.168.1.0/24
+
+        whiptail --backtitle "$BACKTITLE" --msgbox --title "Information" "To log into Nord VPN, run 'nordvpn login' and follow the instructions" 0 78
 }
 
 install_qemu(){
