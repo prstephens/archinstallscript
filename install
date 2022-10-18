@@ -376,6 +376,14 @@ EOT
         # nano syntax highlighting
         echo "include /usr/share/nano/*.nanorc" >> /mnt/etc/nanorc
 
+        cat << EOF > /etc/profile.d/shell-timeout.sh
+TMOUT="\$(( 60*30 ))";
+[ -z "\$DISPLAY" ] && export TMOUT;
+case \$( /usr/bin/tty ) in
+	/dev/tty[0-9]*) export TMOUT;;
+esac
+EOF
+
         # performance and secuirty tweaks
         cat <<EOT > /mnt/etc/sysctl.d/99-performance.conf
         # The swappiness sysctl parameter represents the kernel's preference (or avoidance) of swap space. Swappiness can have a value between 0 and 100, the default value is 60. 
