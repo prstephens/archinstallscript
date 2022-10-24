@@ -421,11 +421,21 @@ initialise(){
         sudo cp /lib/initcpio/hooks/grub-btrfs-overlayfs /etc/initcpio/hooks
         sudo cp /lib/initcpio/install/grub-btrfs-overlayfs /etc/initcpio/install
 
-        if [[ "$USE_CRYPT" -eq 1 ]]
+        if [[ "$USE_RAID" -eq 1 ]]
         then
-                sudo sed -i 's/^HOOKS=.*$/HOOKS=(base udev autodetect keyboard keymap consolefont modconf block encrypt lvm2 filesystems fsck grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
+                sudo sed -i 's/^HOOKS=.*$/HOOKS=(base udev autodetect keyboard keymap consolefont modconf block mdadm_udev fsck grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
+
+                if [[ "$USE_CRYPT" -eq 1 ]]
+                then
+                        sudo sed -i 's/^HOOKS=.*$/HOOKS=(base udev autodetect keyboard keymap consolefont modconf block mdadm_udev encrypt lvm2 filesystems fsck grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
+                fi
         else
-                sudo sed -i 's/^HOOKS=.*$/HOOKS=(base udev autodetect keyboard keymap consolefont modconf block filesystems fsck grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
+                if [[ "$USE_CRYPT" -eq 1 ]]
+                then
+                        sudo sed -i 's/^HOOKS=.*$/HOOKS=(base udev autodetect keyboard keymap consolefont modconf block encrypt lvm2 filesystems fsck grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
+                else
+                        sudo sed -i 's/^HOOKS=.*$/HOOKS=(base udev autodetect keyboard keymap consolefont modconf block filesystems fsck grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
+                fi
         fi
 
         sudo mkinitcpio -P
@@ -476,6 +486,7 @@ EOT
 # --------------------------------------------------------
 rootdev=/root/dev # changed on the fly during install
 USE_CRYPT=0 # changed on the fly during install
+USE_RAID=0 # changed on the fly during install
 
 [[ ! -d $HOME/yay ]] && initialise
 

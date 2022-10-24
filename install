@@ -200,14 +200,13 @@ choosepartitions(){
         fi
         
         msg=""
-        msg=${msg}"Boot      : "${bootdev}"\n"
-        msg=${msg}"Swap      : "${swapdev}"\n"
-        msg=${msg}"Root      : "${rootdev}"\n"
+        msg=${msg}"Boot          : "${bootdev}"\n"
+        msg=${msg}"Swap          : "${swapdev}"\n"
+        msg=${msg}"Root          : "${rootdev}"\n"
 
         if !(whiptail --backtitle "${BACKTITLE}" --title "Are these values correct?" --fb --yesno "${msg}" 0 78) then
                 choosepartitions
-        fi
-        
+        fi      
 }
 
 getuserinfo(){
@@ -226,12 +225,12 @@ getuserinfo(){
 
         done
         
-        msg=${msg}"Hostname  : "${hostname}"\n"
-        msg=${msg}"User      : "${user}"\n\n"
+        msg=${msg}"Hostname      : "${hostname}"\n"
+        msg=${msg}"User          : "${user}"\n\n"
 }
 
 performinstall(){
-        if (whiptail --backtitle "${BACKTITLE}" --title "Is a RAID Array being used?" --yesno "${msg}" --fb 0 78) then
+        if (whiptail --backtitle "${BACKTITLE}" --title "RAID" --yesno "Is a RAID Array being used?" --fb 0 78) then
                 USE_RAID=1
                 msg=${msg}"Use RAID?     : "${USE_RAID}"\n\n"
 	fi
@@ -509,16 +508,23 @@ EOT
         # add btrfs to modules
         sed -i 's/^MODULES=.*$/MODULES=(i915 btrfs)/' /mnt/etc/mkinitcpio.conf
 
-        if [[ "$USE_CRYPT" -eq 1 ]]
-        then
-                sed -i 's/^HOOKS=.*$/HOOKS=(base udev autodetect keyboard keymap consolefont modconf block encrypt lvm2 filesystems fsck)/' /mnt/etc/mkinitcpio.conf
-        fi
-
         if [[ "$USE_RAID" -eq 1 ]]
         then
                 mdadm --detail --scan >> /mnt/etc/mdadm.conf
                 sed -i 's/^BINARIES=.*$/BINARIES=(mdmon)/' /mnt/etc/mkinitcpio.conf
-                sed -i 's/^HOOKS=.*$/HOOKS=(base udev autodetect keyboard keymap consolefont modconf block mdadm_udev encrypt lvm2 filesystems fsck)/' /mnt/etc/mkinitcpio.conf
+                sed -i 's/^HOOKS=.*$/HOOKS=(base udev autodetect keyboard keymap consolefont modconf block mdadm_udev filesystems fsck)/' /mnt/etc/mkinitcpio.conf
+
+                if [[ "$USE_CRYPT" -eq 1 ]]
+                then
+                        sed -i 's/^HOOKS=.*$/HOOKS=(base udev autodetect keyboard keymap consolefont modconf block mdadm_udev encrypt lvm2 filesystems fsck)/' /mnt/etc/mkinitcpio.conf
+                fi
+        else
+                if [[ "$USE_CRYPT" -eq 1 ]]
+                then
+                        sed -i 's/^HOOKS=.*$/HOOKS=(base udev autodetect keyboard keymap consolefont modconf block encrypt lvm2 filesystems fsck)/' /mnt/etc/mkinitcpio.conf
+                else
+                        sed -i 's/^HOOKS=.*$/HOOKS=(base udev autodetect keyboard keymap consolefont modconf block filesystems fsck)/' /mnt/etc/mkinitcpio.conf
+                fi
         fi
 
         # Create the pacman mirrorlist updater service
@@ -626,6 +632,7 @@ setupuser(){
         arch-chroot /mnt curl -sL $BASE_URL/post-install -o /home/$user/post-install
         arch-chroot /mnt sed -i "s|^rootdev=.*$|rootdev=${rootdev}|" /home/$user/post-install
         arch-chroot /mnt sed -i "s|^USE_CRYPT=.*$|USE_CRYPT=${USE_CRYPT}|" /home/$user/post-install
+        arch-chroot /mnt sed -i "s|^USE_RAID=.*$|USE_RAID=${USE_RAID}|" /home/$user/post-install
         arch-chroot /mnt chown $user:$user /home/$user/post-install
         arch-chroot /mnt chmod a+x /home/$user/post-install
 
