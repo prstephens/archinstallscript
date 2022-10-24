@@ -16,6 +16,7 @@ set -o pipefail
 BACKTITLE="Arch Installer v3"
 BASE_URL="https://raw.githubusercontent.com/prstephens/archinstallscript/master/"
 USE_CRYPT=0
+USE_RAID=0
 
 # --------------------------------------------------------
 
@@ -199,9 +200,9 @@ choosepartitions(){
         fi
         
         msg=""
-        msg=${msg}"Boot     : "${bootdev}"\n"
-        msg=${msg}"Swap     : "${swapdev}"\n"
-        msg=${msg}"Root     : "${rootdev}"\n"
+        msg=${msg}"Boot      : "${bootdev}"\n"
+        msg=${msg}"Swap      : "${swapdev}"\n"
+        msg=${msg}"Root      : "${rootdev}"\n"
 
         if !(whiptail --backtitle "${BACKTITLE}" --title "Are these values correct?" --fb --yesno "${msg}" 0 78) then
                 choosepartitions
@@ -224,12 +225,17 @@ getuserinfo(){
             passphrase_invalid_message="Passwords do not match! "
 
         done
-
-        msg=${msg}"Hostname : "${hostname}"\n"
-        msg=${msg}"User     : "${user}"\n\n"
+        
+        msg=${msg}"Hostname  : "${hostname}"\n"
+        msg=${msg}"User      : "${user}"\n\n"
 }
 
 performinstall(){
+        if (whiptail --backtitle "${BACKTITLE}" --title "Is a RAID Array being used?" --yesno "${msg}" --fb 0 78) then
+                USE_RAID=1
+                msg=${msg}"Use RAID?     : "${USE_RAID}"\n\n"
+	fi
+
         whiptail --backtitle "${BACKTITLE}" --title "Are these values correct?" --yesno "${msg}" --fb 0 78 3>&1 1>&2 2>&3
         if ([ ! "$?" = "0" ];) then
 		mainmenu "1)"
@@ -295,6 +301,11 @@ performinstall(){
         if [[ "$USE_CRYPT" -eq 1 ]]
         then
                 pacstrap /mnt lvm2
+        fi
+
+        if [[ "$USE_RAID" -eq 1 ]]
+        then
+                pacstrap /mnt mdadm
         fi
         
         genfstab -U /mnt >> /mnt/etc/fstab
@@ -376,13 +387,13 @@ EOT
         # nano syntax highlighting
         echo "include /usr/share/nano/*.nanorc" >> /mnt/etc/nanorc
 
-        cat << EOF > /etc/profile.d/shell-timeout.sh
+        cat <<EOT > /etc/profile.d/shell-timeout.sh
 TMOUT="\$(( 60*30 ))";
 [ -z "\$DISPLAY" ] && export TMOUT;
 case \$( /usr/bin/tty ) in
 	/dev/tty[0-9]*) export TMOUT;;
 esac
-EOF
+EOT
 
         # performance and secuirty tweaks
         cat <<EOT > /mnt/etc/sysctl.d/99-performance.conf
@@ -501,6 +512,13 @@ EOT
         if [[ "$USE_CRYPT" -eq 1 ]]
         then
                 sed -i 's/^HOOKS=.*$/HOOKS=(base udev autodetect keyboard keymap consolefont modconf block encrypt lvm2 filesystems fsck)/' /mnt/etc/mkinitcpio.conf
+        fi
+
+        if [[ "$USE_RAID" -eq 1 ]]
+        then
+                mdadm --detail --scan >> /mnt/etc/mdadm.conf
+                sed -i 's/^BINARIES=.*$/BINARIES=(mdmon)/' /mnt/etc/mkinitcpio.conf
+                sed -i 's/^HOOKS=.*$/HOOKS=(base udev autodetect keyboard keymap consolefont modconf block mdadm_udev encrypt lvm2 filesystems fsck)/' /mnt/etc/mkinitcpio.conf
         fi
 
         # Create the pacman mirrorlist updater service
