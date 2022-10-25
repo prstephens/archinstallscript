@@ -230,7 +230,7 @@ getuserinfo(){
 }
 
 performinstall(){
-        if (whiptail --backtitle "${BACKTITLE}" --title "RAID" --yesno "Is a RAID Array being used?" --fb 0 78) then
+        if (whiptail --backtitle "${BACKTITLE}" --title "RAID" --yesno "Is a RAID Array being used?" --defaultno --fb 0 78) then
                 USE_RAID=1
                 msg=${msg}"Use RAID?     : "${USE_RAID}"\n\n"
 	fi
