@@ -178,6 +178,8 @@ install_gnome(){
         gsettings set org.gnome.shell.extensions.arch-update package-manager 'pamac-manager'
         gsettings set org.gnome.shell.extensions.arch-update use-buildin-icons true
 
+        gsettings set org.gnome.shell disable-extension-version-validation "true"
+
         # Turn on some extensions
         gnome-extensions enable user-theme@gnome-shell-extensions.gcampax.github.com
         gnome-extensions enable arch-update@RaphaelRochet
@@ -476,10 +478,13 @@ Description = Backing up /boot...
 When = PostTransaction
 Exec = /usr/bin/boot-backup
 EOT
-        fi
 
         # Run the boot backup for first time so we have a copy of a working kernel 
         sudo /usr/bin/boot-backup
+        
+        fi
+
+        
 }
 
 
