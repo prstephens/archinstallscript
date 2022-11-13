@@ -26,14 +26,13 @@ mainmenu(){
         options+=("1)" "Gnome DE")
         options+=("1.1)" "Pop!_OS Pop Shell")
         options+=("1.2)" "Themes")
-        options+=("1.3)" "Mutter Rounded patch")
         options+=("2)" "Install Xanmod-tt Kernel")
         options+=("3)" "Applications")
         options+=("3.1)" "Nord VPN")
         options+=("4)" "QEMU/KVM")
         options+=("5)" "Java Development Environment")
 
-        sel=$(whiptail --backtitle "${BACKTITLE}" --fb --title "Arch Linux Post Installer" --menu "" --cancel-button "Exit" --default-item "${nextitem}" 0 0 0 \
+        sel=$(whiptail --backtitle "${BACKTITLE}" --fb --title "Arch Linux Post Installer" --menu "" --cancel-button "Exit" --default-item "${nextitem}" 20 78 0 \
             "${options[@]}" \
             3>&1 1>&2 2>&3)
         if [ "$?" = "0" ]; then
@@ -48,10 +47,6 @@ mainmenu(){
                 ;;
                 "1.2)")
                     install_themes
-                    nextitem="1.3)"
-                ;;
-                "1.3)")
-                    install_mutter
                     nextitem="2)"
                 ;;
                 "2)")
@@ -102,10 +97,6 @@ install_themes(){
         install_whitesur
         install_catppuccin
         install_orchis
-}
-
-install_mutter(){
-        yay -S mutter-rounded
 }
 
 install_gnome(){
