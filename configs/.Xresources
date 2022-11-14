@@ -33,6 +33,8 @@
 *color7: #B8C0E0
 *color15: #A5ADCB
 
+URxvt.background: [85]#24273A
+
 URxvt.letterSpace: 0
 URxvt.lineSpace: 0
 URxvt.internalBorder: 30
@@ -41,7 +43,6 @@ URxvt.cursorUnderline: true
 URxvt.saveline: 2048
 URxvt.scrollBar: false
 URxvt.scrollBar_right: false
-URxvt.urgentOnBell: true
 URxvt.iso14755: false
 URxvt.geometry: 120x30
 URxvt.depth: 32

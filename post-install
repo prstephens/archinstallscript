@@ -177,7 +177,7 @@ install_gnome(){
         gnome-extensions enable dash-to-dock@micxgx.gmail.com
 
         # Remove some trash from Gnome
-        sudo pacman -Rs epiphany gnome-music cheese totem gnome-books gnome-software vino gnome-boxes
+        sudo pacman -Rs epiphany gnome-music cheese totem gnome-software
 
         # Install Gradience - to change LibAdwaita colours
         flatpak install flathub com.github.GradienceTeam.Gradience
