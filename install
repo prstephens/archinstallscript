@@ -513,7 +513,7 @@ EOT
                 # generate key file
                 dd bs=512 count=4 if=/dev/random of=/mnt/crypto_keyfile.bin iflag=fullblock
                 chmod 600 /mnt/crypto_keyfile.bin
-                cryptsetup luksAddKey $realrootdev /crypto_keyfile.bin
+                cryptsetup luksAddKey $realrootdev /mnt/crypto_keyfile.bin
                 sed -i 's/^FILES=.*$/FILES=(/crypto_keyfile.bin)/' /mnt/etc/mkinitcpio.conf
         fi
 
