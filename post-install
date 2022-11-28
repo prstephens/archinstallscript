@@ -355,7 +355,6 @@ install_dev(){
 }
 
 initialise(){
-
         # optimise yay when building packages
         sudo sed -i 's/^#MAKEFLAGS="-j2"/MAKEFLAGS="-j$(nproc)"/' /etc/makepkg.conf
         sudo sed -i "s/^PKGEXT=.*$/PKGEXT='.pkg.tar'/" /etc/makepkg.conf

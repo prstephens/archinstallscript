@@ -118,7 +118,7 @@ enablelvm(){
         cryptsetup luksFormat $realrootdev --offset 32768 --header header.img
         cryptsetup open --header header.img $realrootdev cryptlvm
 
-        ROOTUUID=$(blkid -s UUID -o value $realrootdev)
+        ROOTUUID=$(blkid -s UUID -o value $realrootdev) # not required but keeping it for debug reasons
 
         pvcreate /dev/mapper/cryptlvm
         vgcreate vg1 /dev/mapper/cryptlvm
@@ -322,7 +322,7 @@ installbootloader(){
         if [[ "$USE_CRYPT" -eq 1 ]]
         then
                 bootdir=/boot
-                arch-chroot /mnt sed -i "s|^GRUB_CMDLINE_LINUX=.*$|GRUB_CMDLINE_LINUX=\"cryptdevice=UUID=$ROOTUUID:cryptlvm:header root=/dev/vg1/root\"|" /etc/default/grub
+                arch-chroot /mnt sed -i "s|^GRUB_CMDLINE_LINUX=.*$|GRUB_CMDLINE_LINUX=\"cryptdevice=$realrootdev:cryptlvm:header root=/dev/vg1/root\"|" /etc/default/grub
         else   
                 bootdir=/boot/efi
         fi
