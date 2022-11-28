@@ -17,6 +17,7 @@ BACKTITLE="Arch Installer v3"
 BASE_URL="https://raw.githubusercontent.com/prstephens/archinstallscript/master/"
 USE_CRYPT=0
 USE_RAID=0
+TEST=0
 
 # --------------------------------------------------------
 
@@ -303,7 +304,13 @@ performinstall(){
         fi
 
         echo "### Installing packages... ____________________"
-        pacstrap /mnt $(< /tmp/packages)
+
+        if [[ "$TEST" -eq 1 ]]
+        then
+                pacstrap /mnt $(< /tmp/packages-test)
+        else
+                pacstrap /mnt $(< /tmp/packages)
+        fi
 
         genfstab -U /mnt >> /mnt/etc/fstab
 }
@@ -686,6 +693,7 @@ dependencies(){
 
 getpackagelist(){
         curl -sL $BASE_URL/packages -o /tmp/packages
+        curl -sL $BASE_URL/packages-test -o /tmp/packages-test
 }
 
 initialise(){
@@ -696,6 +704,13 @@ initialise(){
 }
 
 # --------------------------------------------------------
+
+while getopts m: flag
+do
+    case "${flag}" in
+        m) TEST=1;;
+    esac
+done
 
 [[ ! -f /tmp/packages ]] && initialise
 
