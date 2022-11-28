@@ -420,12 +420,12 @@ initialise(){
 
                 if [[ "$USE_CRYPT" -eq 1 ]]
                 then
-                        sudo sed -i 's/^HOOKS=.*$/HOOKS=(base udev autodetect keyboard keymap consolefont modconf block mdadm_udev encrypt lvm2 filesystems fsck grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
+                        sudo sed -i 's/^HOOKS=.*$/HOOKS=(base udev autodetect keyboard keymap consolefont modconf block mdadm_udev encrypt-dh lvm2 filesystems fsck grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
                 fi
         else
                 if [[ "$USE_CRYPT" -eq 1 ]]
                 then
-                        sudo sed -i 's/^HOOKS=.*$/HOOKS=(base udev autodetect keyboard keymap consolefont modconf block encrypt lvm2 filesystems fsck grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
+                        sudo sed -i 's/^HOOKS=.*$/HOOKS=(base udev autodetect keyboard keymap consolefont modconf block encrypt-dh lvm2 filesystems fsck grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
                 else
                         sudo sed -i 's/^HOOKS=.*$/HOOKS=(base udev autodetect keyboard keymap consolefont modconf block filesystems fsck grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
                 fi
