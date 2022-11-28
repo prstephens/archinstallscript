@@ -107,11 +107,7 @@ enablelvm(){
         chooseencryptpartition
         clear
         echo "### CREATING LUKS PARTITION ON ${realrootdev} ____________________"
-        cryptsetup -y -v luksFormat $realrootdev
-        echo ""
-        echo "### OPENING ${realrootdev} to /dev/mapper/cryptlvm ____________________"
         
-
         # create LUKS encrypted partition with detached header for deniable encryption
         # the partiton looks like normal random data. no LUKS header describinbg the hash or salt used. 
         # 
