@@ -112,12 +112,6 @@ enablelvm(){
         echo "### OPENING ${realrootdev} to /dev/mapper/cryptlvm ____________________"
         cryptsetup open $realrootdev cryptlvm
 
-        # generate key file
-        dd bs=512 count=4 if=/dev/random of=/mnt/crypto_keyfile.bin iflag=fullblock
-        chmod 600 /mnt/crypto_keyfile.bin
-        cryptsetup luksAddKey $realrootdev /crypto_keyfile.bin
-        sed -i 's/^FILES=.*$/FILES=(/crypto_keyfile.bin)/' /mnt/etc/mkinitcpio.conf
-
         ROOTUUID=$(blkid -s UUID -o value $realrootdev)
 
         pvcreate /dev/mapper/cryptlvm
@@ -513,6 +507,15 @@ EOT
 
         # add btrfs to modules
         sed -i 's/^MODULES=.*$/MODULES=(i915 btrfs)/' /mnt/etc/mkinitcpio.conf
+
+        if [[ "$USE_CRYPT" -eq 1 ]]
+        then
+                # generate key file
+                dd bs=512 count=4 if=/dev/random of=/mnt/crypto_keyfile.bin iflag=fullblock
+                chmod 600 /mnt/crypto_keyfile.bin
+                cryptsetup luksAddKey $realrootdev /crypto_keyfile.bin
+                sed -i 's/^FILES=.*$/FILES=(/crypto_keyfile.bin)/' /mnt/etc/mkinitcpio.conf
+        fi
 
         if [[ "$USE_RAID" -eq 1 ]]
         then
