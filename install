@@ -107,7 +107,7 @@ enablelvm(){
         chooseencryptpartition
         clear
         echo "### CREATING LUKS PARTITION ON ${realrootdev} ____________________"
-        
+
         # create LUKS encrypted partition with detached header for deniable encryption
         # the partiton looks like normal random data. no LUKS header describinbg the hash or salt used. 
         # 
@@ -518,10 +518,6 @@ EOT
                 # get the modified encrypt hook
                 arch-chroot /mnt curl -sL $BASE_URL/configs/encrypt-dh -o /etc/initcpio/hooks/encrypt-dh
                 arch-chroot /mnt cp /usr/lib/initcpio/install/encrypt /etc/initcpio/install/encrypt-dh
-
-                # now update the header.img file
-                cryptsetup luksHeaderBackup $realrootdev --header-backup-file /mnt/boot/header.img
-
         fi
 
         if [[ "$USE_RAID" -eq 1 ]]
