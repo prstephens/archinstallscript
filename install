@@ -28,6 +28,7 @@ mainmenu(){
                 nextitem=${1}
         fi
         options=()
+        options+=("0.1)" "Prepare disk - Secure wipe (optional)")
         options+=("1)" "Partition disk (cfdisk)")
         options+=("1.1)" "LVM on LUKS (optional)")
         options+=("2)" "Select partitions to mount")
@@ -41,6 +42,10 @@ mainmenu(){
                 3>&1 1>&2 2>&3)
         if [ "$?" = "0" ]; then
                 case ${sel} in
+                        "0.1)")
+                                preparedisk
+                                nextitem="1)"
+                        ;;
                         "1)")
                                 diskpartcfdisk
                                 nextitem="2)"
@@ -76,6 +81,13 @@ mainmenu(){
         fi
 }
 
+preparedisk(){
+        device=$( selectdisk "Choose device to be wiped" )
+        cryptsetup open --type plain -d /dev/urandom ${device} to_be_wiped
+        dd if=/dev/zero of=/dev/mapper/to_be_wiped status=progress
+        cryptsetup close to_be_wiped
+}
+
 diskpartcfdisk(){
 	device=$( selectdisk "Edit Partitions (cfdisk)" )
         if [ "$?" = "0" ]; then
@@ -109,10 +121,17 @@ enablelvm(){
         clear
         echo "### CREATING LUKS PARTITION ON ${realrootdev} ____________________"
 
-        # create LUKS encrypted partition with detached header for deniable encryption
-        # the partiton looks like normal random data. no LUKS header describinbg the hash or salt used. 
+        # create LUKS encrypted partition with detached header for deniable encryption.
+        # The partiton looks like normal random data. No LUKS header describinbg the hash or salt used. 
         # 
-        # --offset means we can restore the luks header if need be later on 
+        # --offset means we can restore the luks header if need be later on:
+        #
+        #       cryptsetup luksRestoreHeader /dev/<device> --header-backup-file /path/to/header.img
+        #
+        # If we want to wipe ALL LUKS header info again then use:
+        #
+        #       dd if=/dev/urandom of=/dev/<device> bs=512 count=32768
+
         dd if=/dev/zero of=header.img bs=16M count=1
         chmod 600 header.img
         cryptsetup luksFormat $realrootdev --offset 32768 --header header.img
@@ -120,10 +139,11 @@ enablelvm(){
 
         ROOTUUID=$(blkid -s UUID -o value $realrootdev) # not required but keeping it for debug reasons
 
+        # create the LVM partitons
         pvcreate /dev/mapper/cryptlvm
         vgcreate vg1 /dev/mapper/cryptlvm
 
-        lvcreate -L 4G vg1 -n swap
+        lvcreate -L 4G vg1 -n swap # to do: make this configurable
         lvcreate -l 100%FREE vg1 -n root
 }
 
