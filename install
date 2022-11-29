@@ -146,7 +146,9 @@ enablelvm(){
         pvcreate /dev/mapper/cryptlvm
         vgcreate vg1 /dev/mapper/cryptlvm
 
-        lvcreate -L 4G vg1 -n swap # to do: make this configurable
+        swapspace=$(whiptail --backtitle "$BACKTITLE" --inputbox "Enter SWAP size:" --fb 0 20 3>&1 1>&2 2>&3)
+
+        lvcreate -L ${swapspace}G vg1 -n swap
         lvcreate -l 100%FREE vg1 -n root
 }
 
