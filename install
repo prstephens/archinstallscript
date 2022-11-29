@@ -82,10 +82,13 @@ mainmenu(){
 }
 
 preparedisk(){
-        device=$( selectdisk "Choose device to be wiped" )
-        cryptsetup open --type plain -d /dev/urandom ${device} to_be_wiped
-        dd if=/dev/zero of=/dev/mapper/to_be_wiped status=progress
-        cryptsetup close to_be_wiped
+        wipedevice=$( selectdisk "Choose device to be wiped" )
+
+        if (whiptail --backtitle "${BACKTITLE}" --title "### WARNING ###" --yesno "Are you sure you want to secure wipe ${wipedevice}? \n\nTHIS CANNOT BE UNDONE. ALL DATA WILL BE PERMANENTLY LOST!" --defaultno --fb 0 78) then
+		cryptsetup open --type plain -d /dev/urandom ${wipedevice} to_be_wiped
+                dd if=/dev/zero of=/dev/mapper/to_be_wiped status=progress
+                cryptsetup close to_be_wiped
+	fi 
 }
 
 diskpartcfdisk(){
