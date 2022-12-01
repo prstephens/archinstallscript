@@ -344,6 +344,11 @@ installbootloader(){
         clear
         echo "### Installing GRUB... ____________________"
 
+        REMOVABLE=""
+        if (whiptail --backtitle "${BACKTITLE}" --title "GRUB Bootloader Install" --fb --yesno "Are you installing GRUB to a removable USB device?" --defaultno 0 78) then
+                REMOVABLE="--removable"
+        fi
+
         if [[ "$USE_CRYPT" -eq 1 ]]
         then
                 bootdir=/boot
@@ -356,7 +361,7 @@ installbootloader(){
         arch-chroot /mnt sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT=.*$/GRUB_CMDLINE_LINUX_DEFAULT="quiet loglevel=3 rd.systemd.show_status=false nowatchdog mitigations=off"/' /etc/default/grub
         arch-chroot /mnt sed -i 's/^#GRUB_DISABLE_OS_PROBER=.*$/GRUB_DISABLE_OS_PROBER="false"/' /etc/default/grub
         arch-chroot /mnt os-prober
-        arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=$bootdir --bootloader-id=GRUB --recheck
+        arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=$bootdir --bootloader-id=GRUB --recheck $REMOVABLE
         arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
 }
 
