@@ -290,7 +290,7 @@ install_nordvpn(){
         sudo groupadd -r nordvpn
         sudo gpasswd -a $USER nordvpn
         sudo systemctl enable --now nordvpnd.service
-        nordvpn whitelist add subnet 192.168.1.0/24
+        sudo nordvpn whitelist add subnet 192.168.1.0/24
 
         whiptail --backtitle "$BACKTITLE" --msgbox --title "Information" "To log into Nord VPN, run 'nordvpn login' and follow the instructions" 0 78
 }
