@@ -6,7 +6,7 @@
 #             https://github.com/prstephens           
 # project   : https://github.com/prstephens/archinstallscript
 # license   : LGPL-3.0 (http://opensource.org/licenses/lgpl-3.0.html)
-# referance : https://wiki.archlinux.org/index.php/Installation_guide
+# reference : https://wiki.archlinux.org/index.php/Installation_guide
 
 set -e
 set -o pipefail
@@ -328,6 +328,15 @@ performinstall(){
                 mount $bootdev /mnt/boot/efi
         fi
 
+        # determine if we are installing on a laptop or desktop
+        # if laptop, install tlp for better power management
+        # see here: https://www.dmtf.org/sites/default/files/standards/documents/DSP0134_3.6.0.pdf
+        chassis=$(cat /sys/class/dmi/id/chassis_type)
+        if exists_in_list "8,9,10" "," ${chassis}
+        then
+                echo "tlp" >> /tmp/packages 
+        fi
+
         echo "### Installing packages... ____________________"
 
         if [[ "$TEST" -eq 1 ]]
@@ -337,16 +346,10 @@ performinstall(){
                 pacstrap /mnt $(< /tmp/packages)
         fi
 
-        chassis=$(cat /sys/class/dmi/id/chassis_type)
-        if exists_in_list "8,9,10" "," ${chassis}
-        then
-                pacstrap /mnt tlp
-        fi
-        
         genfstab -U /mnt >> /mnt/etc/fstab
 }
 
-function exists_in_list() {
+exists_in_list() {
     LIST=$1
     DELIMITER=$2
     VALUE=$3
