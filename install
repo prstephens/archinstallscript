@@ -337,7 +337,20 @@ performinstall(){
                 pacstrap /mnt $(< /tmp/packages)
         fi
 
+        chassis=$(cat /sys/class/dmi/id/chassis_type)
+        if exists_in_list "8,9,10" "," ${chassis}
+        then
+                pacstrap /mnt tlp
+        fi
+        
         genfstab -U /mnt >> /mnt/etc/fstab
+}
+
+function exists_in_list() {
+    LIST=$1
+    DELIMITER=$2
+    VALUE=$3
+    [[ "$LIST" =~ ($DELIMITER|^)$VALUE($DELIMITER|$) ]]
 }
 
 installbootloader(){
