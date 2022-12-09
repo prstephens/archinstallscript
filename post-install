@@ -222,7 +222,8 @@ install_whitesur(){
         ./tweaks.sh -d -c Light
         ./tweaks.sh -f monterey
         ./tweaks.sh -F
-        sudo ./tweaks.sh -g -c Dark -i arch
+        sudo flatpak override --filesystem=xdg-config/gtk-4.0
+        sudo ./tweaks.sh -g -c Light -i arch
         cd..
 
         git clone https://github.com/prstephens/WhiteSur-icon-theme.git $HOME/WhiteSur-icon-theme

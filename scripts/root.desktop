@@ -1,0 +1,19 @@
+[Desktop Entry]
+Comment[en_GB]=
+Comment=
+Exec=nautilus /
+GenericName[en_GB]=
+GenericName=
+Icon=
+MimeType=
+Name[en_GB]=Arch Linux HD
+Name=
+Path=
+StartupNotify=true
+Terminal=false
+TerminalOptions=
+Type=Application
+X-DBUS-ServiceName=
+X-DBUS-StartupType=
+X-KDE-SubstituteUID=false
+X-KDE-Username=
