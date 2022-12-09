@@ -104,7 +104,7 @@ install_gnome(){
         
         echo "Installing Gnome.."
         sudo pacman -S gnome gnome-tweaks xscreensaver firefox nemo nemo-fileroller nemo-preview gtk-engine-murrine sassc seahorse gparted grub-customizer wmctrl flatpak code rxvt-unicode
-        yay -S pamac-aur snapper-gui-git rar gdm-settings cava getextensions-git coolero
+        yay -S pamac-aur snapper-gui-git rar gdm-settings cava extension-manager coolero
         
         install_fonts
 
@@ -292,7 +292,10 @@ install_nordvpn(){
         sudo groupadd -r nordvpn
         sudo gpasswd -a $USER nordvpn
         sudo systemctl enable --now nordvpnd.service
+        nordvpn set protocol tcp
+        nordvpn set technology nordlynx
         sudo nordvpn whitelist add subnet 192.168.1.0/24
+        nordvpn set autoconnect on uk
 
         whiptail --backtitle "$BACKTITLE" --msgbox --title "Information" "To log into Nord VPN, run 'nordvpn login' and follow the instructions" 0 78
 }
