@@ -227,6 +227,9 @@ install_whitesur(){
         git clone https://github.com/prstephens/WhiteSur-cursors.git $HOME/WhiteSur-cursors
         $HOME/WhiteSur-cursors/install.sh
 
+        # change the email icon to a better mac version
+        curl -sL $BASE_URL/icons/org.gnome.Geary.svg -o $HOME/.local/share/icons/WhiteSur/apps/scalable/org.gnome.Geary.svg
+
         # Gnome Extensions
         # ==================================================================================
         #
