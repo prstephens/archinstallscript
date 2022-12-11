@@ -148,6 +148,24 @@ install_gnome(){
         make install
         cd
 
+        cat <<EOT >> ~/.local/share/gnome-shell/extensions/ubuntu-dock@ubuntu.com/stylesheet.css
+#dashtodockContainer .overview-icon {
+    padding-top:2px;
+    padding-bottom:2px;
+    padding-right: 1px;
+    padding-left: 1px;
+    margin-bottom: 2px;
+}
+
+#dashtodockContainer .icon {
+    padding-top:2px;
+    padding-bottom:2px;
+    padding-right: 1px;
+    padding-left: 1px;
+}
+EOT
+
+
 ##fildem fix
 #sudo ln -s /usr/lib/python3.9/site-packages/fildem /usr/lib/python3.10/site-packages 
 #sudo ln -s /usr/lib/python3.9/site-packages/fildem-0.6.7-py3.9.egg-info/ /usr/lib/python3.10/site-packages
