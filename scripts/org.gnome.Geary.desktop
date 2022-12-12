@@ -1,0 +1,8 @@
+[Desktop Entry]
+TryExec=geary
+Exec=geary --gapplication-service
+Type=Application
+Terminal=false
+Categories=GNOME;GTK;Network;Email;
+StartupNotify=true
+NoDisplay=true
