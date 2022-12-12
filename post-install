@@ -104,7 +104,7 @@ install_gnome(){
         
         echo "Installing Gnome.."
         sudo pacman -S gnome gnome-tweaks xscreensaver firefox nemo nemo-fileroller nemo-preview gtk-engine-murrine sassc seahorse gparted grub-customizer wmctrl flatpak code rxvt-unicode
-        yay -S pamac-aur snapper-gui-git rar gdm-settings cava extension-manager coolero
+        yay -S pamac-aur snapper-gui-git rar cava extension-manager
         
         install_fonts
 
@@ -188,12 +188,12 @@ EOT
         sudo pacman -Rs epiphany gnome-music cheese totem gnome-software
 
         # Install Gradience - to change LibAdwaita colours
-        flatpak install flathub com.github.GradienceTeam.Gradience
+        #flatpak install flathub com.github.GradienceTeam.Gradience
 
         # coolero
-        sudo systemd-sysusers
-        sudo usermod -aG coolero $USER
-        sudo systemctl enable coolerod.service
+        #sudo systemd-sysusers
+        #sudo usermod -aG coolero $USER
+        #sudo systemctl enable coolerod.service
 
 	sudo systemctl enable gdm
 
@@ -201,6 +201,8 @@ EOT
         for i in `seq 2 50`; do sudo snapper delete $i; done;
         sudo snapper -c root create --description "### FRESH INSTALL - Including Gnome ###" # ID 2
         sudo grub-mkconfig -o /boot/grub/grub.cfg
+
+        whiptail --backtitle "$BACKTITLE" --msgbox --title "Gnome Installed" "Its best to reboot now before carrying on with the install" 0 78
 }
 
 install_popshell(){
@@ -246,7 +248,7 @@ install_whitesur(){
         /tmp/WhiteSur-cursors/install.sh
 
         # change some icons to a better mac version
-        cp -R $HOME/WhiteSur-icon-theme/original/*.svg $HOME/.local/share/icons/WhiteSur/apps/scalable/
+        cp -R /tmp/WhiteSur-icon-theme/original/*.svg $HOME/.local/share/icons/WhiteSur/apps/scalable/
 
         # MacOS calendar icon fix
         git clone https://github.com/prstephens/dynamic-calendar-and-clocks-icons.git /tmp/dynamic-calendar
@@ -513,11 +515,8 @@ EOT
         # Run the boot backup for first time so we have a copy of a working kernel 
         sudo /usr/bin/boot-backup
         
-        fi
-
-        
+        fi      
 }
-
 
 # --------------------------------------------------------
 rootdev=/root/dev # changed on the fly during install
