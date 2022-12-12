@@ -744,7 +744,7 @@ getpackagelist(){
 
 initialise(){
         checkconnection
-        dependencies
+        #dependencies
         updatemirrors
         getpackagelist
 }
