@@ -108,15 +108,6 @@ install_gnome(){
         
         install_fonts
 
-        # Vs code icon theme - material
-        curl -s https://api.github.com/repos/PKief/vscode-material-icon-theme/releases/latest \
-        | grep "browser_download_url.*vsix" \
-        | cut -d : -f 2,3 \
-        | tr -d \" \
-        | wget -O material-icons.vsix -qi -
-
-        code --install-extension material-icons.vsix
-
         # xscreensaver settings - 10 min timeout - GL matrix 
         curl -sL $BASE_URL/configs/.xscreensaver -o $HOME/.xscreensaver
         if [ ! -d $HOME/.config/autostart/ ];then mkdir $HOME/.config/autostart;fi
@@ -142,29 +133,11 @@ install_gnome(){
 
         # add dash to dock extension - use ubuntu-dock branch. better compatiibility with blur my shell
         # yay -S gnome-shell-extension-dash-to-dock
-        git clone https://github.com/micheleg/dash-to-dock.git -b ubuntu-dock /tmp/ubuntu-dock
+        git clone https://github.com/prstephens/dash-to-dock-ventura.git -b ubuntu-dock /tmp/ubuntu-dock
         cd /tmp/ubuntu-dock
         make
         make install
         cd
-
-        cat <<EOT >> ~/.local/share/gnome-shell/extensions/ubuntu-dock@ubuntu.com/stylesheet.css
-#dashtodockContainer .overview-icon {
-    padding-top:2px;
-    padding-bottom:2px;
-    padding-right: 1px;
-    padding-left: 1px;
-    margin-bottom: 2px;
-}
-
-#dashtodockContainer .icon {
-    padding-top:2px;
-    padding-bottom:2px;
-    padding-right: 1px;
-    padding-left: 1px;
-}
-EOT
-
 
 ##fildem fix
 #sudo ln -s /usr/lib/python3.9/site-packages/fildem /usr/lib/python3.10/site-packages 
@@ -194,6 +167,15 @@ EOT
         #sudo systemd-sysusers
         #sudo usermod -aG coolero $USER
         #sudo systemctl enable coolerod.service
+
+        # Vs code icon theme - material
+        # curl -s https://api.github.com/repos/PKief/vscode-material-icon-theme/releases/latest \
+        # | grep "browser_download_url.*vsix" \
+        # | cut -d : -f 2,3 \
+        # | tr -d \" \
+        # | wget -O material-icons.vsix -qi -
+
+        # code --install-extension material-icons.vsix
 
 	sudo systemctl enable gdm
 
