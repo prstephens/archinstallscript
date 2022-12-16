@@ -208,14 +208,20 @@ install_catppuccin(){
 }
 
 install_whitesur(){
-        curl -sL $BASE_URL/wallpaper/macos-ventura/Apple-macOS-13-wallpaper.jpg -o $HOME/.local/share/backgrounds/ventura-light.jpg
-        curl -sL $BASE_URL/wallpaper/macos-ventura/Apple-macOS-13-wallpaper-Dark-Mode.jpg -o $HOME/.local/share/backgrounds/ventura-dark.jpg
+        curl -sL $BASE_URL/wallpaper/macos/ventura-light.jpg -o $HOME/.local/share/backgrounds/ventura-light.jpg
+        curl -sL $BASE_URL/wallpaper/macos/ventura-dark.jpg -o $HOME/.local/share/backgrounds/ventura-dark.jpg
+
+        curl -sL $BASE_URL/wallpaper/macos/monterey-light.jpg -o $HOME/.local/share/backgrounds/monterey-light.jpg
+        curl -sL $BASE_URL/wallpaper/macos/monterey-dark.jpg -o $HOME/.local/share/backgrounds/monterey-dark.jpg
+
+        curl -sL $BASE_URL/wallpaper/macos/bigsur-light.jpg -o $HOME/.local/share/backgrounds/bigsur-light.jpg
+        curl -sL $BASE_URL/wallpaper/macos/bigsur-dark.jpg -o $HOME/.local/share/backgrounds/bigsur-dark.jpg
 
         gsettings set org.gnome.desktop.background picture-uri file:////$HOME/.local/share/backgrounds/ventura-light.jpg
 
         git clone https://github.com/prstephens/WhiteSur-gtk-theme.git /tmp/WhiteSur-gtk-theme
         cd /tmp/WhiteSur-gtk-theme
-        ./install.sh -m -o normal -N glassy -c Light -s 280 -l -c Light --black
+        ./install.sh -m -o normal -N glassy -c Light -c Dark -s 280 -l -c Light -c Dark
         ./tweaks.sh -d -c Light
         ./tweaks.sh -f monterey
         ./tweaks.sh -F
