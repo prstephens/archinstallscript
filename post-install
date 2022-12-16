@@ -79,9 +79,9 @@ mainmenu(){
 install_fonts(){
         echo "Installing fonts..."
         yay -S apple-fonts nerd-fonts-cascadia-code
-        
-        echo "Windows fonts..."
+        curl -sL $BASE_URL/fonts/HelveticaNeueLt.ttf -o $HOME/.local/share/fonts/HelveticaNeueLt.ttf
 
+        echo "Windows fonts..."
         curl -sL $BASE_URL/fonts/windows/windowsfonts.tar.gz.partaa -o /tmp/windowsfonts.tar.gz.partaa
         curl -sL $BASE_URL/fonts/windows/windowsfonts.tar.gz.partab -o /tmp/windowsfonts.tar.gz.partab
         curl -sL $BASE_URL/fonts/windows/windowsfonts.tar.gz.partac -o /tmp/windowsfonts.tar.gz.partac
