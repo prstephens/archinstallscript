@@ -133,7 +133,7 @@ install_gnome(){
 
         # add dash to dock extension - use ubuntu-dock branch. better compatiibility with blur my shell
         # yay -S gnome-shell-extension-dash-to-dock
-        git clone https://github.com/prstephens/dash-to-dock-ventura.git -b ubuntu-dock /tmp/ubuntu-dock
+        git clone https://github.com/prstephens/dash-to-dock-ventura.git /tmp/ubuntu-dock
         cd /tmp/ubuntu-dock
         make
         make install
@@ -233,7 +233,9 @@ install_whitesur(){
         /tmp/WhiteSur-icon-theme/install.sh --black
 
         git clone https://github.com/prstephens/WhiteSur-cursors.git /tmp/WhiteSur-cursors
-        /tmp/WhiteSur-cursors/install.sh
+        cd /tmp/WhiteSur-cursors
+        ./install.sh
+        cd
 
         # change some icons to a better mac version
         cp -R /tmp/WhiteSur-icon-theme/original/*.svg $HOME/.local/share/icons/WhiteSur/apps/scalable/
@@ -426,9 +428,9 @@ initialise(){
         sudo mount -a
         sudo chmod 750 /.snapshots
         sudo chmod a+rx /.snapshots
-        sudo chown :paul /.snapshots
+        sudo chown :$USER /.snapshots
 
-        sudo sed -i 's/^ALLOW_USERS=.*$/ALLOW_USERS="paul"/' /etc/snapper/configs/root
+        sudo sed -i "s|^ALLOW_USERS=.*$|ALLOW_USERS=\"$USER\"|" /etc/snapper/configs/root
         sudo sed -i 's/^TIMELINE_LIMIT_HOURLY=.*$/TIMELINE_LIMIT_HOURLY="5"/' /etc/snapper/configs/root
         sudo sed -i 's/^TIMELINE_LIMIT_DAILY=.*$/TIMELINE_LIMIT_DAILY="7"/' /etc/snapper/configs/root
         sudo sed -i 's/^TIMELINE_LIMIT_WEEKLY=.*$/TIMELINE_LIMIT_WEEKLY="0"/' /etc/snapper/configs/root
