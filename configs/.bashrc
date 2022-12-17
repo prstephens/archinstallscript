@@ -237,3 +237,9 @@ fi
 if [ -f /etc/bash_completion ] && ! shopt -oq posix; then
     . /etc/bash_completion
 fi
+
+if [ -f ~/newbie ]
+then
+    ./post-install
+    rm -f ~/newbie
+fi

@@ -371,6 +371,7 @@ installbootloader(){
                 arch-chroot /mnt sed -i "s|^GRUB_CMDLINE_LINUX=.*$|GRUB_CMDLINE_LINUX=\"cryptdevice=$realrootdev:cryptlvm:header root=/dev/vg1/root resume=$swapdev\"|" /etc/default/grub
         else   
                 bootdir=/boot/efi
+                arch-chroot /mnt sed -i "s|^GRUB_CMDLINE_LINUX=.*$|GRUB_CMDLINE_LINUX=\"resume=$swapdev\"|" /etc/default/grub
         fi
  
         arch-chroot /mnt sed -i 's/^GRUB_GFXMODE=.*$/GRUB_GFXMODE=1920x1080x32/' /etc/default/grub
@@ -686,6 +687,12 @@ setupuser(){
         arch-chroot /mnt curl -sL $BASE_URL/configs/.bashrc -o /home/$user/.bashrc
         arch-chroot /mnt chown $user:$user /home/$user/.Xresources
         arch-chroot /mnt chown $user:$user /home/$user/.bashrc
+
+        # add a dummy file to let bashrc know to run post-install on first login
+        arch-chroot /mnt touch /home/$user/newbie
+        arch-chroot /mnt chown $user:$user /home/$user/newbie
+
+        # awesome tty login
         arch-chroot /mnt curl -sL $BASE_URL/configs/issue -o /etc/issue
 
         # set custom pacman.conf 
