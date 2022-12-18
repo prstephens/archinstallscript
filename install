@@ -741,7 +741,7 @@ updatemirrors(){
 }
 
 dependencies(){
-        pacman -Syy --noconfirm pacman-contrib archlinux-keyring
+        pacman -Sy --noconfirm archlinux-keyring
 }
 
 getpackagelist(){
@@ -751,7 +751,7 @@ getpackagelist(){
 
 initialise(){
         checkconnection
-        #dependencies
+        dependencies
         updatemirrors
         getpackagelist
 }
