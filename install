@@ -28,51 +28,51 @@ mainmenu(){
                 nextitem=${1}
         fi
         options=()
-        options+=("0.1)" "Prepare disk - Secure wipe (optional)")
-        options+=("1)" "Partition disk (cfdisk)")
-        options+=("1.1)" "LVM on LUKS (optional)")
-        options+=("2)" "Select partitions to mount")
-        options+=("3)" "Setup user and root password")
-        options+=("4)" "Install")
+        options+=("WIPE DEVICE" "(Optional) Securely wipe disk or partition before installation")
+        options+=("PARTITION DISK" "Partition disk using cfdisk to create EFI, swap and root partitions")
+        options+=("ENCRYPTION" "(Optional) Use full disk enryption and detached header for deniablity")
+        options+=("MOUNT" "Select the partitions to mount")
+        options+=("SETUP USER" "Setup a user and root password")
+        options+=("INSTALL" "Perform Arch Linux base Installation")
         options+=("" "")
-        options+=("5)" "Finish and reboot")
+        options+=("FINISH" "Finish and reboot")
 
         sel=$(whiptail --backtitle "${BACKTITLE}" --title "Main Menu" --menu "" --fb --cancel-button "Exit" --default-item "${nextitem}" 20 78 0\
                 "${options[@]}" \
                 3>&1 1>&2 2>&3)
         if [ "$?" = "0" ]; then
                 case ${sel} in
-                        "0.1)")
+                        "WIPE DEVICE")
                                 preparedisk
-                                nextitem="1)"
+                                nextitem="PARTITION DISK"
                         ;;
-                        "1)")
+                        "PARTITION DISK")
                                 diskpartcfdisk
-                                nextitem="2)"
+                                nextitem="ENCRYPTION"
                         ;;
-                        "1.1)")
+                        "ENCRYPTION")
                                 enablelvm
-                                nextitem="2)"
+                                nextitem="MOUNT"
                         ;;
-                        "2)")
+                        "MOUNT")
                                 choosepartitions
-                                nextitem="3)"
+                                nextitem="SETUP USER"
                         ;;
-                        "3)")
+                        "SETUP USER")
                                 getuserinfo
-                                nextitem="4)"
+                                nextitem="INSTALL"
                         ;;
-                        "4)")
+                        "INSTALL")
                                 performinstall
                                 configuration
                                 installbootloader
                                 setupuser
                                 finish
-                                nextitem="5)"
+                                nextitem="FINISH"
                         ;;
-                        "5)")
+                        "FINISH")
                                 rebootpc
-                                nextitem="5)"
+                                nextitem="FINISH"
                         ;;
                 esac
                 mainmenu "${nextitem}"
@@ -554,6 +554,44 @@ EOT
 
         echo "tcp_bbr" > /mnt/etc/modules-load.d/bbr.conf
 
+        # Create the pacman mirrorlist updater service
+        cat <<EOT > /mnt/etc/systemd/system/reflector.service
+[Unit]
+Description=Pacman mirrorlist update
+Wants=network-online.target
+After=network-online.target nss-lookup.target
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/reflector -c GB -l 25 --age 12 -p https --sort rate --save /etc/pacman.d/mirrorlist
+[Install]
+WantedBy=multi-user.target
+EOT
+
+        cat <<EOT > /mnt/etc/modprobe.d/blacklist.conf
+blacklist iTCO_wdt
+blacklist pcspkr
+blacklist joydev
+blacklist mousedev
+blacklist mac_hid
+blacklist uvcvideo
+blacklist xpad
+blacklist nvidiafb
+blacklist nouveau
+EOT
+        # for 11th cpu or lower
+        cat <<EOT > /mnt/etc/modprobe.d/i915.conf
+options i915 enable_guc=2
+EOT
+
+        cat << EOT > /mnt/etc/udev/rules.d/60-ioschedulers.rules
+# set scheduler for NVMe
+ACTION=="add|change", KERNEL=="nvme[0-9]*", ATTR{queue/scheduler}="none"
+# set scheduler for SSD and eMMC
+ACTION=="add|change", KERNEL=="sd[a-z]|mmcblk[0-9]*", ATTR{queue/rotational}=="0", ATTR{queue/scheduler}="mq-deadline"
+# set scheduler for rotating disks
+ACTION=="add|change", KERNEL=="sd[a-z]", ATTR{queue/rotational}=="1", ATTR{queue/scheduler}="bfq"
+EOT
+
         # PulseAudio
         arch-chroot /mnt sed -i '/load-module module-suspend-on-idle/ s/^#*/#/' /etc/pulse/default.pa
 
@@ -592,44 +630,6 @@ EOT
                         sed -i 's/^HOOKS=.*$/HOOKS=(base udev autodetect keyboard keymap consolefont modconf block filesystems resume fsck)/' /mnt/etc/mkinitcpio.conf
                 fi
         fi
-
-        # Create the pacman mirrorlist updater service
-        cat <<EOT > /mnt/etc/systemd/system/reflector.service
-[Unit]
-Description=Pacman mirrorlist update
-Wants=network-online.target
-After=network-online.target nss-lookup.target
-[Service]
-Type=oneshot
-ExecStart=/usr/bin/reflector -c GB -l 25 --age 12 -p http -p https --sort rate --save /etc/pacman.d/mirrorlist
-[Install]
-WantedBy=multi-user.target
-EOT
-
-        cat <<EOT > /mnt/etc/modprobe.d/blacklist.conf
-blacklist iTCO_wdt
-blacklist pcspkr
-blacklist joydev
-blacklist mousedev
-blacklist mac_hid
-blacklist uvcvideo
-blacklist xpad
-blacklist nvidiafb
-blacklist nouveau
-EOT
-        # for 11th cpu or lower
-        cat <<EOT > /mnt/etc/modprobe.d/i915.conf
-options i915 enable_guc=2
-EOT
-
-        cat << EOT > /mnt/etc/udev/rules.d/60-ioschedulers.rules
-# set scheduler for NVMe
-ACTION=="add|change", KERNEL=="nvme[0-9]*", ATTR{queue/scheduler}="none"
-# set scheduler for SSD and eMMC
-ACTION=="add|change", KERNEL=="sd[a-z]|mmcblk[0-9]*", ATTR{queue/rotational}=="0", ATTR{queue/scheduler}="mq-deadline"
-# set scheduler for rotating disks
-ACTION=="add|change", KERNEL=="sd[a-z]", ATTR{queue/rotational}=="1", ATTR{queue/scheduler}="bfq"
-EOT
 
         # Bluetooth config
         arch-chroot /mnt sed -i 's/^#DiscoverableTimeout = 0/DiscoverableTimeout = 0/' /etc/bluetooth/main.conf
@@ -685,12 +685,9 @@ setupuser(){
         echo "Getting some config files..."
         arch-chroot /mnt curl -sL $BASE_URL/configs/.Xresources -o /home/$user/.Xresources
         arch-chroot /mnt curl -sL $BASE_URL/configs/.bashrc -o /home/$user/.bashrc
-        arch-chroot /mnt chown $user:$user /home/$user/.Xresources
-        arch-chroot /mnt chown $user:$user /home/$user/.bashrc
 
         # add a dummy file to let bashrc know to run post-install on first login
         arch-chroot /mnt touch /home/$user/newbie
-        arch-chroot /mnt chown $user:$user /home/$user/newbie
 
         # awesome tty login
         arch-chroot /mnt curl -sL $BASE_URL/configs/issue -o /etc/issue
@@ -705,13 +702,14 @@ setupuser(){
         arch-chroot /mnt sed -i "s|^rootdev=.*$|rootdev=${rootdev}|" /home/$user/post-install
         arch-chroot /mnt sed -i "s|^USE_CRYPT=.*$|USE_CRYPT=${USE_CRYPT}|" /home/$user/post-install
         arch-chroot /mnt sed -i "s|^USE_RAID=.*$|USE_RAID=${USE_RAID}|" /home/$user/post-install
-        arch-chroot /mnt chown $user:$user /home/$user/post-install
         arch-chroot /mnt chmod a+x /home/$user/post-install
 
         # Add shell-option to ~/.inputrc to enable case-insensitive tab completion
         if [ ! -a /mnt/home/$user/.inputrc ]; then echo '$include /etc/inputrc' > /mnt/home/$user/.inputrc; fi
         echo 'set completion-ignore-case On' >> /mnt/home/$user/.inputrc
-        arch-chroot /mnt chown $user:$user /home/$user/.inputrc
+
+        # own that stuff!
+        arch-chroot /mnt chown -R $user:$user /home/$user/*
 }
 
 rebootpc(){
@@ -741,7 +739,7 @@ updatemirrors(){
 }
 
 dependencies(){
-        pacman -Sy --noconfirm archlinux-keyring
+        pacman -Sy archlinux-keyring
 }
 
 getpackagelist(){
