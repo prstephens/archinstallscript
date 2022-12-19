@@ -709,7 +709,7 @@ setupuser(){
         echo 'set completion-ignore-case On' >> /mnt/home/$user/.inputrc
 
         # own that stuff!
-        arch-chroot /mnt chown -R $user:$user /home/$user/*
+        arch-chroot /mnt chown -R $user:$user /home/$user/
 }
 
 rebootpc(){
@@ -739,7 +739,7 @@ updatemirrors(){
 }
 
 dependencies(){
-        pacman -Sy archlinux-keyring
+        pacman -Sy --noconfirm archlinux-keyring
 }
 
 getpackagelist(){
