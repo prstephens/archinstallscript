@@ -18,6 +18,7 @@ BASE_URL="https://raw.githubusercontent.com/prstephens/archinstallscript/master/
 USE_CRYPT=0
 USE_RAID=0
 TEST=0
+MIRROR_COUNTRY=GB
 
 # --------------------------------------------------------
 
@@ -735,7 +736,8 @@ checkconnection(){
 }
 
 updatemirrors(){
-        reflector --verbose -c GB -l 25 --age 12 -p https --sort rate --save /etc/pacman.d/mirrorlist
+        MIRROR_COUNTRY=$(echo $MIRROR_COUNTRY | tr '[:lower:]' '[:upper:]')
+        reflector --verbose -c $MIRROR_COUNTRY -l 25 --age 12 -p https --sort rate --save /etc/pacman.d/mirrorlist
 }
 
 dependencies(){
@@ -756,11 +758,18 @@ initialise(){
 
 # --------------------------------------------------------
 
-while getopts m: flag
-do
-    case "${flag}" in
-        m) TEST=1;;
-    esac
+while [[ $# -gt 0 ]]; do
+        case "${1}" in
+                -t)
+                        TEST=1; shift ;;
+                -c)
+                        umount -A /mnt/boot 
+                        umount -A /mnt; shift ;;
+                -m)
+                        MIRROR_COUNTRY="${2}" && shift 2 || shift ;;
+                *)
+                        echo "ERROR: Unrecognized installation option '${1}'."; shift 2 ;;
+        esac
 done
 
 [[ ! -f /tmp/packages ]] && initialise
