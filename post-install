@@ -79,6 +79,8 @@ mainmenu(){
 install_fonts(){
         echo "Installing fonts..."
         yay -S apple-fonts nerd-fonts-cascadia-code
+
+        [[ ! -d $HOME/.local/share/fonts ]] && mkdir $HOME/.local/share/fonts
         curl -sL $BASE_URL/fonts/HelveticaNeueLt.ttf -o $HOME/.local/share/fonts/HelveticaNeueLt.ttf
 
         echo "Windows fonts..."
@@ -208,6 +210,8 @@ install_catppuccin(){
 }
 
 install_whitesur(){
+        [[ ! -d $HOME/.local/share/backgrounds ]] && mkdir $HOME/.local/share/backgrounds
+
         curl -sL $BASE_URL/wallpaper/macos/ventura-light.jpg -o $HOME/.local/share/backgrounds/ventura-light.jpg
         curl -sL $BASE_URL/wallpaper/macos/ventura-dark.jpg -o $HOME/.local/share/backgrounds/ventura-dark.jpg
 

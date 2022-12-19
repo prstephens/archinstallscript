@@ -171,6 +171,10 @@ omm(){
     done;
 }
 
+mirrors(){
+    sudo reflector --verbose -c $1 -l 25 --age 12 -p https --sort rate --save /etc/pacman.d/mirrorlist
+}
+
 # some more ls aliases
 alias c='clear'
 alias cdev='cd ~/data/dev'
