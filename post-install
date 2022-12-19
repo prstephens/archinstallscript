@@ -393,6 +393,8 @@ install_dev(){
 }
 
 initialise(){
+        whiptail --backtitle "$BACKTITLE" --msgbox --title "Welcome!" "Welcome to Arch Linux\n\nWe will now initialise the system" 0 78
+
         # optimise yay when building packages
         sudo sed -i 's/^#MAKEFLAGS="-j2"/MAKEFLAGS="-j$(nproc)"/' /etc/makepkg.conf
         sudo sed -i "s/^PKGEXT=.*$/PKGEXT='.pkg.tar'/" /etc/makepkg.conf
