@@ -414,7 +414,7 @@ EOT
 
         echo "Updating pacman mirrors to awesomeness..."
         # Update pacman mirror list
-        arch-chroot /mnt reflector --verbose -c GB -l 25 --age 12 -p https --sort rate --save /etc/pacman.d/mirrorlist
+        arch-chroot /mnt reflector --verbose -c $MIRROR_COUNTRY -l 25 --age 12 -p https --sort rate --save /etc/pacman.d/mirrorlist
 
         echo "Setting up spacetime continuum..."
         # Set date time
