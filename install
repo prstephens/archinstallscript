@@ -37,7 +37,7 @@ mainmenu(){
         options+=("" "")
         options+=("FINISH" "Finish and reboot")
 
-        sel=$(whiptail --backtitle "${BACKTITLE}" --title "Main Menu" --menu "" --fb --cancel-button "Exit" --default-item "${nextitem}" 20 78 0\
+        sel=$(whiptail --backtitle "${BACKTITLE}" --title "Main Menu" --menu "" --fb --cancel-button "Exit" --default-item "${nextitem}" 0 78 0\
                 "${options[@]}" \
                 3>&1 1>&2 2>&3)
         if [ "$?" = "0" ]; then
