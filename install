@@ -757,7 +757,7 @@ initialise(){
 
         sed -i '/ParallelDownloads/s/^[#[:space:]]*//g' /etc/pacman.conf
         sed -i '/Color/s/^[#[:space:]]*//g' /etc/pacman.conf
-        sed -i '/Color/a IloveCandy' /etc/pacman.conf
+        sed -i '/Color/a ILoveCandy' /etc/pacman.conf
 }
 
 # --------------------------------------------------------
