@@ -754,6 +754,10 @@ initialise(){
         dependencies
         updatemirrors
         getpackagelist
+
+        sed -i '/ParallelDownloads/s/^[#[:space:]]*//g' /etc/pacman.conf
+        sed -i '/Color/s/^[#[:space:]]*//g' /etc/pacman.conf
+        echo "ILoveCandy" >> /etc/pacman.conf
 }
 
 # --------------------------------------------------------
