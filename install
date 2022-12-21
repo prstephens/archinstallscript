@@ -757,7 +757,7 @@ initialise(){
 
         sed -i '/ParallelDownloads/s/^[#[:space:]]*//g' /etc/pacman.conf
         sed -i '/Color/s/^[#[:space:]]*//g' /etc/pacman.conf
-        echo "ILoveCandy" >> /etc/pacman.conf
+        sed  '/Color/a IloveCandy' /etc/pacman.conf
 }
 
 # --------------------------------------------------------
@@ -767,8 +767,10 @@ while [[ $# -gt 0 ]]; do
                 -t)
                         TEST=1; shift ;;
                 -c)
-                        umount -A /mnt/boot 
+                        umount -A /mnt/boot/efi
+                        umount -A /mnt/boot
                         umount -A /mnt; shift ;;
+                        swapoff -a
                 -m)
                         MIRROR_COUNTRY="${2}" && shift 2 || shift ;;
                 *)
