@@ -105,7 +105,7 @@ install_gnome(){
         clear
         
         echo "Installing Gnome.."
-        sudo pacman -S gnome gnome-tweaks xscreensaver firefox nemo nemo-fileroller nemo-preview gtk-engine-murrine sassc seahorse gparted grub-customizer wmctrl flatpak code rxvt-unicode
+        sudo pacman -S gnome gnome-tweaks xscreensaver firefox sassc seahorse gparted grub-customizer wmctrl flatpak code rxvt-unicode cool-retro-term
         yay -S pamac-aur snapper-gui-git rar cava extension-manager
         
         install_fonts
@@ -148,7 +148,7 @@ install_gnome(){
         # add arch updater extension
         yay -S gnome-shell-extension-arch-update
         gsettings set org.gnome.shell.extensions.arch-update check-cmd "/bin/sh -c \"(/usr/bin/checkupdates; /usr/bin/yay -Qqu --color never | sed 's/Get .*//') | sort -u -t' ' -k1,1\""
-        gsettings set org.gnome.shell.extensions.arch-update update-cmd 'urxvt -e sh -c "yay -Syu ; echo Done - Press enter to exit; read"'
+        gsettings set org.gnome.shell.extensions.arch-update update-cmd 'cool-retro-term -e sh -c "wmctrl -r :ACTIVE: -b toggle,fullscreen;yay -Syu ; echo Done - Press enter to exit; read""'
         gsettings set org.gnome.shell.extensions.arch-update package-manager 'pamac-manager'
         gsettings set org.gnome.shell.extensions.arch-update use-buildin-icons true
 
@@ -160,7 +160,7 @@ install_gnome(){
         gnome-extensions enable ubuntu-dock@ubuntu.com
 
         # Remove some trash from Gnome
-        sudo pacman -Rs epiphany gnome-music cheese totem gnome-software
+        sudo pacman -Rs epiphany gnome-music cheese totem
 
         # Install Gradience - to change LibAdwaita colours
         #flatpak install flathub com.github.GradienceTeam.Gradience
@@ -225,7 +225,7 @@ install_whitesur(){
 
         git clone https://github.com/prstephens/WhiteSur-gtk-theme.git /tmp/WhiteSur-gtk-theme
         cd /tmp/WhiteSur-gtk-theme
-        ./install.sh -m -o normal -N glassy -c Light -c Dark -s 280 -l -c Light -c Dark
+        ./install.sh -m -o normal -N glassy -c Light -s 280 -l -c Light
         ./tweaks.sh -d -c Light
         ./tweaks.sh -f monterey
         ./tweaks.sh -F
