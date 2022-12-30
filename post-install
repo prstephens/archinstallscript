@@ -8,7 +8,8 @@
 # license   : LGPL-3.0 (http://opensource.org/licenses/lgpl-3.0.html)
 # referance : https://wiki.archlinux.org/index.php/Installation_guide
 
-BACKTITLE="Arch Installer v3"
+VERSION="2"
+BACKTITLE="Arch Installer v"$VERSION
 BASE_URL="https://raw.githubusercontent.com/prstephens/archinstallscript/master/"
 
 set -o pipefail
@@ -518,6 +519,16 @@ EOT
 rootdev=/root/dev # changed on the fly during install
 USE_CRYPT=0 # changed on the fly during install
 USE_RAID=0 # changed on the fly during install
+
+# self updater
+curl -sL $BASE_URL/version -o /tmp/version
+value=$(</tmp/version)
+if (("$VERSION" < "$value")); then
+        curl -sL $BASE_URL/post-install -o $HOME/post-install
+        chmod +x $HOME/post-install
+        exec $HOME/post-install
+        exit 1
+fi
 
 [[ ! -d $HOME/yay ]] && initialise
 
