@@ -12,6 +12,10 @@ VERSION="2"
 BACKTITLE="Arch Installer v"$VERSION
 BASE_URL="https://raw.githubusercontent.com/prstephens/archinstallscript/master/"
 
+rootdev=/root/dev # changed on the fly during install
+USE_CRYPT=0 # changed on the fly during install
+USE_RAID=0 # changed on the fly during install
+
 set -o pipefail
 #set -x #toggle for debug. Will print all commands.
 
@@ -515,20 +519,20 @@ EOT
         fi      
 }
 
-# --------------------------------------------------------
-rootdev=/root/dev # changed on the fly during install
-USE_CRYPT=0 # changed on the fly during install
-USE_RAID=0 # changed on the fly during install
+self_update(){
+        curl -sL $BASE_URL/version -o /tmp/version
+        value=$(</tmp/version)
+        if (("$VERSION" < "$value")); then
+                curl -sL $BASE_URL/post-install -o $HOME/post-install
+                chmod +x $HOME/post-install
+                exec $HOME/post-install
+                exit 1
+        fi
+}
 
-# self updater
-curl -sL $BASE_URL/version -o /tmp/version
-value=$(</tmp/version)
-if (("$VERSION" < "$value")); then
-        curl -sL $BASE_URL/post-install -o $HOME/post-install
-        chmod +x $HOME/post-install
-        exec $HOME/post-install
-        exit 1
-fi
+# --------------------------------------------------------
+
+self_update
 
 [[ ! -d $HOME/yay ]] && initialise
 
