@@ -474,6 +474,7 @@ initialise(){
         sudo sed -i "s/^PKGEXT=.*$/PKGEXT='.pkg.tar'/" /etc/makepkg.conf
 
         sudo sed -i 's/^CFLAGS.*/CFLAGS="-march=native -mtune=native -O2 -pipe -fstack-protector-strong --param=ssp-buffer-size=4 -fno-plt"/' /etc/makepkg.conf
+        sudo sed -i '/CFLAGS/{n;N;d}' /etc/makepkg.conf
         
         sudo sed -i 's/^#RUSTFLAGS.*/RUSTFLAGS="-C opt-level=2 -C target-cpu=native"/' /etc/makepkg.conf
         sudo sed -i 's/^#BUILDDIR.*/BUILDDIR=\/tmp\/makepkg/' /etc/makepkg.conf
@@ -486,9 +487,6 @@ initialise(){
         sudo sed -i 's/^COMPRESSLZO.*/COMPRESSLZO=(lzop -q --best)/' /etc/makepkg.conf
         sudo sed -i 's/^COMPRESSZ.*/COMPRESSZ=(compress -c -f)/' /etc/makepkg.conf
         sudo sed -i 's/^COMPRESSLZ4.*/COMPRESSLZ4=(lz4 -q --best)/' /etc/makepkg.conf
-
-        whiptail --backtitle "$BACKTITLE" --msgbox --title "Warning" "Please manually correct the MAKEFLAGS line in /etc/makepkg.conf" 0 78
-        sudo nano /etc/makepkg.conf
 
         # install yay
         git clone https://aur.archlinux.org/yay.git $HOME/yay
