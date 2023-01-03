@@ -29,7 +29,7 @@ mainmenu(){
         fi
         options=()
         options+=("GNOME" "Gnome vanilla install")
-        options+=("GNOME MAC 0S" "Install Gnome with Mac OS theme")
+        options+=("GNOME MAC OS" "Install Gnome with Mac OS theme")
         options+=("GNOME POP!_OS" "Install Gnome with the Pop!_OS Pop Shell and configurations")
         options+=("1.2)" "Themes")
         options+=("2)" "Install Xanmod-tt Kernel")
@@ -133,7 +133,7 @@ install_gnome(){
         # add arch updater extension
         yay -S gnome-shell-extension-arch-update
         gsettings set org.gnome.shell.extensions.arch-update check-cmd "/bin/sh -c \"(/usr/bin/checkupdates; /usr/bin/yay -Qqu --color never | sed 's/Get .*//') | sort -u -t' ' -k1,1\""
-        gsettings set org.gnome.shell.extensions.arch-update update-cmd 'cool-retro-term -e sh -c "wmctrl -r :ACTIVE: -b toggle,fullscreen;yay -Syu ; echo Done - Press enter to exit; read""'
+        gsettings set org.gnome.shell.extensions.arch-update update-cmd 'cool-retro-term -e sh -c "wmctrl -r :ACTIVE: -b toggle,fullscreen;yay -Syu ; echo Done - Press enter to exit; read"'
         gsettings set org.gnome.shell.extensions.arch-update package-manager 'pamac-manager'
         gsettings set org.gnome.shell.extensions.arch-update use-buildin-icons true
 
