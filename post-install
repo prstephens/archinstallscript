@@ -28,8 +28,9 @@ mainmenu(){
             nextitem=${1}
         fi
         options=()
-        options+=("1)" "Gnome DE")
-        options+=("1.1)" "Pop!_OS Pop Shell")
+        options+=("GNOME" "Gnome vanilla install")
+        options+=("GNOME MAC 0S" "Install Gnome with Mac OS theme")
+        options+=("GNOME POP!_OS" "Install Gnome with the Pop!_OS Pop Shell and configurations")
         options+=("1.2)" "Themes")
         options+=("2)" "Install Xanmod-tt Kernel")
         options+=("3)" "Applications")
@@ -42,11 +43,15 @@ mainmenu(){
             3>&1 1>&2 2>&3)
         if [ "$?" = "0" ]; then
             case ${sel} in
-                "1)")
+                "GNOME")
                     install_gnome
-                    nextitem="1.1)"
+                    nextitem="1.2)"
                 ;;
-                "1.1)")
+                "GNOME MAC OS")
+                    install_gnome_mac
+                    nextitem="1.2)"
+                ;;
+                "GNOME POP!_OS")
                     install_popshell
                     nextitem="1.2)"
                 ;;
@@ -125,13 +130,46 @@ install_gnome(){
         gsettings set org.cinnamon.desktop.default-applications.terminal exec urxvt
         gsettings set org.cinnamon.desktop.default-applications.terminal exec-arg -e
 
-        gsettings set org.gnome.desktop.interface font-name "SF Pro Rounded Regular 11"
-        gsettings set org.gnome.desktop.interface document-font-name "SF Pro Rounded Regular 11"
-        gsettings set org.gnome.desktop.interface monospace-font-name "Source Code Pro 9"
-        gsettings set org.gnome.desktop.wm.preferences titlebar-font "SF Pro Rounded Regular 11"
+        # add arch updater extension
+        yay -S gnome-shell-extension-arch-update
+        gsettings set org.gnome.shell.extensions.arch-update check-cmd "/bin/sh -c \"(/usr/bin/checkupdates; /usr/bin/yay -Qqu --color never | sed 's/Get .*//') | sort -u -t' ' -k1,1\""
+        gsettings set org.gnome.shell.extensions.arch-update update-cmd 'cool-retro-term -e sh -c "wmctrl -r :ACTIVE: -b toggle,fullscreen;yay -Syu ; echo Done - Press enter to exit; read""'
+        gsettings set org.gnome.shell.extensions.arch-update package-manager 'pamac-manager'
+        gsettings set org.gnome.shell.extensions.arch-update use-buildin-icons true
 
-        gsettings set org.gnome.desktop.wm.preferences button-layout "close,minimize,maximize:"
-        gsettings set org.gnome.mutter center-new-windows "true"
+        gsettings set org.gnome.shell disable-extension-version-validation "true"
+
+        # Turn on some extensions
+        gnome-extensions enable user-theme@gnome-shell-extensions.gcampax.github.com
+        gnome-extensions enable arch-update@RaphaelRochet
+        
+        # Remove some trash from Gnome
+        sudo pacman -Rs epiphany gnome-music cheese totem
+
+        ##fildem fix
+        #sudo ln -s /usr/lib/python3.9/site-packages/fildem /usr/lib/python3.10/site-packages 
+        #sudo ln -s /usr/lib/python3.9/site-packages/fildem-0.6.7-py3.9.egg-info/ /usr/lib/python3.10/site-packages
+
+        # Install Gradience - to change LibAdwaita colours
+        #flatpak install flathub com.github.GradienceTeam.Gradience
+
+        # coolero
+        #sudo systemd-sysusers
+        #sudo usermod -aG coolero $USER
+        #sudo systemctl enable coolerod.service
+
+	sudo systemctl enable gdm
+
+        # create a snapshot
+        for i in `seq 2 50`; do sudo snapper delete $i; done;
+        sudo snapper -c root create --description "### FRESH INSTALL - Including Gnome ###" # ID 2
+        sudo grub-mkconfig -o /boot/grub/grub.cfg
+
+        whiptail --backtitle "$BACKTITLE" --msgbox --title "Gnome Installed" "Its best to reboot now before carrying on with the install" 0 78
+}
+
+install_gnome_mac(){
+        install_gnome
 
         gsettings set org.gnome.desktop.input-sources sources "[('xkb', 'gb')]"
 
@@ -146,72 +184,13 @@ install_gnome(){
         make install
         cd
 
-##fildem fix
-#sudo ln -s /usr/lib/python3.9/site-packages/fildem /usr/lib/python3.10/site-packages 
-#sudo ln -s /usr/lib/python3.9/site-packages/fildem-0.6.7-py3.9.egg-info/ /usr/lib/python3.10/site-packages
-
-        # add arch updater extension
-        yay -S gnome-shell-extension-arch-update
-        gsettings set org.gnome.shell.extensions.arch-update check-cmd "/bin/sh -c \"(/usr/bin/checkupdates; /usr/bin/yay -Qqu --color never | sed 's/Get .*//') | sort -u -t' ' -k1,1\""
-        gsettings set org.gnome.shell.extensions.arch-update update-cmd 'cool-retro-term -e sh -c "wmctrl -r :ACTIVE: -b toggle,fullscreen;yay -Syu ; echo Done - Press enter to exit; read""'
-        gsettings set org.gnome.shell.extensions.arch-update package-manager 'pamac-manager'
-        gsettings set org.gnome.shell.extensions.arch-update use-buildin-icons true
-
-        gsettings set org.gnome.shell disable-extension-version-validation "true"
-
-        # Turn on some extensions
-        gnome-extensions enable user-theme@gnome-shell-extensions.gcampax.github.com
-        gnome-extensions enable arch-update@RaphaelRochet
         gnome-extensions enable ubuntu-dock@ubuntu.com
 
-        # Remove some trash from Gnome
-        sudo pacman -Rs epiphany gnome-music cheese totem
+        # install the Mac theme set
+        install_whitesur
+        apply_whitesur
 
-        # Install Gradience - to change LibAdwaita colours
-        #flatpak install flathub com.github.GradienceTeam.Gradience
-
-        # coolero
-        #sudo systemd-sysusers
-        #sudo usermod -aG coolero $USER
-        #sudo systemctl enable coolerod.service
-
-        # Vs code icon theme - material
-        # curl -s https://api.github.com/repos/PKief/vscode-material-icon-theme/releases/latest \
-        # | grep "browser_download_url.*vsix" \
-        # | cut -d : -f 2,3 \
-        # | tr -d \" \
-        # | wget -O material-icons.vsix -qi -
-
-        # code --install-extension material-icons.vsix
-
-	sudo systemctl enable gdm
-
-        # create a snapshot
-        for i in `seq 2 50`; do sudo snapper delete $i; done;
-        sudo snapper -c root create --description "### FRESH INSTALL - Including Gnome ###" # ID 2
-        sudo grub-mkconfig -o /boot/grub/grub.cfg
-
-        whiptail --backtitle "$BACKTITLE" --msgbox --title "Gnome Installed" "Its best to reboot now before carrying on with the install" 0 78
-}
-
-install_popshell(){
-        yay -S typescript gnome-shell-extension-pop-shell-git
-        git clone https://github.com/pop-os/shell.git /tmp/shell
-        cd /tmp/shell
-        make local-install
-        cd
-        gsettings --schemadir ~/.local/share/gnome-shell/extensions/pop-shell@system76.com/schemas set org.gnome.shell.extensions.pop-shell activate-launcher "['<Super>space']"
-}
-
-install_catppuccin(){
-        yay -S catppuccin-gtk-theme-macchiato
-
-        # code theme
-        git clone https://github.com/catppuccin/vscode.git $HOME/.vscode-oss/extensions/catppuccin-vsc
-
-        # Fluent icon theme - goes nice with catppuccin
-        git clone https://github.com/prstephens/Fluent-icon-theme.git /tmp/Fluent-icon-theme
-        /tmp/Fluent-icon-theme/install.sh --all -r
+        whiptail --backtitle "$BACKTITLE" --msgbox --title "Gnome Mac OS Installed" "Its best to logout or reboot now" 0 78
 }
 
 install_whitesur(){
@@ -225,8 +204,6 @@ install_whitesur(){
 
         curl -sL $BASE_URL/wallpaper/macos/bigsur-light.jpg -o $HOME/.local/share/backgrounds/bigsur-light.jpg
         curl -sL $BASE_URL/wallpaper/macos/bigsur-dark.jpg -o $HOME/.local/share/backgrounds/bigsur-dark.jpg
-
-        gsettings set org.gnome.desktop.background picture-uri file:////$HOME/.local/share/backgrounds/ventura-light.jpg
 
         git clone https://github.com/prstephens/WhiteSur-gtk-theme.git /tmp/WhiteSur-gtk-theme
         cd /tmp/WhiteSur-gtk-theme
@@ -276,7 +253,100 @@ install_whitesur(){
         # Tray icons reloaded
         # Unite
 }
-        
+
+apply_whitesur(){
+        gsettings set org.gnome.desktop.interface gtk-theme WhiteSur-Light
+        gsettings set org.gnome.desktop.interface icon-theme WhiteSur
+        gsettings set org.gnome.desktop.interface cursor-theme WhiteSur-cursors
+        gsettings set org.gnome.shell.extensions.user-theme name WhiteSur-Light
+
+        gsettings set org.gnome.desktop.interface font-name "SF Pro Rounded Regular 11"
+        gsettings set org.gnome.desktop.interface document-font-name "SF Pro Rounded Regular 11"
+        gsettings set org.gnome.desktop.interface monospace-font-name "Source Code Pro 9"
+        gsettings set org.gnome.desktop.wm.preferences titlebar-font "SF Pro Rounded Regular 11"
+
+        gsettings set org.gnome.desktop.wm.preferences button-layout "close,minimize,maximize:"
+
+        gsettings set org.gnome.desktop.background picture-uri file:////$HOME/.local/share/backgrounds/ventura-light.jpg
+}
+
+install_popshell(){
+        install_gnome
+
+        # dependancies
+        yay -S typescript ninja meson pop-fonts
+        fc-cache -f
+
+        # GTK Theme
+        git clone https://github.com/pop-os/gtk-theme.git /tmp/gtk-theme
+        cd /tmp/gtk-theme
+        meson build && cd build
+        ninja
+        ninja install
+
+        # Icon theme
+        git clone https://github.com/pop-os/icon-theme /tmp/pop-icon-theme
+        cd /tmp/pop-icon-theme
+        meson build
+        sudo ninja -C "build" install
+
+        # pop shell cosmic dock
+        https://github.com/pop-os/cosmic-dock.git /tmp/cosmic-dock
+        cd /tmp/cosmic-dock
+        make
+        make install
+
+        # cosmic workspaces
+        git clone https://github.com/pop-os/cosmic-workspaces.git /tmp/cosmic-workspaces
+        cd /tmp/cosmic-workspaces
+        make
+        make install
+
+        # desktop widgets
+        https://github.com/pop-os/desktop-widget.git /tmp/desktop-widget
+        cd /tmp/desktop-widget
+        make install
+
+        # COSMIC
+        git clone https://github.com/pop-os/cosmic /tmp/cosmic
+        cd /tmp/cosmic
+        make && make install
+
+        apply_pop
+
+        # Pop shell extension
+        yay -S gnome-shell-extension-pop-shell-git
+        git clone https://github.com/pop-os/shell.git /tmp/shell
+        cd /tmp/shell
+        make local-install    
+
+        whiptail --backtitle "$BACKTITLE" --msgbox --title "Gnome Pop!_OS Installed" "Its best to logout or reboot now" 0 78
+}
+
+apply_pop(){
+        gsettings set org.gnome.desktop.interface gtk-theme Pop-dark
+        gsettings set org.gnome.desktop.interface icon-theme Pop
+        gsettings set org.gnome.desktop.interface cursor-theme Pop
+        gsettings set org.gnome.shell.extensions.user-theme name Pop
+
+        gsettings set org.gnome.desktop.interface font-name "Fira Sans Book 10"
+        gsettings set org.gnome.desktop.interface document-font-name "Roboto Slab Regular 11"
+        gsettings set org.gnome.desktop.interface monospace-font-name "Fira Mono Regular 11"
+        gsettings set org.gnome.desktop.wm.preferences titlebar-font "Fira Sans SemiBold 10"
+
+        gsettings set org.gnome.desktop.wm.preferences button-layout ":minimize,close"
+}
+
+install_catppuccin(){
+        yay -S catppuccin-gtk-theme-macchiato
+
+        # code theme
+        git clone https://github.com/catppuccin/vscode.git $HOME/.vscode-oss/extensions/catppuccin-vsc
+
+        # Fluent icon theme - goes nice with catppuccin
+        git clone https://github.com/prstephens/Fluent-icon-theme.git /tmp/Fluent-icon-theme
+        /tmp/Fluent-icon-theme/install.sh --all -r
+}
 
 install_orchis(){
         git clone https://github.com/prstephens/Orchis-theme.git /tmp/Orchis-theme
