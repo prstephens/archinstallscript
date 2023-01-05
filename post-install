@@ -92,7 +92,7 @@ install_fonts(){
 
         [[ ! -d $HOME/.local/share/fonts ]] && mkdir $HOME/.local/share/fonts
         curl -sL $BASE_URL/fonts/HelveticaNeueLt.ttf -o $HOME/.local/share/fonts/HelveticaNeueLt.ttf
-        curl -sL $BASE_URL/fonts/bedstead.otf -o $HOME/.local/share/fonts/bedstead.otf
+        curl -sL $BASE_URL/fonts/acorn/bedstead.otf -o $HOME/.local/share/fonts/bedstead.otf
 
         echo "Windows fonts..."
         curl -sL $BASE_URL/fonts/windows/windowsfonts.tar.gz.partaa -o /tmp/windowsfonts.tar.gz.partaa
@@ -188,8 +188,8 @@ install_gnome_mac(){
         apply_whitesur
 
         # Global menu
-        curl -sL $BASE_URL/configs/python3-fildem.zst /tmp/python3-fildem.zst
-        pacman -U /tmp/python3-fildem.zst
+        curl -sL $BASE_URL/configs/python3-fildem.zst -o /tmp/python3-fildem.zst
+        sudo pacman -U /tmp/python3-fildem.zst
 
         git clone https://github.com/gonzaarcr/Fildem.git /tmp/fildem
         cd /tmp/fildem
