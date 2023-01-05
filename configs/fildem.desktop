@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Exec=fildem
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+Name[en_US]=Fildem
+Name=Fildem
+Comment[en_US]=Fildem Global Menu and HUD
+Comment=Fildem Global Menu and HUD

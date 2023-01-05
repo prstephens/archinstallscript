@@ -92,6 +92,7 @@ install_fonts(){
 
         [[ ! -d $HOME/.local/share/fonts ]] && mkdir $HOME/.local/share/fonts
         curl -sL $BASE_URL/fonts/HelveticaNeueLt.ttf -o $HOME/.local/share/fonts/HelveticaNeueLt.ttf
+        curl -sL $BASE_URL/fonts/bedstead.otf -o $HOME/.local/share/fonts/bedstead.otf
 
         echo "Windows fonts..."
         curl -sL $BASE_URL/fonts/windows/windowsfonts.tar.gz.partaa -o /tmp/windowsfonts.tar.gz.partaa
@@ -146,10 +147,6 @@ install_gnome(){
         # Remove some trash from Gnome
         sudo pacman -Rs epiphany gnome-music cheese totem
 
-        ##fildem fix
-        #sudo ln -s /usr/lib/python3.9/site-packages/fildem /usr/lib/python3.10/site-packages 
-        #sudo ln -s /usr/lib/python3.9/site-packages/fildem-0.6.7-py3.9.egg-info/ /usr/lib/python3.10/site-packages
-
         # Install Gradience - to change LibAdwaita colours
         #flatpak install flathub com.github.GradienceTeam.Gradience
 
@@ -189,6 +186,29 @@ install_gnome_mac(){
         # install the Mac theme set
         install_whitesur
         apply_whitesur
+
+        # Global menu
+        curl -sL $BASE_URL/configs/python3-fildem.zst /tmp/python3-fildem.zst
+        pacman -U /tmp/python3-fildem.zst
+
+        git clone https://github.com/gonzaarcr/Fildem.git /tmp/fildem
+        cd /tmp/fildem
+        cp -r  fildemGMenu\@gonza.com/ $HOME/.local/share/gnome-shell/extensions/
+
+        cat <<EOT >> ~/.gtkrc-2.0
+gtk-modules="appmenu-gtk-module"
+EOT
+
+        cat <<EOT >> ~/.config/gtk-3.0/settings.ini
+gtk-modules="appmenu-gtk-module"
+EOT
+
+        # fildem fix
+        sudo ln -s /usr/lib/python3.9/site-packages/fildem /usr/lib/python3.10/site-packages 
+        sudo ln -s /usr/lib/python3.9/site-packages/fildem-0.6.7-py3.9.egg-info/ /usr/lib/python3.10/site-packages
+
+        curl -sL $BASE_URL/configs/fildem.desktop -o $HOME/.config/autostart/fildem.desktop
+
 
         whiptail --backtitle "$BACKTITLE" --msgbox --title "Gnome Mac OS Installed" "Its best to logout or reboot now" 0 78
 }
@@ -241,7 +261,6 @@ install_whitesur(){
         # Compiz alike magic lamp effect
         # Desktop Icons NG (DING)
         # Espresso
-        # Fildem
         # Gnome 4x UI Improvements
         # Hibernate status button
         # Just perfection

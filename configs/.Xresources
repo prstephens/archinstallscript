@@ -34,7 +34,6 @@
 *color15: #A5ADCB
 
 URxvt.background: [85]#24273A
-
 URxvt.letterSpace: 0
 URxvt.lineSpace: 0
 URxvt.internalBorder: 30
@@ -55,4 +54,4 @@ URxvt.urlButton:                  1
 
 URxvt.keysym.Control-Shift-V: perl:pasta:paste
 URxvt.perl-ext-common: selection-to-clipboard,pasta
-URxvt.font: xft:CaskaydiaCove Nerd Font:pixelsize=13
+URxvt.font: xft:Bedstead:pixelsize=13
