@@ -181,8 +181,6 @@ install_gnome_mac(){
         make install
         cd
 
-        gnome-extensions enable ubuntu-dock@ubuntu.com
-
         # install the Mac theme set
         install_whitesur
         apply_whitesur
@@ -200,6 +198,7 @@ gtk-modules="appmenu-gtk-module"
 EOT
 
         cat <<EOT >> ~/.config/gtk-3.0/settings.ini
+[Settings]
 gtk-modules="appmenu-gtk-module"
 EOT
 
@@ -209,6 +208,8 @@ EOT
 
         curl -sL $BASE_URL/configs/fildem.desktop -o $HOME/.config/autostart/fildem.desktop
 
+        gnome-extensions enable ubuntu-dock@ubuntu.com
+        gnome-extensions enable fildemGMenu@gonza.com
 
         whiptail --backtitle "$BACKTITLE" --msgbox --title "Gnome Mac OS Installed" "Its best to logout or reboot now" 0 78
 }
