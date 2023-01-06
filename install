@@ -335,7 +335,7 @@ performinstall(){
         chassis=$(cat /sys/class/dmi/id/chassis_type)
         if exists_in_list "8,9,10" "," ${chassis}
         then
-                echo "tlp" >> /tmp/packages 
+                echo $'\ntlp' >> /tmp/packages 
         fi
 
         echo "### Installing packages... ____________________"
