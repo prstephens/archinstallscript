@@ -216,6 +216,11 @@ EOT
         cd /tmp/panel-corners
         make install
 
+        # logo menu
+        git clone https://github.com/Aryan20/Logomenu.git /tmp/logo-menu
+        cd /tmp/logo-menu
+        make install
+
         # fildem fix
         sudo ln -s /usr/lib/python3.9/site-packages/fildem /usr/lib/python3.10/site-packages 
         sudo ln -s /usr/lib/python3.9/site-packages/fildem-0.6.7-py3.9.egg-info/ /usr/lib/python3.10/site-packages
@@ -225,16 +230,19 @@ EOT
         curl -sL $BASE_URL/configs/dash-to-dock-settings -o /tmp/dash-to-dock-settings
         curl -sL $BASE_URL/configs/blur-my-shell-settings -o /tmp/blur-my-shell-settings
         curl -sL $BASE_URL/configs/panel-corners-settings -o /tmp/panel-corners-settings
+        curl -sL $BASE_URL/configs/logo-menu-settings -o /tmp/logo-menu-settings
 
         dconf load /org/gnome/shell/extensions/dash-to-dock/ < /tmp/dash-to-dock-settings
         dconf load /org/gnome/shell/extensions/blur-my-shell/ < /tmp/blur-my-shell-settings
         dconf load /org/gnome/shell/extensions/panel-corners/ < /tmp/panel-corners-settings
+        dconf load /org/gnome/shell/extensions/Logo-menu/ < /tmp/logo-menu-settings
 
         gnome-extensions enable ubuntu-dock@ubuntu.com
         gnome-extensions enable blur-my-shell@aunetx
         gnome-extensions enable fildemGMenu@gonza.com
         gnome-extensions enable rounded-window-corners@yilozt
         gnome-extensions enable panel-corners@aunetx
+        gnome-extensions enable logomenu@aryan_k
 
         whiptail --backtitle "$BACKTITLE" --msgbox --title "Gnome Mac OS Installed" "Its best to logout or reboot now" 0 78
 }
