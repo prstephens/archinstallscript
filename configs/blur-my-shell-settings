@@ -1,0 +1,15 @@
+[/]
+hacks-level=3
+
+[dash-to-dock]
+blur=true
+brightness=1.0
+customize=true
+override-background=false
+sigma=20
+style-dash-to-dock=1
+
+[panel]
+brightness=1.0
+customize=true
+sigma=200
