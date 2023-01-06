@@ -207,6 +207,15 @@ EOT
         cd /tmp/blur-my-shell
         make install
 
+        # rounded corners
+        curl -sL https://github.com/yilozt/rounded-window-corners/releases/download/v10/rounded-window-corners@yilozt.shell-extension.zip -o /tmp/rounded.zip
+        gnome-extensions install /tmp/rounded.zip
+
+        # panel corners
+        git https://github.com/aunetx/panel-corners.git /tmp/panel-corners
+        cd /tmp/panel-corners
+        make install
+
         # fildem fix
         sudo ln -s /usr/lib/python3.9/site-packages/fildem /usr/lib/python3.10/site-packages 
         sudo ln -s /usr/lib/python3.9/site-packages/fildem-0.6.7-py3.9.egg-info/ /usr/lib/python3.10/site-packages
@@ -215,13 +224,17 @@ EOT
 
         curl -sL $BASE_URL/configs/dash-to-dock-settings -o /tmp/dash-to-dock-settings
         curl -sL $BASE_URL/configs/blur-my-shell-settings -o /tmp/blur-my-shell-settings
+        curl -sL $BASE_URL/configs/panel-corners-settings -o /tmp/panel-corners-settings
 
-        dconf load /org/gnome/shell/extensions/dash-to-dock/ < ~/tmp/dash-to-dock-settings
-        dconf load /org/gnome/shell/extensions/blur-my-shell/ < ~/tmp/blur-my-shell-settings
+        dconf load /org/gnome/shell/extensions/dash-to-dock/ < /tmp/dash-to-dock-settings
+        dconf load /org/gnome/shell/extensions/blur-my-shell/ < /tmp/blur-my-shell-settings
+        dconf load /org/gnome/shell/extensions/panel-corners/ < /tmp/panel-corners-settings
 
         gnome-extensions enable ubuntu-dock@ubuntu.com
         gnome-extensions enable blur-my-shell@aunetx
         gnome-extensions enable fildemGMenu@gonza.com
+        gnome-extensions enable rounded-window-corners@yilozt
+        gnome-extensions enable panel-corners@aunetx
 
         whiptail --backtitle "$BACKTITLE" --msgbox --title "Gnome Mac OS Installed" "Its best to logout or reboot now" 0 78
 }
