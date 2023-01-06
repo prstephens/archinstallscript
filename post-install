@@ -212,7 +212,7 @@ EOT
         gnome-extensions install /tmp/rounded.zip
 
         # panel corners
-        git https://github.com/aunetx/panel-corners.git /tmp/panel-corners
+        git clone https://github.com/aunetx/panel-corners.git /tmp/panel-corners
         cd /tmp/panel-corners
         make install
 

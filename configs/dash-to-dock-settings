@@ -9,3 +9,4 @@ height-fraction=0.90000000000000002
 running-indicator-style='DOTS'
 show-apps-at-top=true
 dock-fixed=true
+disable-overview-on-startup=true
