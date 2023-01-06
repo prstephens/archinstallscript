@@ -202,13 +202,25 @@ EOT
 gtk-modules="appmenu-gtk-module"
 EOT
 
+        # blur my shell
+        git clone https://github.com/aunetx/blur-my-shell /tmp/blur-my-shell
+        cd /tmp/blur-my-shell
+        make install
+
         # fildem fix
         sudo ln -s /usr/lib/python3.9/site-packages/fildem /usr/lib/python3.10/site-packages 
         sudo ln -s /usr/lib/python3.9/site-packages/fildem-0.6.7-py3.9.egg-info/ /usr/lib/python3.10/site-packages
 
         curl -sL $BASE_URL/configs/fildem.desktop -o $HOME/.config/autostart/fildem.desktop
 
+        curl -sL $BASE_URL/configs/dash-to-dock-settings -o /tmp/dash-to-dock-settings
+        curl -sL $BASE_URL/configs/blur-my-shell-settings -o /tmp/blur-my-shell-settings
+
+        dconf load /org/gnome/shell/extensions/dash-to-dock/ < ~/tmp/dash-to-dock-settings
+        dconf load /org/gnome/shell/extensions/blur-my-shell/ < ~/tmp/blur-my-shell-settings
+
         gnome-extensions enable ubuntu-dock@ubuntu.com
+        gnome-extensions enable blur-my-shell@aunetx
         gnome-extensions enable fildemGMenu@gonza.com
 
         whiptail --backtitle "$BACKTITLE" --msgbox --title "Gnome Mac OS Installed" "Its best to logout or reboot now" 0 78
@@ -257,7 +269,6 @@ install_whitesur(){
         #
         # Alpabetical App Grid
         # Favourites in AppGrid
-        # Blur my Shell
         # clipboard indicator
         # Compiz alike magic lamp effect
         # Desktop Icons NG (DING)
