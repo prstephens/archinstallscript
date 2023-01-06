@@ -13,7 +13,8 @@ set -o pipefail
 #set -x #toggle for debug. Will print all commands.
 
 # Globals
-BACKTITLE="Arch Installer v3"
+VERSION="2"
+BACKTITLE="Arch Installer v"$VERSION
 BASE_URL="https://raw.githubusercontent.com/prstephens/archinstallscript/master/"
 USE_CRYPT=0
 USE_RAID=0
@@ -760,6 +761,17 @@ initialise(){
         sed -i '/Color/a ILoveCandy' /etc/pacman.conf
 }
 
+self_update(){
+        curl -sL $BASE_URL/version -o /tmp/version
+        value=$(</tmp/version)
+        if (("$VERSION" < "$value")); then
+                curl -sL $BASE_URL/install -o install
+                chmod +x install
+                exec install
+                exit 1
+        fi
+}
+
 # --------------------------------------------------------
 
 while [[ $# -gt 0 ]]; do
@@ -778,6 +790,8 @@ while [[ $# -gt 0 ]]; do
                         echo "ERROR: Unrecognized installation option '${1}'."; shift 2 ;;
         esac
 done
+
+self_update
 
 [[ ! -f /tmp/packages ]] && initialise
 
