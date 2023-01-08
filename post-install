@@ -248,6 +248,7 @@ EOT
         gnome-extensions enable rounded-window-corners@yilozt
         gnome-extensions enable panel-corners@aunetx
         gnome-extensions enable logomenu@aryan_k
+        gnome-extensions enable Sur_Clock@medaip90.com
 
         whiptail --backtitle "$BACKTITLE" --msgbox --title "Gnome Mac OS Installed" "Its best to logout or reboot now" 0 78
 }
