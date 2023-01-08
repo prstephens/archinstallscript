@@ -221,6 +221,9 @@ EOT
         cd /tmp/logo-menu
         make install
 
+        # sur clock
+        git clone https://github.com/MedaiP90/gnome-sur-clock.git ~/.local/share/gnome-shell/extensions/Sur_Clock\@medaip90.com
+
         # fildem fix
         sudo ln -s /usr/lib/python3.9/site-packages/fildem /usr/lib/python3.10/site-packages 
         sudo ln -s /usr/lib/python3.9/site-packages/fildem-0.6.7-py3.9.egg-info/ /usr/lib/python3.10/site-packages
@@ -231,11 +234,13 @@ EOT
         curl -sL $BASE_URL/configs/blur-my-shell-settings -o /tmp/blur-my-shell-settings
         curl -sL $BASE_URL/configs/panel-corners-settings -o /tmp/panel-corners-settings
         curl -sL $BASE_URL/configs/logo-menu-settings -o /tmp/logo-menu-settings
+        curl -sL $BASE_URL/configs/sur-clock-settings -o /tmp/sur-clock-settings
 
         dconf load /org/gnome/shell/extensions/dash-to-dock/ < /tmp/dash-to-dock-settings
         dconf load /org/gnome/shell/extensions/blur-my-shell/ < /tmp/blur-my-shell-settings
         dconf load /org/gnome/shell/extensions/panel-corners/ < /tmp/panel-corners-settings
         dconf load /org/gnome/shell/extensions/Logo-menu/ < /tmp/logo-menu-settings
+        dconf load /org/gnome/shell/extensions/sur-clock/ < /tmp/sur-clock-settings
 
         gnome-extensions enable ubuntu-dock@ubuntu.com
         gnome-extensions enable blur-my-shell@aunetx
@@ -248,6 +253,8 @@ EOT
 }
 
 install_whitesur(){
+        gsettings set org.gnome.desktop.interface clock-show-weekday true
+
         [[ ! -d $HOME/.local/share/backgrounds ]] && mkdir $HOME/.local/share/backgrounds
 
         curl -sL $BASE_URL/wallpaper/macos/ventura-light.jpg -o $HOME/.local/share/backgrounds/ventura-light.jpg
