@@ -1,0 +1,8 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=WhatsApp
+Comment=WhatsApp
+Icon=internet-chat
+Exec=google-chrome-stable web.whatsapp.com
+Terminal=false

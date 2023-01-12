@@ -18,6 +18,7 @@ BACKTITLE="Arch Installer v"$VERSION
 BASE_URL="https://raw.githubusercontent.com/prstephens/archinstallscript/master/"
 USE_CRYPT=0
 USE_RAID=0
+TLP=0
 TEST=0
 MIRROR_COUNTRY=US
 
@@ -336,6 +337,7 @@ performinstall(){
         chassis=$(cat /sys/class/dmi/id/chassis_type)
         if exists_in_list "8,9,10" "," ${chassis}
         then
+                TLP=1
                 echo $'\ntlp' >> /tmp/packages 
         fi
 
@@ -656,6 +658,11 @@ EOT
         arch-chroot /mnt systemctl enable reflector.timer
         arch-chroot /mnt systemctl enable fstrim.timer
         arch-chroot /mnt systemctl enable sshd
+
+        if [[ "$TLP" -eq 1 ]]
+        then
+                arch-chroot /mnt systemctl enable tlp
+        fi
 
         if [[ "$USE_CRYPT" -eq 1 ]]
         then
