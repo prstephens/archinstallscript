@@ -231,8 +231,21 @@ EOT
         # fildem fix
         sudo ln -s /usr/lib/python3.9/site-packages/fildem /usr/lib/python3.10/site-packages 
         sudo ln -s /usr/lib/python3.9/site-packages/fildem-0.6.7-py3.9.egg-info/ /usr/lib/python3.10/site-packages
-
         curl -sL $BASE_URL/configs/home/fildem.desktop -o $HOME/.config/autostart/fildem.desktop
+
+        # plymouth macos loading theme
+        # only apply if we are not using LVM and encrypt
+        if [[ "$USE_CRYPT" -ne 1 ]]
+        then
+                yay -S gdm-plymouth
+                sudo sed -i 's/^HOOKS=.*$/HOOKS=(base udev plymouth autodetect keyboard keymap consolefont modconf block filesystems resume fsck grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
+                sudo sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT=.*$/GRUB_CMDLINE_LINUX_DEFAULT="quiet splash vt.global_cursor_default=0 loglevel=3 rd.systemd.show_status=false nowatchdog mitigations=off"/' /etc/default/grub
+                git clone https://github.com/nilotpalbiswas/MacOS-Boot-Plymouth.git /tmp/macos-plymouth
+                sudo cp -r /tmp/macos-plymouth/apple-mac-plymouth/ /usr/share/plymouth/themes/
+                sudo plymouth-set-default-theme -R apple-mac-plymouth                
+                sudo grub-mkconfig -o /boot/grub/grub.cfg
+        fi
+
 
         curl -sL $BASE_URL/configs/extensions/dash-to-dock-settings -o /tmp/dash-to-dock-settings
         curl -sL $BASE_URL/configs/extensions/blur-my-shell-settings -o /tmp/blur-my-shell-settings
@@ -312,13 +325,8 @@ install_whitesur(){
         # Gnome 4x UI Improvements
         # Hibernate status button
         # Just perfection
-        # Logo menu
-        # Panel corners
-        # Rounded window corners
         # Search Light
-        # Sur clock
         # Tray icons reloaded
-        # Unite
 }
 
 apply_whitesur(){
@@ -654,6 +662,14 @@ EOT
         fi      
 }
 
+checkconnection(){
+        if [[ $(ping -q -w1 -c1 google.com &>/dev/null && echo online || echo offline) == "offline" ]]; 
+        then
+                whiptail --backtitle "$BACKTITLE" --msgbox --title "No Network Connection" "You need to be connected to the Internet.\n\nInstallation stopped." --fb 0 78
+                exit
+        fi
+}
+
 self_update(){
         curl -sL $BASE_URL/version -o /tmp/version
         value=$(</tmp/version)
@@ -667,6 +683,7 @@ self_update(){
 
 # --------------------------------------------------------
 
+checkconnection
 self_update
 
 [[ ! -d $HOME/yay ]] && initialise

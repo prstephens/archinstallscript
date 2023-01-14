@@ -1,4 +1,3 @@
 [/]
-desktop-name-text=''
-show-window-title='never'
+hide-activities-button='always'
 window-buttons-theme='whitesur'
