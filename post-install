@@ -137,6 +137,7 @@ install_gnome(){
         gsettings set org.gnome.shell.extensions.arch-update update-cmd 'cool-retro-term -e sh -c "wmctrl -r :ACTIVE: -b toggle,fullscreen;yay -Syu ; echo Done - Press enter to exit; read"'
         gsettings set org.gnome.shell.extensions.arch-update package-manager 'pamac-manager'
         gsettings set org.gnome.shell.extensions.arch-update use-buildin-icons true
+        gsettings set org.gnome.shell.extensions.arch-update strip-versions true
 
         gsettings set org.gnome.shell disable-extension-version-validation "true"
 
