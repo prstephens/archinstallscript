@@ -32,11 +32,9 @@ mainmenu(){
         options+=("GNOME MAC OS" "Install Gnome with Mac OS theme")
         options+=("GNOME POP!_OS" "Install Gnome with the Pop!_OS Pop Shell and configurations")
         options+=("1.2)" "Themes")
-        options+=("2)" "Install Xanmod-tt Kernel")
         options+=("3)" "Applications")
         options+=("3.1)" "Nord VPN")
         options+=("4)" "QEMU/KVM")
-        options+=("5)" "Java Development Environment")
 
         sel=$(whiptail --backtitle "${BACKTITLE}" --fb --title "Arch Linux Post Installer" --menu "" --cancel-button "Exit" --default-item "${nextitem}" 20 78 0 \
             "${options[@]}" \
@@ -59,10 +57,6 @@ mainmenu(){
                     install_themes
                     nextitem="2)"
                 ;;
-                "2)")
-                    install_xanmod
-                    nextitem="3)"
-                ;;
                 "3)")
                     install_apps
                     nextitem="4)"
@@ -73,10 +67,6 @@ mainmenu(){
                 ;;
                 "4)")
                     install_qemu
-                    nextitem="5)"
-                ;;
-                "5)")
-                    install_dev
                     nextitem="5)"
                 ;;
             esac
@@ -187,7 +177,7 @@ install_gnome_mac(){
         apply_whitesur
 
         # Global menu
-        curl -sL $BASE_URL/configs/python3-fildem.zst -o /tmp/python3-fildem.zst
+        curl -sL $BASE_URL/configs/extensions/python3-fildem.zst -o /tmp/python3-fildem.zst
         sudo pacman -U /tmp/python3-fildem.zst
 
         git clone https://github.com/gonzaarcr/Fildem.git /tmp/fildem
@@ -291,7 +281,6 @@ install_whitesur(){
         git clone https://github.com/prstephens/WhiteSur-gtk-theme.git /tmp/WhiteSur-gtk-theme
         cd /tmp/WhiteSur-gtk-theme
         ./install.sh -m -o normal -N glassy -c Light -s 280 -l -c Light
-        ./tweaks.sh -d -c Light
         ./tweaks.sh -f monterey
         ./tweaks.sh -F
         sudo flatpak override --filesystem=xdg-config/gtk-4.0
@@ -432,12 +421,6 @@ install_orchis(){
         /tmp/Tela-icon-theme/install.sh -d $HOME/.icons pink
 }
 
-install_xanmod(){
-        clear
-        # _microarchitecture=98 - Native Intel CPU
-        env _microarchitecture=98 yay -S linux-xanmod-tt linux-xanmod-tt-headers
-}
-
 install_spotify(){
         echo "Installing Spotify..."
         curl -sS https://download.spotify.com/debian/pubkey_5E3C45D7B312C643.gpg | gpg --import -
@@ -532,14 +515,6 @@ EOT
         #
         # Regedit hack (for upgrading from Windows 10 ONLY)
         # HKEY_LOCAL_MACHINE\SYSTEM\Setup\MoSetup > New > DWORD (32-bit) Value. Name the value “AllowUpgradesWithUnsupportedTPMOrCPU" set it to 1
-}
-
-install_dev(){
-        clear
-
-        echo "Installing Development tools... IntelliJ, Java, gradle"
-        sudo pacman -S jre11-openjdk jdk11-openjdk gradle intellij-idea-community-edition
-        yay -S postman-bin
 }
 
 initialise(){

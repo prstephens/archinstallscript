@@ -612,7 +612,7 @@ EOT
                 sed -i 's/^FILES=.*$/FILES=(\/crypto_keyfile.bin \/boot\/header.img)/' /mnt/etc/mkinitcpio.conf
 
                 # get the modified encrypt hook
-                arch-chroot /mnt curl -sL $BASE_URL/configs/encrypt-dh -o /etc/initcpio/hooks/encrypt-dh
+                arch-chroot /mnt curl -sL $BASE_URL/configs/system/encrypt-dh -o /etc/initcpio/hooks/encrypt-dh
                 arch-chroot /mnt cp /usr/lib/initcpio/install/encrypt /etc/initcpio/install/encrypt-dh
         fi
 
@@ -699,11 +699,11 @@ setupuser(){
         arch-chroot /mnt touch /home/$user/newbie
 
         # awesome tty login
-        arch-chroot /mnt curl -sL $BASE_URL/configs/issue -o /etc/issue
+        arch-chroot /mnt curl -sL $BASE_URL/configs/system/issue -o /etc/issue
 
         # set custom pacman.conf 
         arch-chroot /mnt mv /etc/pacman.conf /etc/pacman.conf.bak
-        arch-chroot /mnt curl -sL $BASE_URL/configs/pacman.conf -o /etc/pacman.conf
+        arch-chroot /mnt curl -sL $BASE_URL/configs/system/pacman.conf -o /etc/pacman.conf
         
         # Copy post-install file to /home/$user
         echo "Copy post-install file to /home/${user}..."
