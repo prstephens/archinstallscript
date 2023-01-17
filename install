@@ -19,7 +19,6 @@ BASE_URL="https://raw.githubusercontent.com/prstephens/archinstallscript/master/
 USE_CRYPT=0
 USE_RAID=0
 TLP=0
-TEST=0
 MIRROR_COUNTRY=US
 
 # --------------------------------------------------------
@@ -343,13 +342,8 @@ performinstall(){
 
         echo "### Installing packages... ____________________"
 
-        if [[ "$TEST" -eq 1 ]]
-        then
-                pacstrap /mnt $(< /tmp/packages-test)
-        else
-                pacstrap /mnt $(< /tmp/packages)
-        fi
-
+        pacstrap /mnt $(< /tmp/packages)
+        
         genfstab -U /mnt >> /mnt/etc/fstab
 }
 
@@ -754,7 +748,6 @@ dependencies(){
 
 getpackagelist(){
         curl -sL $BASE_URL/packages -o /tmp/packages
-        curl -sL $BASE_URL/packages-test -o /tmp/packages-test
 }
 
 initialise(){
@@ -783,8 +776,6 @@ self_update(){
 
 while [[ $# -gt 0 ]]; do
         case "${1}" in
-                -t)
-                        TEST=1; shift ;;
                 -c)
                         rm /tmp/packages
                         [[ -d /mnt/boot/efi ]] && umount -A /mnt/boot/efi
