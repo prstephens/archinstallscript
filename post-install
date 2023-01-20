@@ -106,7 +106,7 @@ install_gnome(){
         clear
         
         echo "Installing Gnome.."
-        sudo pacman -S gnome gnome-tweaks xscreensaver firefox sassc seahorse gparted grub-customizer wmctrl flatpak code rxvt-unicode cool-retro-term
+        sudo pacman -S gnome gnome-tweaks xscreensaver firefox sassc seahorse gparted grub-customizer wmctrl flatpak code rxvt-unicode cool-retro-term pavucontrol
         yay -S pamac-aur snapper-gui-git rar cava extension-manager
         
         install_fonts
