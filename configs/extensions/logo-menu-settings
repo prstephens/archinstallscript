@@ -2,6 +2,6 @@
 hide-forcequit=false
 hide-softwarecentre=false
 menu-button-extensions-app='com.mattjakeman.ExtensionManager.desktop'
-menu-button-icon-size=24
+menu-button-icon-size=25
 show-lockscreen=true
 show-power-options=true

@@ -78,7 +78,7 @@ mainmenu(){
 
 install_fonts(){
         echo "Installing fonts..."
-        yay -S apple-fonts nerd-fonts-cascadia-code
+        yay -S apple-fonts otf-cascadia-code-nerd
 
         [[ ! -d $HOME/.local/share/fonts ]] && mkdir $HOME/.local/share/fonts
         curl -sL $BASE_URL/fonts/HelveticaNeueLt.ttf -o $HOME/.local/share/fonts/HelveticaNeueLt.ttf
@@ -164,13 +164,12 @@ install_gnome_mac(){
         # Remove 'Utilities' folder in app grid so all apps are in view
         gsettings set org.gnome.desktop.app-folders folder-children "['YaST']"
 
-        # add dash to dock extension - use ubuntu-dock branch. better compatiibility with blur my shell
+        # add dash to dock extension - use ubuntu-dock branch. better compatibility with blur my shell
         # yay -S gnome-shell-extension-dash-to-dock
         git clone https://github.com/prstephens/dash-to-dock-ventura.git /tmp/ubuntu-dock
         cd /tmp/ubuntu-dock
         make
         make install
-        cd
 
         # install the Mac theme set
         install_whitesur
@@ -422,6 +421,7 @@ install_orchis(){
 }
 
 install_spotify(){
+        # now there is spotify-launcher in main repos
         echo "Installing Spotify..."
         curl -sS https://download.spotify.com/debian/pubkey_5E3C45D7B312C643.gpg | gpg --import -
         yay -S spotify
@@ -447,10 +447,8 @@ install_anything-sync-daemon(){
 install_apps(){
         clear
 
-        echo "Installing Chrome, VS Code, OnlyOffice, Gimp..."
-        yay -S google-chrome onlyoffice-bin gimp vlc kodi dropbox handbrake rpi-imager-bin geary ventoy-bin etcher-bin
-
-        install_spotify
+        echo "Installing Chrome, OnlyOffice, Gimp..."
+        yay -S spotify-launcher google-chrome onlyoffice-bin gimp vlc kodi dropbox handbrake rpi-imager-bin geary ventoy-bin etcher-bin
 }
 
 install_nordvpn(){
@@ -543,7 +541,7 @@ initialise(){
         git clone https://aur.archlinux.org/yay.git $HOME/yay
         cd $HOME/yay
         makepkg -si
-        cd ..
+        cd
 
         # remove annoying yay questions
         yay --save --answerdiff None --answerclean None --removemake 
@@ -597,11 +595,6 @@ initialise(){
 
         # put root dev into snapper-rollback.conf
         echo "dev=${rootdev}" | sudo tee -a /etc/snapper-rollback.conf
-
-        # git credentials
-        git config --global credential.helper store
-        git config --global user.email "pr.stephens@gmail.com"
-        git config --global user.name "prstephens"
 
         # create a snapshot
         for i in `seq 1 50`; do sudo snapper delete $i; done;
