@@ -291,23 +291,28 @@ install_whitesur(){
                 Light)
                         ./install.sh -m -o normal -N glassy -c Light -s 280 -l -c Light
                         sudo ./tweaks.sh -g -c Light -b $HOME/.local/share/backgrounds/ventura-light.jpg
+                        gsettings set org.gnome.desktop.background picture-uri file:////$HOME/.local/share/backgrounds/ventura-light.jpg
                 ;;
 
                 Dark)
                         ./install.sh -m -o normal -N glassy -c Dark -s 280 -l -c Dark
                         sudo ./tweaks.sh -g -c Dark -b $HOME/.local/share/backgrounds/ventura-dark.jpg
+                        gsettings set org.gnome.desktop.background picture-uri file:////$HOME/.local/share/backgrounds/ventura-dark.jpg
 
                 ;;
 
                 Both)
                         ./install.sh -m -o normal -N glassy -c Light -c Dark -s 280 -l -c Light -c Dark
                         sudo ./tweaks.sh -g -c Dark -b $HOME/.local/share/backgrounds/ventura-dark.jpg
+                        gsettings set org.gnome.desktop.background picture-uri file:////$HOME/.local/share/backgrounds/ventura-light.jpg
                 ;;
 
                 *)
                 # default Light
                         ./install.sh -m -o normal -N glassy -c Light -s 280 -l -c Light
                         sudo ./tweaks.sh -g -c Light -b $HOME/.local/share/backgrounds/ventura-light.jpg
+                        gsettings set org.gnome.desktop.background picture-uri file:////$HOME/.local/share/backgrounds/ventura-light.jpg
+
                 ;;
         esac
 
@@ -361,8 +366,6 @@ apply_whitesur(){
         gsettings set org.gnome.desktop.wm.preferences titlebar-font "SF Pro Rounded Regular 11"
 
         gsettings set org.gnome.desktop.wm.preferences button-layout "close,minimize,maximize:"
-
-        gsettings set org.gnome.desktop.background picture-uri file:////$HOME/.local/share/backgrounds/ventura-light.jpg
 }
 
 install_popshell(){
