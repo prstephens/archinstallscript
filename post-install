@@ -277,13 +277,44 @@ install_whitesur(){
         curl -sL $BASE_URL/wallpaper/macos/bigsur-light.jpg -o $HOME/.local/share/backgrounds/bigsur-light.jpg
         curl -sL $BASE_URL/wallpaper/macos/bigsur-dark.jpg -o $HOME/.local/share/backgrounds/bigsur-dark.jpg
 
+        theme=$(whiptail --backtitle "$BACKTITLE" --title "Select theme variation" --radiolist "Choose" 20 30 5 \
+        "Light" "" light \
+        "Dark" "" dark \
+        "Both" "" both \
+        3>&1 1>&2 2>&3)
+
         git clone https://github.com/prstephens/WhiteSur-gtk-theme.git /tmp/WhiteSur-gtk-theme
         cd /tmp/WhiteSur-gtk-theme
-        ./install.sh -m -o normal -N glassy -c Light -s 280 -l -c Light
+
+        case $theme in
+
+                Light)
+                        ./install.sh -m -o normal -N glassy -c Light -s 280 -l -c Light
+                        sudo ./tweaks.sh -g -c Light -b $HOME/.local/share/backgrounds/ventura-light.jpg
+                ;;
+
+                Dark)
+                        ./install.sh -m -o normal -N glassy -c Dark -s 280 -l -c Dark
+                        sudo ./tweaks.sh -g -c Dark -b $HOME/.local/share/backgrounds/ventura-dark.jpg
+
+                ;;
+
+                Both)
+                        ./install.sh -m -o normal -N glassy -c Light -c Dark -s 280 -l -c Light -c Dark
+                        sudo ./tweaks.sh -g -c Dark -b $HOME/.local/share/backgrounds/ventura-dark.jpg
+                ;;
+
+                *)
+                # default Light
+                        ./install.sh -m -o normal -N glassy -c Light -s 280 -l -c Light
+                        sudo ./tweaks.sh -g -c Light -b $HOME/.local/share/backgrounds/ventura-light.jpg
+                ;;
+        esac
+
         ./tweaks.sh -f monterey
         ./tweaks.sh -F
         sudo flatpak override --filesystem=xdg-config/gtk-4.0
-        sudo ./tweaks.sh -g -c Light -b $HOME/.local/share/backgrounds/ventura-light.jpg
+        
         cd ..
 
         git clone https://github.com/prstephens/WhiteSur-icon-theme.git /tmp/WhiteSur-icon-theme
