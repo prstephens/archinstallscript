@@ -249,7 +249,7 @@ EOT
         dconf load /org/gnome/shell/extensions/panel-corners/ < /tmp/panel-corners-settings
         dconf load /org/gnome/shell/extensions/Logo-menu/ < /tmp/logo-menu-settings
         dconf load /org/gnome/shell/extensions/sur-clock/ < /tmp/sur-clock-settings
-        dconf load /org/gnome/shell/extensions/sur-clock/ < /tmp/unite-settings
+        dconf load /org/gnome/shell/extensions/unite/ < /tmp/unite-settings
 
         gnome-extensions enable ubuntu-dock@ubuntu.com
         gnome-extensions enable blur-my-shell@aunetx
