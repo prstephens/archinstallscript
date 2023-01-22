@@ -292,12 +292,16 @@ install_whitesur(){
                         ./install.sh -m -o normal -N glassy -c Light -s 280 -l -c Light
                         sudo ./tweaks.sh -g -c Light -b $HOME/.local/share/backgrounds/ventura-light.jpg
                         gsettings set org.gnome.desktop.background picture-uri file:////$HOME/.local/share/backgrounds/ventura-light.jpg
+                        curl -sL $BASE_URL/configs/home/.Xresources-light -o /home/$user/.Xresources
+
                 ;;
 
                 Dark)
                         ./install.sh -m -o normal -N glassy -c Dark -s 280 -l -c Dark
                         sudo ./tweaks.sh -g -c Dark -b $HOME/.local/share/backgrounds/ventura-dark.jpg
                         gsettings set org.gnome.desktop.background picture-uri file:////$HOME/.local/share/backgrounds/ventura-dark.jpg
+                        curl -sL $BASE_URL/configs/home/.Xresources-dark -o /home/$user/.Xresources
+
 
                 ;;
 
@@ -312,6 +316,7 @@ install_whitesur(){
                         ./install.sh -m -o normal -N glassy -c Light -s 280 -l -c Light
                         sudo ./tweaks.sh -g -c Light -b $HOME/.local/share/backgrounds/ventura-light.jpg
                         gsettings set org.gnome.desktop.background picture-uri file:////$HOME/.local/share/backgrounds/ventura-light.jpg
+                        curl -sL $BASE_URL/configs/home/.Xresources-light -o /home/$user/.Xresources
 
                 ;;
         esac

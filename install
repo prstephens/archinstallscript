@@ -686,7 +686,7 @@ setupuser(){
 
         # config files
         echo "Getting some config files..."
-        arch-chroot /mnt curl -sL $BASE_URL/configs/home/.Xresources -o /home/$user/.Xresources
+        arch-chroot /mnt curl -sL $BASE_URL/configs/home/.Xresources-dark -o /home/$user/.Xresources
         arch-chroot /mnt curl -sL $BASE_URL/configs/home/.bashrc -o /home/$user/.bashrc
 
         # add a dummy file to let bashrc know to run post-install on first login
