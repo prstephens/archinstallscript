@@ -242,7 +242,7 @@ EOT
         curl -sL $BASE_URL/configs/extensions/panel-corners-settings -o /tmp/panel-corners-settings
         curl -sL $BASE_URL/configs/extensions/logo-menu-settings -o /tmp/logo-menu-settings
         curl -sL $BASE_URL/configs/extensions/sur-clock-settings -o /tmp/sur-clock-settings
-        curl -sL $BASE_URL/configs/extensions/sur-clock-settings -o /tmp/unite-settings
+        curl -sL $BASE_URL/configs/extensions/unite-settings -o /tmp/unite-settings
 
         dconf load /org/gnome/shell/extensions/dash-to-dock/ < /tmp/dash-to-dock-settings
         dconf load /org/gnome/shell/extensions/blur-my-shell/ < /tmp/blur-my-shell-settings
