@@ -593,8 +593,11 @@ EOT
         # PulseAudio
         arch-chroot /mnt sed -i '/load-module module-suspend-on-idle/ s/^#*/#/' /etc/pulse/default.pa
 
-        # add btrfs to modules
-        sed -i 's/^MODULES=.*$/MODULES=(i915 btrfs)/' /mnt/etc/mkinitcpio.conf
+        # speed up boot time with lz4
+        sed -i 's/^MODULES=.*$/MODULES=(i915 btrfs lz4 lz4_compress)/' /mnt/etc/mkinitcpio.conf
+        sed -i 's/^#COMPRESSION="lz4".*$/COMPRESSION="LZ4"/' /mnt/etc/mkinitcpio.conf
+        sed -i 's/^#COMPRESSION_OPTIONS=.*$/COMPRESSION_OPTIONS="-9"/' /mnt/etc/mkinitcpio.conf
+        sed -i 's/^#MODULES_DECOMPRESS=.*$/MODULES_DECOMPRESS="yes"/' /mnt/etc/mkinitcpio.conf
 
         if [[ "$USE_CRYPT" -eq 1 ]]
         then
@@ -602,7 +605,7 @@ EOT
                 dd bs=512 count=4 if=/dev/random of=/mnt/crypto_keyfile.bin iflag=fullblock
                 chmod 600 /mnt/crypto_keyfile.bin
                 cryptsetup luksAddKey $realrootdev --header /mnt/boot/header.img /mnt/crypto_keyfile.bin
-                sed -i 's/^MODULES=.*$/MODULES=(i915 btrfs loop)/' /mnt/etc/mkinitcpio.conf
+                sed -i 's/^MODULES=.*$/MODULES=(i915 btrfs lz4 lz4_compress loop)/' /mnt/etc/mkinitcpio.conf
                 sed -i 's/^FILES=.*$/FILES=(\/crypto_keyfile.bin \/boot\/header.img)/' /mnt/etc/mkinitcpio.conf
 
                 # get the modified encrypt hook
