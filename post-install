@@ -283,7 +283,6 @@ install_whitesur(){
         theme=$(whiptail --backtitle "$BACKTITLE" --title "Select theme variation" --radiolist "Choose" 20 30 5 \
         "Light" "" light \
         "Dark" "" dark \
-        "Both" "" both \
         3>&1 1>&2 2>&3)
 
         git clone https://github.com/prstephens/WhiteSur-gtk-theme.git /tmp/WhiteSur-gtk-theme
@@ -293,25 +292,17 @@ install_whitesur(){
         sudo ./tweaks.sh -g -c Light -b $HOME/.local/share/backgrounds/ventura-$theme.jpg
         gsettings set org.gnome.desktop.background picture-uri file:////$HOME/.local/share/backgrounds/ventura-$theme.jpg
         curl -sL $BASE_URL/configs/home/.Xresources-$theme -o $HOME/.Xresources
+        ./tweaks.sh -d -c $theme
+        ./tweaks.sh -f monterey
+        ./tweaks.sh -F
+        sudo flatpak override --filesystem=xdg-config/gtk-4.0
 
-        case $theme in
-                Both)
-                        ./install.sh -m -o normal -N glassy -c Light -c Dark -s 280 -l -c Light -c Dark
-                        sudo ./tweaks.sh -g -c Dark -b $HOME/.local/share/backgrounds/ventura-dark.jpg
-                        gsettings set org.gnome.desktop.background picture-uri file:////$HOME/.local/share/backgrounds/ventura-Light.jpg
-                ;;
-        esac
-
-        if [[ "$theme" -eq "Dark" ]]
+        f [[ "$theme" -eq "Dark" ]]
         then
                 gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
         else
                 gsettings set org.gnome.desktop.interface color-scheme 'default'
         fi
-
-        ./tweaks.sh -f monterey
-        ./tweaks.sh -F
-        sudo flatpak override --filesystem=xdg-config/gtk-4.0
 
         git clone https://github.com/prstephens/WhiteSur-icon-theme.git /tmp/WhiteSur-icon-theme
         /tmp/WhiteSur-icon-theme/install.sh --black
