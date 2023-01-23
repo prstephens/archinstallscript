@@ -268,14 +268,14 @@ install_whitesur(){
 
         [[ ! -d $HOME/.local/share/backgrounds ]] && mkdir $HOME/.local/share/backgrounds
 
-        curl -sL $BASE_URL/wallpaper/macos/ventura-light.jpg -o $HOME/.local/share/backgrounds/ventura-light.jpg
-        curl -sL $BASE_URL/wallpaper/macos/ventura-dark.jpg -o $HOME/.local/share/backgrounds/ventura-dark.jpg
+        curl -sL $BASE_URL/wallpaper/macos/ventura-light.jpg -o $HOME/.local/share/backgrounds/ventura-Light.jpg
+        curl -sL $BASE_URL/wallpaper/macos/ventura-dark.jpg -o $HOME/.local/share/backgrounds/ventura-Dark.jpg
 
-        curl -sL $BASE_URL/wallpaper/macos/monterey-light.jpg -o $HOME/.local/share/backgrounds/monterey-light.jpg
-        curl -sL $BASE_URL/wallpaper/macos/monterey-dark.jpg -o $HOME/.local/share/backgrounds/monterey-dark.jpg
+        curl -sL $BASE_URL/wallpaper/macos/monterey-light.jpg -o $HOME/.local/share/backgrounds/monterey-Light.jpg
+        curl -sL $BASE_URL/wallpaper/macos/monterey-dark.jpg -o $HOME/.local/share/backgrounds/monterey-Dark.jpg
 
-        curl -sL $BASE_URL/wallpaper/macos/bigsur-light.jpg -o $HOME/.local/share/backgrounds/bigsur-light.jpg
-        curl -sL $BASE_URL/wallpaper/macos/bigsur-dark.jpg -o $HOME/.local/share/backgrounds/bigsur-dark.jpg
+        curl -sL $BASE_URL/wallpaper/macos/bigsur-light.jpg -o $HOME/.local/share/backgrounds/bigsur-Light.jpg
+        curl -sL $BASE_URL/wallpaper/macos/bigsur-dark.jpg -o $HOME/.local/share/backgrounds/bigsur-Dark.jpg
 
         theme=$(whiptail --backtitle "$BACKTITLE" --title "Select theme variation" --radiolist "Choose" 20 30 5 \
         "Light" "" light \
@@ -283,46 +283,28 @@ install_whitesur(){
         "Both" "" both \
         3>&1 1>&2 2>&3)
 
+        # default to light if nothing is chosen (fallback)
+        [ -z "$theme" ] && $theme="Light"
+
         git clone https://github.com/prstephens/WhiteSur-gtk-theme.git /tmp/WhiteSur-gtk-theme
         cd /tmp/WhiteSur-gtk-theme
 
+        ./install.sh -m -o normal -N glassy -c $theme -s 280 -l -c $theme
+        sudo ./tweaks.sh -g -c Light -b $HOME/.local/share/backgrounds/ventura-$theme.jpg
+        gsettings set org.gnome.desktop.background picture-uri file:////$HOME/.local/share/backgrounds/ventura-$theme.jpg
+        curl -sL $BASE_URL/configs/home/.Xresources-$theme -o $HOME/.Xresources
+
         case $theme in
-
-                Light)
-                        ./install.sh -m -o normal -N glassy -c Light -s 280 -l -c Light
-                        sudo ./tweaks.sh -g -c Light -b $HOME/.local/share/backgrounds/ventura-light.jpg
-                        gsettings set org.gnome.desktop.background picture-uri file:////$HOME/.local/share/backgrounds/ventura-light.jpg
-                        curl -sL $BASE_URL/configs/home/.Xresources-light -o $HOME/.Xresources
-                ;;
-
-                Dark)
-                        ./install.sh -m -o normal -N glassy -c Dark -s 280 -l -c Dark
-                        sudo ./tweaks.sh -g -c Dark -b $HOME/.local/share/backgrounds/ventura-dark.jpg
-                        gsettings set org.gnome.desktop.background picture-uri file:////$HOME/.local/share/backgrounds/ventura-dark.jpg
-                        curl -sL $BASE_URL/configs/home/.Xresources-dark -o $HOME/.Xresources
-                ;;
-
                 Both)
                         ./install.sh -m -o normal -N glassy -c Light -c Dark -s 280 -l -c Light -c Dark
                         sudo ./tweaks.sh -g -c Dark -b $HOME/.local/share/backgrounds/ventura-dark.jpg
-                        gsettings set org.gnome.desktop.background picture-uri file:////$HOME/.local/share/backgrounds/ventura-light.jpg
-                ;;
-
-                *)
-                # default Light
-                        ./install.sh -m -o normal -N glassy -c Light -s 280 -l -c Light
-                        sudo ./tweaks.sh -g -c Light -b $HOME/.local/share/backgrounds/ventura-light.jpg
-                        gsettings set org.gnome.desktop.background picture-uri file:////$HOME/.local/share/backgrounds/ventura-light.jpg
-                        curl -sL $BASE_URL/configs/home/.Xresources-light -o $HOME/.Xresources
-
+                        gsettings set org.gnome.desktop.background picture-uri file:////$HOME/.local/share/backgrounds/ventura-Light.jpg
                 ;;
         esac
 
         ./tweaks.sh -f monterey
         ./tweaks.sh -F
         sudo flatpak override --filesystem=xdg-config/gtk-4.0
-        
-        cd ..
 
         git clone https://github.com/prstephens/WhiteSur-icon-theme.git /tmp/WhiteSur-icon-theme
         /tmp/WhiteSur-icon-theme/install.sh --black
@@ -330,7 +312,6 @@ install_whitesur(){
         git clone https://github.com/prstephens/WhiteSur-cursors.git /tmp/WhiteSur-cursors
         cd /tmp/WhiteSur-cursors
         ./install.sh
-        cd
 
         # change some icons to a better mac version
         cp -R /tmp/WhiteSur-icon-theme/original/*.svg $HOME/.local/share/icons/WhiteSur/apps/scalable/
