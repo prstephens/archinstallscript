@@ -277,14 +277,14 @@ install_whitesur(){
         curl -sL $BASE_URL/wallpaper/macos/bigsur-light.jpg -o $HOME/.local/share/backgrounds/bigsur-Light.jpg
         curl -sL $BASE_URL/wallpaper/macos/bigsur-dark.jpg -o $HOME/.local/share/backgrounds/bigsur-Dark.jpg
 
+        # default to light if nothing is chosen (fallback)
+        $theme="Light"
+
         theme=$(whiptail --backtitle "$BACKTITLE" --title "Select theme variation" --radiolist "Choose" 20 30 5 \
         "Light" "" light \
         "Dark" "" dark \
         "Both" "" both \
         3>&1 1>&2 2>&3)
-
-        # default to light if nothing is chosen (fallback)
-        [ -z "$theme" ] && $theme="Light"
 
         git clone https://github.com/prstephens/WhiteSur-gtk-theme.git /tmp/WhiteSur-gtk-theme
         cd /tmp/WhiteSur-gtk-theme
