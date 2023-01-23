@@ -173,7 +173,6 @@ install_gnome_mac(){
 
         # install the Mac theme set
         install_whitesur
-        apply_whitesur
 
         # Global menu
         curl -sL $BASE_URL/configs/extensions/python3-fildem.zst -o /tmp/python3-fildem.zst
@@ -228,7 +227,7 @@ EOT
         if [[ "$USE_CRYPT" -ne 1 ]]
         then
                 yay -S gdm-plymouth
-                sudo sed -i 's/^HOOKS=.*$/HOOKS=(base udev plymouth autodetect keyboard keymap consolefont modconf block filesystems resume fsck grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
+                sudo sed -i 's/^HOOKS=.*$/HOOKS=(base udev plymouth autodetect keyboard keymap consolefont modconf block mdadm_udev filesystems resume fsck grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
                 sudo sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT=.*$/GRUB_CMDLINE_LINUX_DEFAULT="quiet splash vt.global_cursor_default=0 loglevel=3 rd.systemd.show_status=false nowatchdog mitigations=off"/' /etc/default/grub
                 git clone https://github.com/fathyar/mac-plymouth.git /tmp/mac-plymouth
                 sudo cp -r /tmp/mac-plymouth/mac/ /usr/share/plymouth/themes/
@@ -289,20 +288,13 @@ install_whitesur(){
         cd /tmp/WhiteSur-gtk-theme
 
         ./install.sh -m -o normal -N glassy -c $theme -s 280 -l -c $theme
-        sudo ./tweaks.sh -g -c Light -b $HOME/.local/share/backgrounds/ventura-$theme.jpg
+        sudo ./tweaks.sh -g -c $theme -b $HOME/.local/share/backgrounds/ventura-$theme.jpg
         gsettings set org.gnome.desktop.background picture-uri file:////$HOME/.local/share/backgrounds/ventura-$theme.jpg
         curl -sL $BASE_URL/configs/home/.Xresources-$theme -o $HOME/.Xresources
         ./tweaks.sh -d -c $theme
         ./tweaks.sh -f monterey
         ./tweaks.sh -F
         sudo flatpak override --filesystem=xdg-config/gtk-4.0
-
-        if [[ "$theme" -eq "Dark" ]]
-        then
-                gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
-        else
-                gsettings set org.gnome.desktop.interface color-scheme 'default'
-        fi
 
         git clone https://github.com/prstephens/WhiteSur-icon-theme.git /tmp/WhiteSur-icon-theme
         /tmp/WhiteSur-icon-theme/install.sh --black
@@ -318,6 +310,23 @@ install_whitesur(){
         git clone https://github.com/prstephens/mac-dynamic-calendar.git /tmp/mac-dynamic-calendar
         cp -R /tmp/mac-dynamic-calendar/mac-dynamic-calendar\@prstephens.github.com $HOME/.local/share/gnome-shell/extensions/
         gnome-extensions enable mac-dynamic-calendar@prstephens.github.com
+
+        gsettings set org.gnome.desktop.interface gtk-theme WhiteSur-$theme
+        gsettings set org.gnome.desktop.interface cursor-theme WhiteSur-cursors
+        gsettings set org.gnome.shell.extensions.user-theme name WhiteSur-$theme
+        gsettings set org.gnome.desktop.interface icon-theme WhiteSur
+
+        if [[ "$theme" -eq "Dark" ]]
+        then
+                gsettings set org.gnome.desktop.interface icon-theme WhiteSur-dark
+        fi
+
+        gsettings set org.gnome.desktop.interface font-name "SF Pro Rounded Regular 11"
+        gsettings set org.gnome.desktop.interface document-font-name "SF Pro Rounded Regular 11"
+        gsettings set org.gnome.desktop.interface monospace-font-name "Source Code Pro 9"
+        gsettings set org.gnome.desktop.wm.preferences titlebar-font "SF Pro Rounded Regular 11"
+
+        gsettings set org.gnome.desktop.wm.preferences button-layout "close,minimize,maximize:"
 
         # Gnome Extensions
         # ==================================================================================
