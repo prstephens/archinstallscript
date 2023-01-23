@@ -1,3 +1,4 @@
 [/]
 hide-activities-button='always'
 window-buttons-theme='whitesur'
+show-window-title='never'
