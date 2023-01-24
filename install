@@ -714,6 +714,9 @@ setupuser(){
         if [ ! -a /mnt/home/$user/.inputrc ]; then echo '$include /etc/inputrc' > /mnt/home/$user/.inputrc; fi
         echo 'set completion-ignore-case On' >> /mnt/home/$user/.inputrc
 
+        # remove last login message on console login
+        touch /mnt/home/$user/.hushlogin
+
         # own that stuff!
         arch-chroot /mnt chown -R $user:$user /home/$user/
 }
