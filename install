@@ -371,6 +371,16 @@ installbootloader(){
                 bootdir=/boot/efi
                 arch-chroot /mnt sed -i "s|^GRUB_CMDLINE_LINUX=.*$|GRUB_CMDLINE_LINUX=\"resume=$swapdev\"|" /etc/default/grub
         fi
+
+        # faster grub boot time - displays no menu. be warned
+        cat <<EOT >> /mnt/etc/default/grub
+GRUB_FORCE_HIDDEN_MENU=true
+GRUB_TIMEOUT=0
+GRUB_TIMEOUT_STYLE=hidden
+GRUB_HIDDEN_TIMEOUT=0
+GRUB_HIDDEN_TIMEOUT_QUIET=true
+GRUB_RECORDFAIL_TIMEOUT=0
+EOT
  
         arch-chroot /mnt sed -i 's/^GRUB_GFXMODE=.*$/GRUB_GFXMODE=1920x1080x32/' /etc/default/grub
         arch-chroot /mnt sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT=.*$/GRUB_CMDLINE_LINUX_DEFAULT="quiet loglevel=3 systemd.show_status=auto rd.udev.log_level=3 nowatchdog mitigations=off"/' /etc/default/grub
@@ -715,7 +725,7 @@ setupuser(){
         echo 'set completion-ignore-case On' >> /mnt/home/$user/.inputrc
 
         # remove last login message on console login
-        touch /mnt/home/$user/.hushlogin
+        arch-chroot /mnt touch /home/$user/.hushlogin
 
         # own that stuff!
         arch-chroot /mnt chown -R $user:$user /home/$user/
