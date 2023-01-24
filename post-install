@@ -227,7 +227,7 @@ EOT
         if [[ "$USE_CRYPT" -ne 1 ]]
         then
                 yay -S gdm-plymouth
-                sudo sed -i 's/^HOOKS=.*$/HOOKS=(base udev plymouth autodetect keyboard keymap consolefont modconf block mdadm_udev filesystems resume fsck grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
+                sudo sed -i 's/^HOOKS=.*$/HOOKS=(systemd plymouth autodetect keyboard keymap consolefont modconf block mdadm_udev filesystems resume fsck grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
                 sudo sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT=.*$/GRUB_CMDLINE_LINUX_DEFAULT="quiet splash vt.global_cursor_default=0 loglevel=3 rd.systemd.show_status=false nowatchdog mitigations=off"/' /etc/default/grub
                 git clone https://github.com/fathyar/mac-plymouth.git /tmp/mac-plymouth
                 sudo cp -r /tmp/mac-plymouth/mac/ /usr/share/plymouth/themes/
@@ -600,18 +600,18 @@ initialise(){
 
         if [[ "$USE_RAID" -eq 1 ]]
         then
-                sudo sed -i 's/^HOOKS=.*$/HOOKS=(base udev autodetect keyboard keymap consolefont modconf block mdadm_udev filesystems resume fsck grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
+                sudo sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect keyboard keymap consolefont modconf block mdadm_udev filesystems resume grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
 
                 if [[ "$USE_CRYPT" -eq 1 ]]
                 then
-                        sudo sed -i 's/^HOOKS=.*$/HOOKS=(base udev autodetect keyboard keymap consolefont modconf block mdadm_udev encrypt-dh lvm2 filesystems resume fsck grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
+                        sudo sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect keyboard keymap consolefont modconf block mdadm_udev encrypt-dh lvm2 filesystems resume grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
                 fi
         else
                 if [[ "$USE_CRYPT" -eq 1 ]]
                 then
-                        sudo sed -i 's/^HOOKS=.*$/HOOKS=(base udev autodetect keyboard keymap consolefont modconf block encrypt-dh lvm2 filesystems resume fsck grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
+                        sudo sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect keyboard keymap consolefont modconf block encrypt-dh lvm2 filesystems resume grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
                 else
-                        sudo sed -i 's/^HOOKS=.*$/HOOKS=(base udev autodetect keyboard keymap consolefont modconf block filesystems resume fsck grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
+                        sudo sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect keyboard keymap consolefont modconf block filesystems resume grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
                 fi
         fi
 

@@ -617,18 +617,18 @@ EOT
         then
                 mdadm --detail --scan >> /mnt/etc/mdadm.conf
                 sed -i 's/^BINARIES=.*$/BINARIES=(mdmon)/' /mnt/etc/mkinitcpio.conf
-                sed -i 's/^HOOKS=.*$/HOOKS=(base udev autodetect keyboard keymap consolefont modconf block mdadm_udev filesystems resume fsck)/' /mnt/etc/mkinitcpio.conf
+                sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect keyboard keymap consolefont modconf block mdadm_udev filesystems resume)/' /mnt/etc/mkinitcpio.conf
 
                 if [[ "$USE_CRYPT" -eq 1 ]]
                 then
-                        sed -i 's/^HOOKS=.*$/HOOKS=(base udev autodetect keyboard keymap consolefont modconf block mdadm_udev encrypt-dh lvm2 filesystems resume fsck)/' /mnt/etc/mkinitcpio.conf
+                        sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect keyboard keymap consolefont modconf block mdadm_udev encrypt-dh lvm2 filesystems resume)/' /mnt/etc/mkinitcpio.conf
                 fi
         else
                 if [[ "$USE_CRYPT" -eq 1 ]]
                 then
-                        sed -i 's/^HOOKS=.*$/HOOKS=(base udev autodetect keyboard keymap consolefont modconf block encrypt-dh lvm2 filesystems resume fsck)/' /mnt/etc/mkinitcpio.conf
+                        sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect keyboard keymap consolefont modconf block encrypt-dh lvm2 filesystems resume)/' /mnt/etc/mkinitcpio.conf
                 else
-                        sed -i 's/^HOOKS=.*$/HOOKS=(base udev autodetect keyboard keymap consolefont modconf block filesystems resume fsck)/' /mnt/etc/mkinitcpio.conf
+                        sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect keyboard keymap consolefont modconf block filesystems resume)/' /mnt/etc/mkinitcpio.conf
                 fi
         fi
 
