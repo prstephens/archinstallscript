@@ -625,10 +625,8 @@ initialise(){
         sudo snapper -c root create --description "### FRESH INSTALL - Base ###" #ID 1
         sudo grub-mkconfig -o /boot/grub/grub.cfg
 
-        sudo cat <<EOT >> /usr/share/libalpm/scripts/grub-mkconfig
-sed -i '/Loading Linux/d' /boot/grub/grub.cfg 
-sed -i '/Loading initial ramdisk/d' /boot/grub/grub.cfg
-EOT
+        echo "sed -i '/Loading Linux/d' /boot/grub/grub.cfg" | sudo tee -a /usr/share/libalpm/scripts/grub-mkconfig 
+        echo "sed -i '/Loading initial ramdisk/d' /boot/grub/grub.cfg" | sudo tee -a /usr/share/libalpm/scripts/grub-mkconfig 
 
         if [[ "$USE_CRYPT" -eq 1 ]]
         then
