@@ -625,6 +625,11 @@ initialise(){
         sudo snapper -c root create --description "### FRESH INSTALL - Base ###" #ID 1
         sudo grub-mkconfig -o /boot/grub/grub.cfg
 
+        sudo cat <<EOT >> /usr/share/libalpm/scripts/grub-mkconfig
+sed -i '/Loading Linux/d' /boot/grub/grub.cfg 
+sed -i '/Loading initial ramdisk/d' /boot/grub/grub.cfg
+EOT
+
         if [[ "$USE_CRYPT" -eq 1 ]]
         then
                 sudo mkdir /.bootbackup
