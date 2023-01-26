@@ -328,7 +328,7 @@ performinstall(){
                 mount $bootdev /mnt/boot
 
                 # copy LUKS header file now 
-                mv header.img /mnt/boot
+                #mv header.img /mnt/boot
         else   
                 mount $bootdev /mnt/boot/efi
         fi
