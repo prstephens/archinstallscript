@@ -137,10 +137,13 @@ enablelvm(){
         #
         #       dd if=/dev/urandom of=/dev/<device> bs=512 count=32768
 
-        dd if=/dev/zero of=header.img bs=16M count=1
-        chmod 600 header.img
-        cryptsetup luksFormat $realrootdev --offset 32768 --header header.img
-        cryptsetup open --header header.img $realrootdev cryptlvm
+        #dd if=/dev/zero of=header.img bs=16M count=1
+        #chmod 600 header.img
+        #cryptsetup luksFormat $realrootdev --offset 32768 --header header.img
+        #cryptsetup open --header header.img $realrootdev cryptlvm
+
+        cryptsetup luksFormat $realrootdev 
+        cryptsetup open $realrootdev cryptlvm
 
         ROOTUUID=$(blkid -s UUID -o value $realrootdev) # not required but keeping it for debug reasons
 
@@ -366,7 +369,9 @@ installbootloader(){
         if [[ "$USE_CRYPT" -eq 1 ]]
         then
                 bootdir=/boot
-                arch-chroot /mnt sed -i "s|^GRUB_CMDLINE_LINUX=.*$|GRUB_CMDLINE_LINUX=\"cryptdevice=$realrootdev:cryptlvm:header root=/dev/vg1/root resume=$swapdev\"|" /etc/default/grub
+                # arch-chroot /mnt sed -i "s|^GRUB_CMDLINE_LINUX=.*$|GRUB_CMDLINE_LINUX=\"cryptdevice=$realrootdev:cryptlvm:header root=/dev/vg1/root resume=$swapdev\"|" /etc/default/grub
+                arch-chroot /mnt sed -i "s|^GRUB_CMDLINE_LINUX=.*$|GRUB_CMDLINE_LINUX=\"rd.luks.name=$ROOTUUID=cryptlvm root=/dev/vg1/root resume=$swapdev\"|" /etc/default/grub
+
         else   
                 bootdir=/boot/efi
                 arch-chroot /mnt sed -i "s|^GRUB_CMDLINE_LINUX=.*$|GRUB_CMDLINE_LINUX=\"resume=$swapdev\"|" /etc/default/grub
@@ -612,33 +617,33 @@ EOT
         if [[ "$USE_CRYPT" -eq 1 ]]
         then
                 # generate key file
-                dd bs=512 count=4 if=/dev/random of=/mnt/crypto_keyfile.bin iflag=fullblock
-                chmod 600 /mnt/crypto_keyfile.bin
-                cryptsetup luksAddKey $realrootdev --header /mnt/boot/header.img /mnt/crypto_keyfile.bin
-                sed -i 's/^MODULES=.*$/MODULES=(i915 btrfs lz4 lz4_compress loop)/' /mnt/etc/mkinitcpio.conf
-                sed -i 's/^FILES=.*$/FILES=(\/crypto_keyfile.bin \/boot\/header.img)/' /mnt/etc/mkinitcpio.conf
+                dd bs=512 count=4 if=/dev/random of=/mnt/etc/cryptsetup-keys.d/cryptlvm.key iflag=fullblock
+                chmod 600 /mnt/etc/cryptsetup-keys.d/cryptlvm.key
+                cryptsetup luksAddKey $realrootdev /mnt/etc/cryptsetup-keys.d/cryptlvm.key
+                sed -i 's/^MODULES=.*$/MODULES=(i915 btrfs lz4 lz4_compress)/' /mnt/etc/mkinitcpio.conf
+                sed -i 's/^FILES=.*$/FILES=(\/etc\/cryptsetup-keys.d\/cryptlvm.key)/' /mnt/etc/mkinitcpio.conf
 
                 # get the modified encrypt hook
-                arch-chroot /mnt curl -sL $BASE_URL/configs/system/encrypt-dh -o /etc/initcpio/hooks/encrypt-dh
-                arch-chroot /mnt cp /usr/lib/initcpio/install/encrypt /etc/initcpio/install/encrypt-dh
+                #arch-chroot /mnt curl -sL $BASE_URL/configs/system/encrypt-dh -o /etc/initcpio/hooks/encrypt-dh
+                #arch-chroot /mnt cp /usr/lib/initcpio/install/encrypt /etc/initcpio/install/encrypt-dh
         fi
 
         if [[ "$USE_RAID" -eq 1 ]]
         then
                 mdadm --detail --scan >> /mnt/etc/mdadm.conf
                 sed -i 's/^BINARIES=.*$/BINARIES=(mdmon)/' /mnt/etc/mkinitcpio.conf
-                sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect keyboard keymap consolefont modconf block mdadm_udev filesystems resume)/' /mnt/etc/mkinitcpio.conf
+                sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect keyboard sd-vconsole modconf kms block mdadm_udev filesystems)/' /mnt/etc/mkinitcpio.conf
 
                 if [[ "$USE_CRYPT" -eq 1 ]]
                 then
-                        sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect keyboard keymap consolefont modconf block mdadm_udev encrypt-dh lvm2 filesystems resume)/' /mnt/etc/mkinitcpio.conf
+                        sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect keyboard sd-vconsole modconf kms block mdadm_udev sd-encrypt lvm2 filesystems)/' /mnt/etc/mkinitcpio.conf
                 fi
         else
                 if [[ "$USE_CRYPT" -eq 1 ]]
                 then
-                        sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect keyboard keymap consolefont modconf block encrypt-dh lvm2 filesystems resume)/' /mnt/etc/mkinitcpio.conf
+                        sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect keyboard sd-vconsole modconf kms block sd-encrypt lvm2 filesystems)/' /mnt/etc/mkinitcpio.conf
                 else
-                        sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect keyboard keymap consolefont modconf block filesystems resume)/' /mnt/etc/mkinitcpio.conf
+                        sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect keyboard sd-vconsole modconf kms block filesystems)/' /mnt/etc/mkinitcpio.conf
                 fi
         fi
 
