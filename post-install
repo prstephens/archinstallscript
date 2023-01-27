@@ -222,20 +222,15 @@ EOT
         sudo ln -s /usr/lib/python3.9/site-packages/fildem-0.6.7-py3.9.egg-info/ /usr/lib/python3.10/site-packages
         curl -sL $BASE_URL/configs/home/fildem.desktop -o $HOME/.config/autostart/fildem.desktop
 
-        # plymouth macos loading theme
-        # only apply if we are not using LVM and encrypt
-        if [[ "$USE_CRYPT" -ne 1 ]]
-        then
-                yay -S gdm-plymouth
-                sudo sed -i 's/^HOOKS=.*$/HOOKS=(systemd sd-plymouth autodetect keyboard keymap consolefont modconf block mdadm_udev filesystems resume grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
-                sudo sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT=.*$/GRUB_CMDLINE_LINUX_DEFAULT="quiet splash vt.global_cursor_default=0 loglevel=3 rd.systemd.show_status=false nowatchdog mitigations=off"/' /etc/default/grub
-                git clone https://github.com/fathyar/mac-plymouth.git /tmp/mac-plymouth
-                sudo cp -r /tmp/mac-plymouth/mac/ /usr/share/plymouth/themes/
-                sudo plymouth-set-default-theme -R mac              
-                sudo grub-mkconfig -o /boot/grub/grub.cfg
-        fi
-
-
+        # plymouth macos loading theme        
+        yay -S gdm-plymouth
+        sudo sed -i 's/systemd/systemd sd-plymouth/' /etc/mkinitcpio.conf
+        sudo sed -i 's/quiet/quiet splash/' /etc/default/grub
+        git clone https://github.com/fathyar/mac-plymouth.git /tmp/mac-plymouth
+        sudo cp -r /tmp/mac-plymouth/mac/ /usr/share/plymouth/themes/
+        sudo plymouth-set-default-theme -R mac              
+        sudo grub-mkconfig -o /boot/grub/grub.cfg
+        
         curl -sL $BASE_URL/configs/extensions/dash-to-dock-settings -o /tmp/dash-to-dock-settings
         curl -sL $BASE_URL/configs/extensions/blur-my-shell-settings -o /tmp/blur-my-shell-settings
         curl -sL $BASE_URL/configs/extensions/panel-corners-settings -o /tmp/panel-corners-settings
