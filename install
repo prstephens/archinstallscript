@@ -19,7 +19,7 @@ BASE_URL="https://raw.githubusercontent.com/prstephens/archinstallscript/master/
 USE_CRYPT=0
 USE_RAID=0
 TLP=0
-MIRROR_COUNTRY=US
+MIRROR_COUNTRY=GB
 
 # --------------------------------------------------------
 
@@ -137,13 +137,10 @@ enablelvm(){
         #
         #       dd if=/dev/urandom of=/dev/<device> bs=512 count=32768
 
-        #dd if=/dev/zero of=header.img bs=16M count=1
-        #chmod 600 header.img
-        #cryptsetup luksFormat $realrootdev --offset 32768 --header header.img
-        #cryptsetup open --header header.img $realrootdev cryptlvm
-
-        cryptsetup luksFormat $realrootdev 
-        cryptsetup open $realrootdev cryptlvm
+        dd if=/dev/zero of=header.img bs=16M count=1
+        chmod 600 header.img
+        cryptsetup luksFormat $realrootdev --offset 32768 --header header.img
+        cryptsetup open --header header.img $realrootdev cryptlvm
 
         ROOTUUID=$(blkid -s UUID -o value $realrootdev)
 
@@ -328,10 +325,12 @@ performinstall(){
                 mount $bootdev /mnt/boot
 
                 # copy LUKS header file now 
-                #mv header.img /mnt/boot
+                mv header.img /mnt/boot
         else   
                 mount $bootdev /mnt/boot/efi
         fi
+
+        BOOTUUID=$(blkid -s UUID -o value $bootdev)
 
         # determine if we are installing on a laptop or desktop
         # if laptop, install tlp for better power management
@@ -370,7 +369,9 @@ installbootloader(){
         then
                 bootdir=/boot
                 arch-chroot /mnt sed -i "s|^GRUB_CMDLINE_LINUX=.*$|GRUB_CMDLINE_LINUX=\"rd.luks.name=$ROOTUUID=cryptlvm root=/dev/vg1/root resume=$swapdev\"|" /etc/default/grub
+                ROOTDISKID=$(ls /dev/disk/by-id/ | grep CRYPT-LUKS2)
 
+                echo "cryptlvm        /dev/disk/by-id/$ROOTDISKID	none	header=/header.img:UUID=$BOOTUUID" >> /mnt/etc/crypttab.initramfs
         else   
                 bootdir=/boot/efi
                 arch-chroot /mnt sed -i "s|^GRUB_CMDLINE_LINUX=.*$|GRUB_CMDLINE_LINUX=\"resume=$swapdev\"|" /etc/default/grub
@@ -620,7 +621,7 @@ EOT
                 dd bs=512 count=4 if=/dev/random of=/mnt/etc/cryptsetup-keys.d/cryptlvm.key iflag=fullblock
                 chmod 600 /mnt/etc/cryptsetup-keys.d/cryptlvm.key
                 cryptsetup luksAddKey $realrootdev /mnt/etc/cryptsetup-keys.d/cryptlvm.key
-                sed -i 's/^MODULES=.*$/MODULES=(i915 btrfs lz4 lz4_compress)/' /mnt/etc/mkinitcpio.conf
+                sed -i 's/^MODULES=.*$/MODULES=(i915 btrfs lz4 lz4_compress vfat)/' /mnt/etc/mkinitcpio.conf
                 sed -i 's/^FILES=.*$/FILES=(\/etc\/cryptsetup-keys.d\/cryptlvm.key)/' /mnt/etc/mkinitcpio.conf
         fi
 
