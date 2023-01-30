@@ -563,7 +563,7 @@ initialise(){
         cd
 
         # remove annoying yay questions
-        yay --save --answerdiff None --answerclean None --removemake 
+        yay --save --answerdiff None --answerclean None --removemake --batchinstall --devel
 
         # snapper config
         sudo umount /.snapshots
