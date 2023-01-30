@@ -583,7 +583,7 @@ installbootloader-systemd(){
         clear
         echo "### Installing bootctl... ____________________"
 
-        bootctl install
+        arch-chroot /mnt bootctl install
 
         echo "cryptlvm        /dev/disk/by-uuid/$ROOTUUID	none	header=/header.img:UUID=$BOOTUUID" >> /mnt/etc/crypttab.initramfs
 
