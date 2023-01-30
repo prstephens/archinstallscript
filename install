@@ -589,7 +589,7 @@ title   Arch Linux
 linux   /vmlinuz-linux-zen
 initrd  /intel-ucode.img
 initrd  /initramfs-linux-zen.img
-options root=/dev/vg1/root rootflags=subvol=@ rd.luks.name=$ROOTUUID=cryptlvm resume=$swapdev quiet loglevel=3 systemd.show_status=auto rd.udev.log_level=3 nowatchdog mitigations=off
+options root=/dev/vg1/root rootflags=subvol=@ resume=$swapdev loglevel=3 systemd.show_status=auto rd.udev.log_level=3 nowatchdog mitigations=off
 EOT
 
 }
