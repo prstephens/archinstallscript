@@ -623,16 +623,14 @@ initialise(){
         echo "sed -i '/Loading Linux/d' /boot/grub/grub.cfg" | sudo tee -a /usr/share/libalpm/scripts/grub-mkconfig 
         echo "sed -i '/Loading initial ramdisk/d' /boot/grub/grub.cfg" | sudo tee -a /usr/share/libalpm/scripts/grub-mkconfig 
 
-        if [[ "$USE_CRYPT" -eq 1 ]]
-        then
-                sudo mkdir /.bootbackup
-                cat <<EOT | sudo tee -a /usr/bin/boot-backup
+        sudo mkdir /.bootbackup
+        cat <<EOT | sudo tee -a /usr/bin/boot-backup
 #!/bin/bash
 /usr/bin/rsync -a --delete /boot /.bootbackup/\$(ls -1v /.snapshots | tail -n 1)
 EOT
-                sudo chmod +x /usr/bin/boot-backup
-                sudo mkdir /etc/pacman.d/hooks
-                cat <<EOT | sudo tee -a /etc/pacman.d/hooks/95-bootbackup.hook
+        sudo chmod +x /usr/bin/boot-backup
+        sudo mkdir /etc/pacman.d/hooks
+        cat <<EOT | sudo tee -a /etc/pacman.d/hooks/95-bootbackup.hook
 [Trigger]
 Operation = Upgrade
 Operation = Install
@@ -646,11 +644,8 @@ Description = Backing up /boot...
 When = PostTransaction
 Exec = /usr/bin/boot-backup
 EOT
-
         # Run the boot backup for first time so we have a copy of a working kernel 
-        sudo /usr/bin/boot-backup
-        
-        fi      
+        sudo /usr/bin/boot-backup      
 }
 
 checkconnection(){

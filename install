@@ -131,7 +131,7 @@ enablelvm(){
         # 
         # --offset means we can restore the luks header if need be later on:
         #
-        #       cryptsetup luksRestoreHeader /dev/<device> --header-backup-file /path/to/header.img
+        #       cryptsetup luksHeaderRestore /dev/<device> --header-backup-file /path/to/header.img
         #
         # If we want to wipe ALL LUKS header info again then use:
         #
@@ -320,15 +320,7 @@ performinstall(){
 
         mount -o noatime,commit=120,compress=zstd,space_cache=v2,discard=async,subvol=@snapshots $rootdev /mnt/.snapshots
 
-        if [[ "$USE_CRYPT" -eq 1 ]]
-        then
-                mount $bootdev /mnt/boot
-
-                # copy LUKS header file now 
-                mv header.img /mnt/boot
-        else   
-                mount $bootdev /mnt/boot/efi
-        fi
+        mount $bootdev /mnt/boot
 
         BOOTUUID=$(blkid -s UUID -o value $bootdev)
 
@@ -552,12 +544,12 @@ installbootloader(){
 
         if [[ "$USE_CRYPT" -eq 1 ]]
         then
-                bootdir=/boot
-                arch-chroot /mnt sed -i "s|^GRUB_CMDLINE_LINUX=.*$|GRUB_CMDLINE_LINUX=\"rd.luks.name=$ROOTUUID=cryptlvm root=/dev/vg1/root resume=$swapdev\"|" /etc/default/grub
+                # copy LUKS header file now 
+                mv header.img /mnt/boot
 
+                arch-chroot /mnt sed -i "s|^GRUB_CMDLINE_LINUX=.*$|GRUB_CMDLINE_LINUX=\"rd.luks.name=$ROOTUUID=cryptlvm root=/dev/vg1/root resume=$swapdev\"|" /etc/default/grub
                 echo "cryptlvm        /dev/disk/by-uuid/$ROOTUUID	none	header=/header.img:UUID=$BOOTUUID" >> /mnt/etc/crypttab.initramfs
         else   
-                bootdir=/boot/efi
                 arch-chroot /mnt sed -i "s|^GRUB_CMDLINE_LINUX=.*$|GRUB_CMDLINE_LINUX=\"resume=$swapdev\"|" /etc/default/grub
         fi
 
@@ -575,7 +567,7 @@ EOT
         arch-chroot /mnt sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT=.*$/GRUB_CMDLINE_LINUX_DEFAULT="quiet loglevel=3 systemd.show_status=auto rd.udev.log_level=3 nowatchdog mitigations=off"/' /etc/default/grub
         arch-chroot /mnt sed -i 's/^#GRUB_DISABLE_OS_PROBER=.*$/GRUB_DISABLE_OS_PROBER="false"/' /etc/default/grub
         arch-chroot /mnt os-prober
-        arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=$bootdir --bootloader-id=GRUB --recheck $REMOVABLE
+        arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB --recheck $REMOVABLE
         arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
 }
 
@@ -585,14 +577,19 @@ installbootloader-systemd(){
 
         arch-chroot /mnt bootctl install
 
-        echo "cryptlvm        /dev/disk/by-uuid/$ROOTUUID	none	header=/header.img:UUID=$BOOTUUID" >> /mnt/etc/crypttab.initramfs
+        if [[ "$USE_CRYPT" -eq 1 ]]
+        then
+                # copy LUKS header file now 
+                mv header.img /mnt/boot
+                echo "cryptlvm        /dev/disk/by-uuid/$ROOTUUID	none	header=/header.img:UUID=$BOOTUUID" >> /mnt/etc/crypttab.initramfs
+        fi
 
         cat <<EOT >> /mnt/boot/loader/entries/arch.conf
 title   Arch Linux
 linux   /vmlinuz-linux-zen
 initrd  /intel-ucode.img
 initrd  /initramfs-linux-zen.img
-options root=/dev/vg1/root rootflags=subvol=@ resume=$swapdev quiet loglevel=3 systemd.show_status=auto rd.udev.log_level=3 nowatchdog mitigations=off
+options root=/dev/vg1/root rootflags=subvol=@ rd.luks.name=$ROOTUUID=cryptlvm resume=$swapdev quiet loglevel=3 systemd.show_status=auto rd.udev.log_level=3 nowatchdog mitigations=off
 EOT
 
 }
