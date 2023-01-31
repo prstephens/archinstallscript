@@ -459,7 +459,7 @@ EOT
         arch-chroot /mnt sed -i '/load-module module-suspend-on-idle/ s/^#*/#/' /etc/pulse/default.pa
 
         # speed up boot time with lz4
-        sed -i 's/^MODULES=.*$/MODULES=(i915 btrfs lz4 lz4_compress)/' /mnt/etc/mkinitcpio.conf
+        sed -i 's/^MODULES=.*$/MODULES=(i915 btrfs lz4 lz4_compress vfat)/' /mnt/etc/mkinitcpio.conf
         sed -i 's/^#COMPRESSION="lz4".*$/COMPRESSION="lz4"/' /mnt/etc/mkinitcpio.conf
         sed -i 's/^#COMPRESSION_OPTIONS=.*$/COMPRESSION_OPTIONS="-9"/' /mnt/etc/mkinitcpio.conf
         sed -i 's/^#MODULES_DECOMPRESS=.*$/MODULES_DECOMPRESS="yes"/' /mnt/etc/mkinitcpio.conf
