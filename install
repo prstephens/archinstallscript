@@ -581,7 +581,7 @@ installbootloader-systemd(){
         then
                 # copy LUKS header file now 
                 mv header.img /mnt/boot
-                echo "cryptlvm        /dev/disk/by-uuid/$ROOTUUID	none	header=/header.img:UUID=$BOOTUUID" >> /mnt/etc/crypttab.initramfs
+                #echo "cryptlvm        /dev/disk/by-uuid/$ROOTUUID	none	header=/header.img:UUID=$BOOTUUID" >> /mnt/etc/crypttab.initramfs
         fi
 
         cat <<EOT >> /mnt/boot/loader/entries/arch.conf
@@ -589,7 +589,7 @@ title   Arch Linux
 linux   /vmlinuz-linux-zen
 initrd  /intel-ucode.img
 initrd  /initramfs-linux-zen.img
-options root=/dev/vg1/root rootflags=subvol=@ resume=$swapdev loglevel=3 systemd.show_status=auto rd.udev.log_level=3 nowatchdog mitigations=off
+options rd.luks.name=$ROOTUUID=cryptlvm rd.luks.options=$ROOTUUID=header=/header.img:UUID=$BOOTUUID rd.luks.data=$ROOTUUID=/dev/disk/by-uuid/$ROOTUUID root=/dev/vg1/root rootflags=subvol=@ resume=$swapdev loglevel=3 systemd.show_status=auto rd.udev.log_level=3 nowatchdog mitigations=off
 EOT
 
 }
