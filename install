@@ -136,13 +136,12 @@ enablelvm(){
         # If we want to wipe ALL LUKS header info again then use:
         #
         #       dd if=/dev/urandom of=/dev/<device> bs=512 count=32768
+        ROOTUUID=$(blkid -s UUID -o value $realrootdev)
 
         dd if=/dev/zero of=header.img bs=16M count=1
         chmod 600 header.img
         cryptsetup luksFormat $realrootdev --offset 32768 --header header.img
         cryptsetup open --header header.img $realrootdev cryptlvm
-
-        ROOTUUID=$(blkid -s UUID -o value $realrootdev)
 
         # create the LVM partitons
         pvcreate /dev/mapper/cryptlvm
