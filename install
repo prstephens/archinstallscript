@@ -590,7 +590,7 @@ title   Arch Linux
 linux   /vmlinuz-linux-zen
 initrd  /intel-ucode.img
 initrd  /initramfs-linux-zen.img
-options rd.luks.name=$ROOTUUID=cryptlvm rd.luks.options=$ROOTUUID=header=/header.img:UUID=$ROOTUUID rd.luks.data=$ROOTUUID=/dev/disk/by-uuid/$ROOTUUID root=/dev/vg1/root rootflags=subvol=@ resume=$swapdev loglevel=3 systemd.show_status=auto rd.udev.log_level=3 nowatchdog mitigations=off
+options rd.luks.name=$ROOTUUID=cryptlvm rd.luks.options=$ROOTUUID=header=/header.img:UUID=$BOOTUUID rd.luks.data=$ROOTUUID=/dev/disk/by-uuid/$ROOTUUID root=/dev/vg1/root rootflags=subvol=@ resume=$swapdev loglevel=3 systemd.show_status=auto rd.udev.log_level=3 nowatchdog mitigations=off
 EOT
 
                 #echo "cryptlvm        /dev/disk/by-uuid/$ROOTUUID	none	header=/header.img:UUID=$BOOTUUID" >> /mnt/etc/crypttab.initramfs
