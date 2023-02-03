@@ -126,24 +126,10 @@ enablelvm(){
         clear
         echo "### CREATING LUKS PARTITION ON ${realrootdev} ____________________"
 
-        # create LUKS encrypted partition with detached header for deniable encryption.
-        # The partiton looks like normal random data. No LUKS header describinbg the hash or salt used. 
-        # 
-        # --offset means we can restore the luks header if need be later on:
-        #
-        #       cryptsetup luksHeaderRestore /dev/<device> --header-backup-file /path/to/header.img
-        #
-        # If we want to wipe ALL LUKS header info again then use:
-        #
-        #       dd if=/dev/urandom of=/dev/<device> bs=512 count=32768
         ROOTUUID=$(blkid -s UUID -o value $realrootdev)
 
-        dd if=/dev/zero of=header.img bs=16M count=1
-        chmod 600 header.img
-        cryptsetup luksFormat $realrootdev --offset 32768 --header header.img
-        cryptsetup open --header header.img $realrootdev cryptlvm
-
-        HEADERUUID=$(blkid -s UUID -o value header.img)
+        cryptsetup luksFormat $realrootdev 
+        cryptsetup open $realrootdev cryptlvm
 
         # create the LVM partitons
         pvcreate /dev/mapper/cryptlvm
@@ -465,19 +451,6 @@ EOT
         sed -i 's/^#COMPRESSION_OPTIONS=.*$/COMPRESSION_OPTIONS="-9"/' /mnt/etc/mkinitcpio.conf
         sed -i 's/^#MODULES_DECOMPRESS=.*$/MODULES_DECOMPRESS="yes"/' /mnt/etc/mkinitcpio.conf
 
-        #### REMOVED AS IT DOESNT WORK WITH sd-encrypt ####
-        #### KEEPING FOR REFERENCE ####
-        # if [[ "$USE_CRYPT" -eq 1 ]]
-        # then
-        #         # generate key file
-        #         mkdir /mnt/etc/cryptsetup-keys.d/
-        #         dd bs=512 count=4 if=/dev/random of=/mnt/etc/cryptsetup-keys.d/cryptlvm.key iflag=fullblock
-        #         chmod 600 /mnt/etc/cryptsetup-keys.d/cryptlvm.key
-        #         cryptsetup luksAddKey $realrootdev /mnt/etc/cryptsetup-keys.d/cryptlvm.key
-        #         sed -i 's/^MODULES=.*$/MODULES=(i915 btrfs lz4 lz4_compress vfat)/' /mnt/etc/mkinitcpio.conf
-        #         sed -i 's/^FILES=.*$/FILES=(\/etc\/cryptsetup-keys.d\/cryptlvm.key)/' /mnt/etc/mkinitcpio.conf
-        # fi
-
         if [[ "$USE_RAID" -eq 1 ]]
         then
                 mdadm --detail --scan >> /mnt/etc/mdadm.conf
@@ -547,11 +520,8 @@ installbootloader(){
 
         if [[ "$USE_CRYPT" -eq 1 ]]
         then
-                # copy LUKS header file now 
-                mv header.img /mnt/boot
 
                 arch-chroot /mnt sed -i "s|^GRUB_CMDLINE_LINUX=.*$|GRUB_CMDLINE_LINUX=\"rd.luks.name=$ROOTUUID=cryptlvm root=/dev/vg1/root resume=$swapdev\"|" /etc/default/grub
-                echo "cryptlvm        /dev/disk/by-uuid/$ROOTUUID	none	header=/header.img:UUID=$BOOTUUID" >> /mnt/etc/crypttab.initramfs
         else   
                 arch-chroot /mnt sed -i "s|^GRUB_CMDLINE_LINUX=.*$|GRUB_CMDLINE_LINUX=\"resume=$swapdev\"|" /etc/default/grub
         fi
@@ -582,18 +552,13 @@ installbootloader-systemd(){
 
         if [[ "$USE_CRYPT" -eq 1 ]]
         then
-                # copy LUKS header file now 
-                mv header.img /mnt/boot
-
                 cat <<EOT >> /mnt/boot/loader/entries/arch.conf
 title   Arch Linux
 linux   /vmlinuz-linux-zen
 initrd  /intel-ucode.img
 initrd  /initramfs-linux-zen.img
-options rd.luks.name=$ROOTUUID=cryptlvm rd.luks.options=$ROOTUUID=header=/header.img:UUID=$BOOTUUID rd.luks.data=$ROOTUUID=/dev/disk/by-uuid/$ROOTUUID root=/dev/vg1/root rootflags=subvol=@ resume=$swapdev loglevel=3 systemd.show_status=auto rd.udev.log_level=3 nowatchdog mitigations=off
+options rd.luks.name=$ROOTUUID=cryptlvm root=/dev/vg1/root rootflags=subvol=@ resume=$swapdev loglevel=3 systemd.show_status=auto rd.udev.log_level=3 nowatchdog mitigations=off
 EOT
-
-                #echo "cryptlvm        /dev/disk/by-uuid/$ROOTUUID	none	header=/header.img:UUID=$BOOTUUID" >> /mnt/etc/crypttab.initramfs
         else
                 cat <<EOT >> /mnt/boot/loader/entries/arch.conf
 title   Arch Linux

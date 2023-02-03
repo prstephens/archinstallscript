@@ -587,7 +587,7 @@ initialise(){
         sudo systemctl enable --now snapper-cleanup.timer
         sudo systemctl enable --now btrfs-scrub@-.timer
 
-        yay -S snap-pac-grub snapper-rollback snp
+        yay -S snap-pac-grub snapper-rollback snp systemd-boot-pacman-hook
 
         # config for booting a snapshot in read only
         sudo cp /lib/initcpio/hooks/grub-btrfs-overlayfs /etc/initcpio/hooks
