@@ -175,11 +175,9 @@ install_gnome_mac(){
         install_whitesur
 
         # Global menu
-        curl -sL $BASE_URL/configs/extensions/python3-fildem.zst -o /tmp/python3-fildem.zst
-        sudo pacman -U /tmp/python3-fildem.zst
-
-        git clone https://github.com/gonzaarcr/Fildem.git /tmp/fildem
+        git clone https://github.com/Weather-OS/Fildem-v2.git /tmp/fildem
         cd /tmp/fildem
+        makepkg -si
         cp -r  fildemGMenu\@gonza.com/ $HOME/.local/share/gnome-shell/extensions/
 
         cat <<EOT >> ~/.gtkrc-2.0
@@ -216,11 +214,6 @@ EOT
         # Unite 
         git clone https://github.com/hardpixel/unite-shell.git /tmp/unite
         cp -r /tmp/unite/unite\@hardpixel.eu ~/.local/share/gnome-shell/extensions
-
-        # fildem fix
-        sudo ln -s /usr/lib/python3.9/site-packages/fildem /usr/lib/python3.10/site-packages 
-        sudo ln -s /usr/lib/python3.9/site-packages/fildem-0.6.7-py3.9.egg-info/ /usr/lib/python3.10/site-packages
-        curl -sL $BASE_URL/configs/home/fildem.desktop -o $HOME/.config/autostart/fildem.desktop
 
         # plymouth macos loading theme        
         yay -S gdm-plymouth
