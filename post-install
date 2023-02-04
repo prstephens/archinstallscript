@@ -15,6 +15,7 @@ BASE_URL="https://raw.githubusercontent.com/prstephens/archinstallscript/master/
 rootdev=/root/dev # changed on the fly during install
 USE_CRYPT=0 # changed on the fly during install
 USE_RAID=0 # changed on the fly during install
+USE_GRUB=0 # changed on the fly during install
 
 set -o pipefail
 #set -x #toggle for debug. Will print all commands.
@@ -151,7 +152,6 @@ install_gnome(){
         # create a snapshot
         for i in `seq 2 50`; do sudo snapper delete $i; done;
         sudo snapper -c root create --description "### FRESH INSTALL - Including Gnome ###" # ID 2
-        sudo grub-mkconfig -o /boot/grub/grub.cfg
 
         whiptail --backtitle "$BACKTITLE" --msgbox --title "Gnome Installed" "Its best to reboot now before carrying on with the install" 0 78
 }
@@ -587,41 +587,44 @@ initialise(){
         sudo systemctl enable --now snapper-cleanup.timer
         sudo systemctl enable --now btrfs-scrub@-.timer
 
-        yay -S snap-pac-grub snapper-rollback snp systemd-boot-pacman-hook
-
-        # config for booting a snapshot in read only
-        sudo cp /lib/initcpio/hooks/grub-btrfs-overlayfs /etc/initcpio/hooks
-        sudo cp /lib/initcpio/install/grub-btrfs-overlayfs /etc/initcpio/install
-
-        if [[ "$USE_RAID" -eq 1 ]]
-        then
-                sudo sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect keyboard sd-vconsole modconf kms block mdadm_udev filesystems grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
-
-                if [[ "$USE_CRYPT" -eq 1 ]]
-                then
-                        sudo sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect keyboard sd-vconsole modconf kms block mdadm_udev sd-encrypt lvm2 filesystems grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
-                fi
-        else
-                if [[ "$USE_CRYPT" -eq 1 ]]
-                then
-                        sudo sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect keyboard sd-vconsole modconf kms block sd-encrypt lvm2 filesystems grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
-                else
-                        sudo sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect keyboard sd-vconsole modconf kms block filesystems grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
-                fi
-        fi
-
-        sudo mkinitcpio -P
+        yay -S snapper-rollback snp
 
         # put root dev into snapper-rollback.conf
         echo "dev=${rootdev}" | sudo tee -a /etc/snapper-rollback.conf
 
+        if [[ "$USE_GRUB" -eq 1 ]]
+        then
+                yay -S snap-pac-grub
+
+                # config for booting a snapshot in read only
+                sudo cp /lib/initcpio/hooks/grub-btrfs-overlayfs /etc/initcpio/hooks
+                sudo cp /lib/initcpio/install/grub-btrfs-overlayfs /etc/initcpio/install
+
+                if [[ "$USE_RAID" -eq 1 ]]
+                then
+                        sudo sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect keyboard sd-vconsole modconf kms block mdadm_udev filesystems grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
+
+                        if [[ "$USE_CRYPT" -eq 1 ]]
+                        then
+                                sudo sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect keyboard sd-vconsole modconf kms block mdadm_udev sd-encrypt lvm2 filesystems grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
+                        fi
+                else
+                        if [[ "$USE_CRYPT" -eq 1 ]]
+                        then
+                                sudo sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect keyboard sd-vconsole modconf kms block sd-encrypt lvm2 filesystems grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
+                        else
+                                sudo sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect keyboard sd-vconsole modconf kms block filesystems grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
+                        fi
+                fi
+        else
+                yay -S snap-pac systemd-boot-pacman-hook
+        fi
+
+        sudo mkinitcpio -P
+
         # create a snapshot
         for i in `seq 1 50`; do sudo snapper delete $i; done;
         sudo snapper -c root create --description "### FRESH INSTALL - Base ###" #ID 1
-        sudo grub-mkconfig -o /boot/grub/grub.cfg
-
-        echo "sed -i '/Loading Linux/d' /boot/grub/grub.cfg" | sudo tee -a /usr/share/libalpm/scripts/grub-mkconfig 
-        echo "sed -i '/Loading initial ramdisk/d' /boot/grub/grub.cfg" | sudo tee -a /usr/share/libalpm/scripts/grub-mkconfig 
 
         sudo mkdir /.bootbackup
         cat <<EOT | sudo tee -a /usr/bin/boot-backup
