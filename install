@@ -335,6 +335,16 @@ performinstall(){
                 USE_GRUB=0
         fi
 
+        if [[ "$USE_RAID" -eq 1 ]]
+        then
+                echo $'\nmdadm' >> /tmp/packages
+        fi
+
+        if [[ "$USE_CRYPT" -eq 1 ]]
+        then
+                echo $'\nlvm2' >> /tmp/packages
+        fi
+
         echo "### Installing packages... ____________________"
 
         pacstrap /mnt $(< /tmp/packages)
