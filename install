@@ -516,7 +516,7 @@ installbootloader(){
         "GRUB" "" GRUB \
         3>&1 1>&2 2>&3)
 
-        if [[ "$bootloader" -eq "GRUB" ]]
+        if [[ "$bootloader" == "GRUB" ]]
         then
                 USE_GRUB=1
                 installbootloader-grub

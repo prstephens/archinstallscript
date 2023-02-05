@@ -265,7 +265,7 @@ install_whitesur(){
         curl -sL $BASE_URL/wallpaper/macos/bigsur-dark.jpg -o $HOME/.local/share/backgrounds/bigsur-Dark.jpg
 
         # default to light if nothing is chosen (fallback)
-        $theme="Light"
+        theme="Light"
 
         theme=$(whiptail --backtitle "$BACKTITLE" --title "Select theme variation" --radiolist "Choose" 20 30 5 \
         "Light" "" light \
@@ -304,7 +304,7 @@ install_whitesur(){
         gsettings set org.gnome.shell.extensions.user-theme name WhiteSur-$theme
         gsettings set org.gnome.desktop.interface icon-theme WhiteSur
 
-        if [[ "$theme" -eq "Dark" ]]
+        if [[ "$theme" == "Dark" ]]
         then
                 gsettings set org.gnome.desktop.interface icon-theme WhiteSur-dark
         fi
