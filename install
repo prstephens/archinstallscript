@@ -321,6 +321,20 @@ performinstall(){
                 echo $'\ntlp' >> /tmp/packages 
         fi
 
+        bootloader="Systemd"
+        bootloader=$(whiptail --backtitle "$BACKTITLE" --title "Select a bootloader to install" --radiolist "Choose" 20 30 5 \
+        "Systemd" "" Systemd \
+        "GRUB" "" GRUB \
+        3>&1 1>&2 2>&3)
+
+        if [[ "$bootloader" == "GRUB" ]]
+        then
+                USE_GRUB=1
+                echo $'\ngrub\nos-prober\ngrub-btrfs' >> /tmp/packages
+        else
+                USE_GRUB=0
+        fi
+
         echo "### Installing packages... ____________________"
 
         pacstrap /mnt $(< /tmp/packages)
@@ -510,18 +524,10 @@ EOT
 }
 
 installbootloader(){
-        bootloader="Systemd"
-        bootloader=$(whiptail --backtitle "$BACKTITLE" --title "Select a bootloader to install" --radiolist "Choose" 20 30 5 \
-        "Systemd" "" Systemd \
-        "GRUB" "" GRUB \
-        3>&1 1>&2 2>&3)
-
-        if [[ "$bootloader" == "GRUB" ]]
+        if [[ "$USE_GRUB" -eq 1 ]]
         then
-                USE_GRUB=1
                 installbootloader-grub
         else
-                USE_GRUB=0
                 installbootloader-systemd
         fi
 }
