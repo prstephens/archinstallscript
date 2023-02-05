@@ -127,10 +127,11 @@ enablelvm(){
         clear
         echo "### CREATING LUKS PARTITION ON ${realrootdev} ____________________"
 
-        ROOTUUID=$(blkid -s UUID -o value $realrootdev)
-
         cryptsetup luksFormat $realrootdev 
         cryptsetup open $realrootdev cryptlvm
+
+        ROOTUUID=$(blkid -s UUID -o value $realrootdev)
+        echo $ROOTUUID
 
         # create the LVM partitons
         pvcreate /dev/mapper/cryptlvm
@@ -309,8 +310,6 @@ performinstall(){
         mount -o noatime,commit=120,compress=zstd,space_cache=v2,discard=async,subvol=@snapshots $rootdev /mnt/.snapshots
 
         mount $bootdev /mnt/boot
-
-        BOOTUUID=$(blkid -s UUID -o value $bootdev)
 
         # determine if we are installing on a laptop or desktop
         # if laptop, install tlp for better power management
@@ -511,9 +510,10 @@ EOT
 }
 
 installbootloader(){
+        bootloader="Systemd"
         bootloader=$(whiptail --backtitle "$BACKTITLE" --title "Select a bootloader to install" --radiolist "Choose" 20 30 5 \
-        "Systemd" "" systemd \
-        "GRUB" "" grub \
+        "Systemd" "" Systemd \
+        "GRUB" "" GRUB \
         3>&1 1>&2 2>&3)
 
         if [[ "$bootloader" -eq "GRUB" ]]
@@ -521,6 +521,7 @@ installbootloader(){
                 USE_GRUB=1
                 installbootloader-grub
         else
+                USE_GRUB=0
                 installbootloader-systemd
         fi
 }
