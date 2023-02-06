@@ -131,7 +131,6 @@ enablelvm(){
         cryptsetup open $realrootdev cryptlvm
 
         ROOTUUID=$(blkid -s UUID -o value $realrootdev)
-        echo $ROOTUUID
 
         # create the LVM partitons
         pvcreate /dev/mapper/cryptlvm
@@ -310,6 +309,8 @@ performinstall(){
         mount -o noatime,commit=120,compress=zstd,space_cache=v2,discard=async,subvol=@snapshots $rootdev /mnt/.snapshots
 
         mount $bootdev /mnt/boot
+
+        ROOTUUID=$(blkid -s UUID -o value $rootdev)
 
         # determine if we are installing on a laptop or desktop
         # if laptop, install tlp for better power management
@@ -580,22 +581,18 @@ installbootloader-systemd(){
 
         if [[ "$USE_CRYPT" -eq 1 ]]
         then
-                cat <<EOT >> /mnt/boot/loader/entries/arch.conf
-title   Arch Linux
-linux   /vmlinuz-linux-zen
-initrd  /intel-ucode.img
-initrd  /initramfs-linux-zen.img
-options rd.luks.name=$ROOTUUID=cryptlvm root=/dev/vg1/root rootflags=subvol=@ resume=$swapdev loglevel=3 systemd.show_status=auto rd.udev.log_level=3 nowatchdog mitigations=off
-EOT
+                options="options rd.luks.name=$ROOTUUID=cryptlvm root=/dev/vg1/root rw rootflags=subvol=@ resume=$swapdev quiet loglevel=3 systemd.show_status=auto rd.udev.log_level=3 nowatchdog mitigations=off"
         else
-                cat <<EOT >> /mnt/boot/loader/entries/arch.conf
+                options="root=UUID=$ROOTUUID rw rootflags=subvol=@ resume=$swapdev quiet loglevel=3 systemd.show_status=auto rd.udev.log_level=3 nowatchdog mitigations=off" 
+        fi
+
+        cat <<EOT >> /mnt/boot/loader/entries/arch.conf
 title   Arch Linux
 linux   /vmlinuz-linux-zen
 initrd  /intel-ucode.img
 initrd  /initramfs-linux-zen.img
-options root=/dev/vg1/root rootflags=subvol=@ resume=$swapdev loglevel=3 systemd.show_status=auto rd.udev.log_level=3 nowatchdog mitigations=off
+options $options
 EOT
-        fi
 }
 
 setupuser(){
