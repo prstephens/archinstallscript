@@ -179,6 +179,7 @@ install_gnome_mac(){
         cd /tmp/fildem
         makepkg -si
         cp -r  fildemGMenu\@gonza.com/ $HOME/.local/share/gnome-shell/extensions/
+        curl -sL $BASE_URL/configs/home/fildem.desktop -o $HOME/.config/autostart/fildem.desktop
 
         cat <<EOT >> ~/.gtkrc-2.0
 gtk-modules="appmenu-gtk-module"
@@ -219,6 +220,7 @@ EOT
         yay -S gdm-plymouth
         sudo sed -i 's/systemd/systemd sd-plymouth/' /etc/mkinitcpio.conf
         sudo sed -i 's/quiet/quiet splash/' /etc/default/grub
+        sudo sed -i 's/quiet/quiet splash/' /boot/loader/entries/arch.conf
         git clone https://github.com/fathyar/mac-plymouth.git /tmp/mac-plymouth
         sudo cp -r /tmp/mac-plymouth/mac/ /usr/share/plymouth/themes/
         sudo plymouth-set-default-theme -R mac              

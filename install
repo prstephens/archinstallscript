@@ -708,11 +708,11 @@ self_update(){
 while [[ $# -gt 0 ]]; do
         case "${1}" in
                 -c)
+                        swapoff -a
                         rm /tmp/packages
                         [[ -d /mnt/boot/efi ]] && umount -A /mnt/boot/efi
                         [[ -d /mnt/boot ]] && umount -A /mnt/boot
-                        [[ -d /mnt ]] && umount -A /mnt
-                        swapoff -a; shift ;;
+                        [[ -d /mnt ]] && umount -A /mnt; shift ;;
                 -m)
                         MIRROR_COUNTRY="${2}" && shift 2 || shift ;;
                 *)
