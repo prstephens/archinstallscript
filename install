@@ -130,7 +130,7 @@ enablelvm(){
         cryptsetup luksFormat $realrootdev 
         cryptsetup open $realrootdev cryptlvm
 
-        ROOTUUID=$(blkid -s UUID -o value $realrootdev)
+        CRYPTROOTUUID=$(blkid -s UUID -o value $realrootdev)
 
         # create the LVM partitons
         pvcreate /dev/mapper/cryptlvm
@@ -550,7 +550,7 @@ installbootloader-grub(){
         if [[ "$USE_CRYPT" -eq 1 ]]
         then
 
-                arch-chroot /mnt sed -i "s|^GRUB_CMDLINE_LINUX=.*$|GRUB_CMDLINE_LINUX=\"rd.luks.name=$ROOTUUID=cryptlvm root=/dev/vg1/root resume=$swapdev\"|" /etc/default/grub
+                arch-chroot /mnt sed -i "s|^GRUB_CMDLINE_LINUX=.*$|GRUB_CMDLINE_LINUX=\"rd.luks.name=$CRYPTROOTUUID=cryptlvm root=/dev/vg1/root resume=$swapdev\"|" /etc/default/grub
         else   
                 arch-chroot /mnt sed -i "s|^GRUB_CMDLINE_LINUX=.*$|GRUB_CMDLINE_LINUX=\"resume=$swapdev\"|" /etc/default/grub
         fi
@@ -581,7 +581,7 @@ installbootloader-systemd(){
 
         if [[ "$USE_CRYPT" -eq 1 ]]
         then
-                options="options rd.luks.name=$ROOTUUID=cryptlvm root=/dev/vg1/root rw rootflags=subvol=@ resume=$swapdev quiet loglevel=3 systemd.show_status=auto rd.udev.log_level=3 nowatchdog mitigations=off"
+                options="options rd.luks.name=$CRYPTROOTUUID=cryptlvm root=/dev/vg1/root rw rootflags=subvol=@ resume=$swapdev quiet loglevel=3 systemd.show_status=auto rd.udev.log_level=3 nowatchdog mitigations=off"
         else
                 options="root=UUID=$ROOTUUID rw rootflags=subvol=@ resume=$swapdev quiet loglevel=3 systemd.show_status=auto rd.udev.log_level=3 nowatchdog mitigations=off" 
         fi
