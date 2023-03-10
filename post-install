@@ -194,6 +194,8 @@ EOT
         sudo ln -s /usr/lib/python3.9/site-packages/fildem /usr/lib/python3.10/site-packages 
         sudo ln -s /usr/lib/python3.9/site-packages/fildem-0.6.7-py3.9.egg-info/ /usr/lib/python3.10/site-packages
 
+        curl -sL $BASE_URL/configs/home/fildem.desktop -o $HOME/.config/autostart/fildem.desktop
+
         # blur my shell
         git clone https://github.com/aunetx/blur-my-shell /tmp/blur-my-shell
         cd /tmp/blur-my-shell
