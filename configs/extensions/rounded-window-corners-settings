@@ -1,0 +1,8 @@
+[/]
+border-color=(1.0, 1.0, 1.0, 1.0)
+border-width=0
+custom-rounded-corner-settings=@a{sv} {}
+enable-preferences-entry=true
+global-rounded-corner-settings={'padding': <{'left': <uint32 0>, 'right': <uint32 1>, 'top': <uint32 0>, 'bottom': <uint32 1>}>, 'keep_rounded_corners': <{'maximized': <true>, 'fullscreen': <false>}>, 'border_radius': <uint32 12>, 'smoothing': <uint32 1>, 'enabled': <true>}
+settings-version=uint32 5
+skip-libadwaita-app=false

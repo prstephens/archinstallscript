@@ -238,6 +238,7 @@ EOT
         curl -sL $BASE_URL/configs/extensions/logo-menu-settings -o /tmp/logo-menu-settings
         curl -sL $BASE_URL/configs/extensions/sur-clock-settings -o /tmp/sur-clock-settings
         curl -sL $BASE_URL/configs/extensions/unite-settings -o /tmp/unite-settings
+        curl -sL $BASE_URL/configs/extensions/rounded-window-corners-settings -o /tmp/rounded-window-corners-settings
 
         dconf load /org/gnome/shell/extensions/dash-to-dock/ < /tmp/dash-to-dock-settings
         dconf load /org/gnome/shell/extensions/blur-my-shell/ < /tmp/blur-my-shell-settings
@@ -245,6 +246,7 @@ EOT
         dconf load /org/gnome/shell/extensions/Logo-menu/ < /tmp/logo-menu-settings
         dconf load /org/gnome/shell/extensions/sur-clock/ < /tmp/sur-clock-settings
         dconf load /org/gnome/shell/extensions/unite/ < /tmp/unite-settings
+        dconf load /org/gnome/shell/extensions/rounded-window-corners/ < /tmp/rounded-window-corners-settings
 
         gnome-extensions enable ubuntu-dock@ubuntu.com
         gnome-extensions enable blur-my-shell@aunetx
