@@ -224,7 +224,7 @@ EOT
 
         # plymouth macos loading theme        
         yay -S gdm-plymouth
-        sudo sed -i 's/systemd/systemd sd-plymouth/' /etc/mkinitcpio.conf
+        sudo sed -i 's/systemd/systemd plymouth/' /etc/mkinitcpio.conf
         sudo sed -i 's/quiet/quiet splash/' /etc/default/grub
         sudo sed -i 's/quiet/quiet splash/' /boot/loader/entries/arch.conf
         git clone https://github.com/fathyar/mac-plymouth.git /tmp/mac-plymouth
