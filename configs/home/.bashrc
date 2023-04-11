@@ -209,7 +209,7 @@ alias nocomment='sudo grep -Ev '\''^(#|$)'\'''
 alias pacclean='sudo paccache -r && sudo pacman -Sc && sudo pacman -Rns $(pacman -Qtdq)'
 alias pacman='sudo pacman'
 alias ports='sudo netstat -tulpn'
-alias ps='ps -elf | grep'
+alias pss='ps -elf | grep'
 alias rd='ssh pi@rainbowdash -i ~/keys/pi-prvt-ssh'
 alias remove-orphans='sudo pacman -Rns $(pacman -Qtdq)'
 alias screen='xrandr --output DP-4 --mode 1920x1080 --rate 240 && xscreensaver'
@@ -225,6 +225,8 @@ alias scrub='sudo btrfs scrub start -B /'
 alias ff='wmctrl -r :ACTIVE: -b toggle,fullscreen'
 alias pacsearch="yay -Slq | fzf --multi --preview 'yay -Si {1}' | xargs -ro yay -S"
 alias pacrm="yay -Qq | fzf --multi --preview 'yay -Qi {1}' | xargs -ro yay -Rns"
+alias pixeldex="pokemon-colorscripts -l | fzf --multi --preview 'pokemon-colorscripts -n {1}'"
+alias gs="sudo renice -n -20 $(ps -eo pid,comm | grep -E '(^|\s)gnome-shell($|\s)' | awk '{print$1}')"
 
 # Alias definitions.
 # You may want to put all your additions into a separate file like
