@@ -223,7 +223,6 @@ EOT
         cp -r /tmp/unite/unite\@hardpixel.eu ~/.local/share/gnome-shell/extensions
 
         # plymouth macos loading theme        
-        yay -S gdm-plymouth
         sudo sed -i 's/systemd/systemd plymouth/' /etc/mkinitcpio.conf
         sudo sed -i 's/quiet/quiet splash/' /etc/default/grub
         sudo sed -i 's/quiet/quiet splash/' /boot/loader/entries/arch.conf
