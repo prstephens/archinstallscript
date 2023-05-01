@@ -150,6 +150,13 @@ install_gnome(){
         # Change Google Drive name in Nautilus sidebar
         # ~/.config/goa-1.0/accounts.conf
         # PresentationIdentity=Google Drive
+
+        # Change wallpaper ov Gnome overview
+        # gnome-shell.css
+        # #overviewGroup {
+        #         background-image: url("/home/paul/Downloads/croped-colorful-abstract-background-wallpaper.jpg");
+        #         background-size: cover;
+        # }              
 }
 
 install_gnome_mac(){
