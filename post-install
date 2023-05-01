@@ -139,14 +139,6 @@ install_gnome(){
         # Remove some trash from Gnome
         sudo pacman -Rs epiphany gnome-music cheese totem
 
-        # Install Gradience - to change LibAdwaita colours
-        #flatpak install flathub com.github.GradienceTeam.Gradience
-
-        # coolero
-        #sudo systemd-sysusers
-        #sudo usermod -aG coolero $USER
-        #sudo systemctl enable coolerod.service
-
 	sudo systemctl enable gdm
 
         # create a snapshot
@@ -154,6 +146,10 @@ install_gnome(){
         sudo snapper -c root create --description "### FRESH INSTALL - Including Gnome ###" # ID 2
 
         whiptail --backtitle "$BACKTITLE" --msgbox --title "Gnome Installed" "Its best to reboot now before carrying on with the install" 0 78
+
+        # Change Google Drive name in Nautilus sidebar
+        # ~/.config/goa-1.0/accounts.conf
+        # PresentationIdentity=Google Drive
 }
 
 install_gnome_mac(){
