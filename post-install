@@ -151,12 +151,22 @@ install_gnome(){
         # ~/.config/goa-1.0/accounts.conf
         # PresentationIdentity=Google Drive
 
-        # Change wallpaper ov Gnome overview
-        # gnome-shell.css
+        # Change wallpaper in Gnome overview
+        # ~/.themes/WhiteSur-Dark/gnome-shell/gnome-shell.css
         # #overviewGroup {
         #         background-image: url("/home/paul/Downloads/croped-colorful-abstract-background-wallpaper.jpg");
         #         background-size: cover;
         # }              
+}
+
+install_dash_to_dock(){
+        # add dash to dock extension - use ubuntu-dock branch. better compatibility with blur my shell
+        git clone https://github.com/micheleg/dash-to-dock.git -b ubuntu-dock /tmp/ubuntu-dock
+        cd /tmp/ubuntu-dock
+        # Change the icon spacing to 0 so the dock isnt so stretched
+        sed -i 's/$dock_icons_distance: 4px;/$dock_icons_distance: 0px;/' _stylesheet.scss
+        make
+        make install
 }
 
 install_gnome_mac(){
@@ -167,12 +177,8 @@ install_gnome_mac(){
         # Remove 'Utilities' folder in app grid so all apps are in view
         gsettings set org.gnome.desktop.app-folders folder-children "['YaST']"
 
-        # add dash to dock extension - use ubuntu-dock branch. better compatibility with blur my shell
-        # yay -S gnome-shell-extension-dash-to-dock
-        git clone https://github.com/prstephens/dash-to-dock-ventura.git /tmp/ubuntu-dock
-        cd /tmp/ubuntu-dock
-        make
-        make install
+        # install dash to dock extension
+        install_dash_to_dock
 
         # install the Mac theme set
         install_whitesur
@@ -205,7 +211,7 @@ EOT
         make install
 
         # rounded corners
-        curl -sL https://github.com/yilozt/rounded-window-corners/releases/download/v10/rounded-window-corners@yilozt.shell-extension.zip -o /tmp/rounded.zip
+        curl -sL https://github.com/yilozt/rounded-window-corners/releases/download/v11/rounded-window-corners@yilozt.shell-extension.zip -o /tmp/rounded.zip
         gnome-extensions install /tmp/rounded.zip
 
         # panel corners
