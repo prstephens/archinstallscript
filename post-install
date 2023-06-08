@@ -79,7 +79,7 @@ mainmenu(){
 
 install_fonts(){
         echo "Installing fonts..."
-        yay -S apple-fonts otf-cascadia-code-nerd ttf-menlo-powerline-git
+        yay -S apple-fonts otf-cascadia-code ttf-menlo-powerline-git
 
         [[ ! -d $HOME/.local/share/fonts ]] && mkdir $HOME/.local/share/fonts
         curl -sL $BASE_URL/fonts/HelveticaNeueLt.ttf -o $HOME/.local/share/fonts/HelveticaNeueLt.ttf
@@ -137,7 +137,7 @@ install_gnome(){
         gnome-extensions enable arch-update@RaphaelRochet
         
         # Remove some trash from Gnome
-        sudo pacman -Rs epiphany gnome-music cheese totem
+        sudo pacman -Rs epiphany gnome-music cheese totem gnome-tour
 
 	sudo systemctl enable gdm
 
