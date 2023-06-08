@@ -183,27 +183,27 @@ install_gnome_mac(){
         # install the Mac theme set
         install_whitesur
 
-        # Global menu
-        curl -sL $BASE_URL/configs/extensions/python3-fildem.zst -o /tmp/python3-fildem.zst
-        sudo pacman -U /tmp/python3-fildem.zst
+        # Global menu - broken
+#         curl -sL $BASE_URL/configs/extensions/python3-fildem.zst -o /tmp/python3-fildem.zst
+#         sudo pacman -U /tmp/python3-fildem.zst
 
-        git clone https://github.com/gonzaarcr/Fildem.git /tmp/fildem
-        cd /tmp/fildem
-        cp -r  fildemGMenu\@gonza.com/ $HOME/.local/share/gnome-shell/extensions/
+#         git clone https://github.com/gonzaarcr/Fildem.git /tmp/fildem
+#         cd /tmp/fildem
+#         cp -r  fildemGMenu\@gonza.com/ $HOME/.local/share/gnome-shell/extensions/
 
-        cat <<EOT >> ~/.gtkrc-2.0
-gtk-modules="appmenu-gtk-module"
-EOT
+#         cat <<EOT >> ~/.gtkrc-2.0
+# gtk-modules="appmenu-gtk-module"
+# EOT
 
-        cat <<EOT >> ~/.config/gtk-3.0/settings.ini
-[Settings]
-gtk-modules="appmenu-gtk-module"
-EOT
-        # fildem fix
-        sudo ln -s /usr/lib/python3.9/site-packages/fildem /usr/lib/python3.10/site-packages 
-        sudo ln -s /usr/lib/python3.9/site-packages/fildem-0.6.7-py3.9.egg-info/ /usr/lib/python3.10/site-packages
+#         cat <<EOT >> ~/.config/gtk-3.0/settings.ini
+# [Settings]
+# gtk-modules="appmenu-gtk-module"
+# EOT
+#         # fildem fix
+#         sudo ln -s /usr/lib/python3.9/site-packages/fildem /usr/lib/python3.10/site-packages 
+#         sudo ln -s /usr/lib/python3.9/site-packages/fildem-0.6.7-py3.9.egg-info/ /usr/lib/python3.10/site-packages
 
-        curl -sL $BASE_URL/configs/home/fildem.desktop -o $HOME/.config/autostart/fildem.desktop
+#        curl -sL $BASE_URL/configs/home/fildem.desktop -o $HOME/.config/autostart/fildem.desktop
 
         # blur my shell
         git clone https://github.com/aunetx/blur-my-shell /tmp/blur-my-shell
@@ -258,7 +258,7 @@ EOT
 
         gnome-extensions enable ubuntu-dock@ubuntu.com
         gnome-extensions enable blur-my-shell@aunetx
-        gnome-extensions enable fildemGMenu@gonza.com
+        #gnome-extensions enable fildemGMenu@gonza.com
         gnome-extensions enable rounded-window-corners@yilozt
         gnome-extensions enable panel-corners@aunetx
         gnome-extensions enable logomenu@aryan_k
