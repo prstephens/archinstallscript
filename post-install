@@ -23,55 +23,35 @@ set -o pipefail
 # --------------------------------------------------------
 
 mainmenu(){
-        if [ "${1}" = "" ]; then
-            nextitem="."
-        else
-            nextitem=${1}
-        fi
         options=()
-        options+=("GNOME" "Gnome vanilla install")
-        options+=("GNOME MAC OS" "Install Gnome with Mac OS theme")
-        options+=("GNOME POP!_OS" "Install Gnome with the Pop!_OS Pop Shell and configurations")
-        options+=("1.2)" "Themes")
-        options+=("3)" "Applications")
-        options+=("3.1)" "Nord VPN")
-        options+=("4)" "QEMU/KVM")
+        options+=("GNOME" "Vanilla GNOME install")
+        options+=("GNOME MAC OS" "Install GNOME with Mac OS theme")
+        options+=("GNOME POP!_OS" "Install GNOME with the Pop!_OS Pop Shell and configurations")
+        options+=("APPLICATIONS)" "Install some useful Applications")
+        options+=("QEMU)" "QEMU/KVM")
 
-        sel=$(whiptail --backtitle "${BACKTITLE}" --fb --title "Arch Linux Post Installer" --menu "" --cancel-button "Exit" --default-item "${nextitem}" 20 78 0 \
+        sel=$(whiptail --backtitle "${BACKTITLE}" --fb --title "Arch Linux Post Installer" --menu "" --cancel-button "Exit" --default-item "." 20 78 0 \
             "${options[@]}" \
             3>&1 1>&2 2>&3)
         if [ "$?" = "0" ]; then
             case ${sel} in
                 "GNOME")
                     install_gnome
-                    nextitem="1.2)"
                 ;;
                 "GNOME MAC OS")
                     install_gnome_mac
-                    nextitem="1.2)"
                 ;;
                 "GNOME POP!_OS")
                     install_popshell
-                    nextitem="1.2)"
                 ;;
-                "1.2)")
-                    install_themes
-                    nextitem="2)"
-                ;;
-                "3)")
+                "APPLICATIONS)")
                     install_apps
-                    nextitem="4)"
                 ;;
-                "3.1)")
-                    install_nordvpn
-                    nextitem="4)"
-                ;;
-                "4)")
+                "QEMU)")
                     install_qemu
-                    nextitem="5)"
                 ;;
             esac
-            mainmenu "${nextitem}"
+            mainmenu
         else
             clear
         fi
@@ -95,12 +75,6 @@ install_fonts(){
         sudo tar -zxvf /tmp/windowsfonts.tar.gz -C /
 
         fc-cache -f
-}
-
-install_themes(){
-        install_whitesur
-        install_catppuccin
-        install_orchis
 }
 
 install_gnome(){
@@ -129,8 +103,8 @@ install_gnome(){
         gsettings set org.gnome.shell.extensions.arch-update package-manager 'pamac-manager'
         gsettings set org.gnome.shell.extensions.arch-update use-buildin-icons true
         gsettings set org.gnome.shell.extensions.arch-update strip-versions true
-
         gsettings set org.gnome.shell disable-extension-version-validation "true"
+        gsettings set org.gnome.desktop.input-sources sources "[('xkb', 'gb')]"
 
         # Turn on some extensions
         gnome-extensions enable user-theme@gnome-shell-extensions.gcampax.github.com
@@ -144,8 +118,6 @@ install_gnome(){
         # create a snapshot
         for i in `seq 2 50`; do sudo snapper delete $i; done;
         sudo snapper -c root create --description "### FRESH INSTALL - Including Gnome ###" # ID 2
-
-        whiptail --backtitle "$BACKTITLE" --msgbox --title "Gnome Installed" "Its best to reboot now before carrying on with the install" 0 78
 
         # Change Google Drive name in Nautilus sidebar
         # ~/.config/goa-1.0/accounts.conf
@@ -172,8 +144,6 @@ install_dash_to_dock(){
 install_gnome_mac(){
         install_gnome
 
-        gsettings set org.gnome.desktop.input-sources sources "[('xkb', 'gb')]"
-
         # Remove 'Utilities' folder in app grid so all apps are in view
         gsettings set org.gnome.desktop.app-folders folder-children "['YaST']"
 
@@ -182,28 +152,6 @@ install_gnome_mac(){
 
         # install the Mac theme set
         install_whitesur
-
-        # Global menu - broken
-#         curl -sL $BASE_URL/configs/extensions/python3-fildem.zst -o /tmp/python3-fildem.zst
-#         sudo pacman -U /tmp/python3-fildem.zst
-
-#         git clone https://github.com/gonzaarcr/Fildem.git /tmp/fildem
-#         cd /tmp/fildem
-#         cp -r  fildemGMenu\@gonza.com/ $HOME/.local/share/gnome-shell/extensions/
-
-#         cat <<EOT >> ~/.gtkrc-2.0
-# gtk-modules="appmenu-gtk-module"
-# EOT
-
-#         cat <<EOT >> ~/.config/gtk-3.0/settings.ini
-# [Settings]
-# gtk-modules="appmenu-gtk-module"
-# EOT
-#         # fildem fix
-#         sudo ln -s /usr/lib/python3.9/site-packages/fildem /usr/lib/python3.10/site-packages 
-#         sudo ln -s /usr/lib/python3.9/site-packages/fildem-0.6.7-py3.9.egg-info/ /usr/lib/python3.10/site-packages
-
-#        curl -sL $BASE_URL/configs/home/fildem.desktop -o $HOME/.config/autostart/fildem.desktop
 
         # blur my shell
         git clone https://github.com/aunetx/blur-my-shell /tmp/blur-my-shell
@@ -258,14 +206,11 @@ install_gnome_mac(){
 
         gnome-extensions enable ubuntu-dock@ubuntu.com
         gnome-extensions enable blur-my-shell@aunetx
-        #gnome-extensions enable fildemGMenu@gonza.com
         gnome-extensions enable rounded-window-corners@yilozt
         gnome-extensions enable panel-corners@aunetx
         gnome-extensions enable logomenu@aryan_k
         gnome-extensions enable Sur_Clock@medaip90.com
         gnome-extensions enable unite@hardpixel.eu
-
-        whiptail --backtitle "$BACKTITLE" --msgbox --title "Gnome Mac OS Installed" "Its best to logout or reboot now" 0 78
 }
 
 install_whitesur(){
@@ -304,13 +249,12 @@ install_whitesur(){
 
         git clone https://github.com/prstephens/WhiteSur-icon-theme.git /tmp/WhiteSur-icon-theme
         /tmp/WhiteSur-icon-theme/install.sh --black
+         # change some icons to a better mac version
+        cp -R /tmp/WhiteSur-icon-theme/original/*.svg $HOME/.local/share/icons/WhiteSur/apps/scalable/
 
         git clone https://github.com/prstephens/WhiteSur-cursors.git /tmp/WhiteSur-cursors
         cd /tmp/WhiteSur-cursors
         ./install.sh
-
-        # change some icons to a better mac version
-        cp -R /tmp/WhiteSur-icon-theme/original/*.svg $HOME/.local/share/icons/WhiteSur/apps/scalable/
 
         # MacOS calendar icon fix
         git clone https://github.com/prstephens/mac-dynamic-calendar.git /tmp/mac-dynamic-calendar
@@ -348,20 +292,6 @@ install_whitesur(){
         # Just perfection
         # Search Light
         # Tray icons reloaded
-}
-
-apply_whitesur(){
-        gsettings set org.gnome.desktop.interface gtk-theme WhiteSur-Light
-        gsettings set org.gnome.desktop.interface icon-theme WhiteSur
-        gsettings set org.gnome.desktop.interface cursor-theme WhiteSur-cursors
-        gsettings set org.gnome.shell.extensions.user-theme name WhiteSur-Light
-
-        gsettings set org.gnome.desktop.interface font-name "SF Pro Rounded Regular 11"
-        gsettings set org.gnome.desktop.interface document-font-name "SF Pro Rounded Regular 11"
-        gsettings set org.gnome.desktop.interface monospace-font-name "Source Code Pro 9"
-        gsettings set org.gnome.desktop.wm.preferences titlebar-font "SF Pro Rounded Regular 11"
-
-        gsettings set org.gnome.desktop.wm.preferences button-layout "close,minimize,maximize:"
 }
 
 install_popshell(){
@@ -431,32 +361,6 @@ apply_pop(){
         gsettings set org.gnome.desktop.wm.preferences button-layout ":minimize,close"
 }
 
-install_catppuccin(){
-        yay -S catppuccin-gtk-theme-macchiato
-
-        # code theme
-        git clone https://github.com/catppuccin/vscode.git $HOME/.vscode-oss/extensions/catppuccin-vsc
-
-        # Fluent icon theme - goes nice with catppuccin
-        git clone https://github.com/prstephens/Fluent-icon-theme.git /tmp/Fluent-icon-theme
-        /tmp/Fluent-icon-theme/install.sh --all -r
-}
-
-install_orchis(){
-        git clone https://github.com/prstephens/Orchis-theme.git /tmp/Orchis-theme
-        /tmp/Orchis-theme/install.sh -d $HOME/.themes -t pink -c dark
-        
-        git clone https://github.com/prstephens/Tela-icon-theme.git /tmp/Tela-icon-theme
-        /tmp/Tela-icon-theme/install.sh -d $HOME/.icons pink
-}
-
-install_spotify(){
-        # now there is spotify-launcher in main repos
-        echo "Installing Spotify..."
-        curl -sS https://download.spotify.com/debian/pubkey_5E3C45D7B312C643.gpg | gpg --import -
-        yay -S spotify
-}
-
 install_profile-sync-daemon(){
         sudo pacman -S profile-sync-daemon
         psd
@@ -478,20 +382,7 @@ install_apps(){
         clear
 
         echo "Installing Chrome, OnlyOffice, Gimp..."
-        yay -S spotify-launcher google-chrome onlyoffice-bin gimp vlc kodi dropbox handbrake rpi-imager-bin geary ventoy-bin etcher-bin
-}
-
-install_nordvpn(){
-        yay -S nordvpn-bin
-        sudo groupadd -r nordvpn
-        sudo gpasswd -a $USER nordvpn
-        sudo systemctl enable --now nordvpnd.service
-        nordvpn set protocol tcp
-        nordvpn set technology nordlynx
-        sudo nordvpn whitelist add subnet 192.168.1.0/24
-        nordvpn set autoconnect on uk
-
-        whiptail --backtitle "$BACKTITLE" --msgbox --title "Information" "To log into Nord VPN, run 'nordvpn login' and follow the instructions" 0 78
+        yay -S spotify-launcher google-chrome onlyoffice-bin gimp vlc kodi dropbox handbrake geary ventoy-bin etcher-bin
 }
 
 install_qemu(){
