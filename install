@@ -33,7 +33,7 @@ mainmenu(){
         options=()
         options+=("WIPE DEVICE" "(Optional) Securely wipe disk or partition before installation")
         options+=("PARTITION DISK" "Partition disk using cfdisk to create EFI, swap and root partitions")
-        options+=("ENCRYPTION" "(Optional) Use full disk enryption and detached header for deniablity")
+        options+=("ENCRYPTION" "(Optional) Use full disk enryption")
         options+=("MOUNT" "Select the partitions to mount")
         options+=("SETUP USER" "Setup a user and root password")
         options+=("INSTALL" "Perform Arch Linux base Installation")
