@@ -141,6 +141,25 @@ install_dash_to_dock(){
         make install
 }
 
+install_plymouth(){
+        sudo pacman -S plymouth
+
+        if [[ "$USE_GRUB" -eq 1 ]]
+        then
+                sudo sed -i 's/quiet/quiet splash/' /etc/default/grub
+                sudo grub-mkconfig -o /boot/grub/grub.cfg
+        else
+                sudo sed -i 's/quiet/quiet splash/' /boot/loader/entries/arch.conf
+        fi
+
+        sudo sed -i 's/systemd/systemd plymouth/' /etc/mkinitcpio.conf
+        sudo mkinitcpio -P
+
+        git clone https://github.com/fathyar/mac-plymouth.git /tmp/mac-plymouth
+        sudo cp -r /tmp/mac-plymouth/mac/ /usr/share/plymouth/themes/
+        sudo plymouth-set-default-theme -R mac    
+}
+
 install_gnome_mac(){
         install_gnome
 
@@ -180,13 +199,7 @@ install_gnome_mac(){
         cp -r /tmp/unite/unite\@hardpixel.eu ~/.local/share/gnome-shell/extensions
 
         # plymouth macos loading theme        
-        sudo sed -i 's/systemd/systemd plymouth/' /etc/mkinitcpio.conf
-        sudo sed -i 's/quiet/quiet splash/' /etc/default/grub
-        sudo sed -i 's/quiet/quiet splash/' /boot/loader/entries/arch.conf
-        git clone https://github.com/fathyar/mac-plymouth.git /tmp/mac-plymouth
-        sudo cp -r /tmp/mac-plymouth/mac/ /usr/share/plymouth/themes/
-        sudo plymouth-set-default-theme -R mac              
-        sudo grub-mkconfig -o /boot/grub/grub.cfg
+        install_plymouth
         
         curl -sL $BASE_URL/configs/extensions/dash-to-dock-settings -o /tmp/dash-to-dock-settings
         curl -sL $BASE_URL/configs/extensions/blur-my-shell-settings -o /tmp/blur-my-shell-settings
