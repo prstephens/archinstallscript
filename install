@@ -33,7 +33,7 @@ mainmenu(){
         options=()
         options+=("WIPE DEVICE" "(Optional) Securely wipe disk or partition before installation")
         options+=("PARTITION DISK" "Partition disk using cfdisk to create EFI, swap and root partitions")
-        options+=("ENCRYPTION" "(Optional) Use full disk enryption")
+        options+=("ENCRYPTION" "(Optional) Use full disk enryption with detached LUKS header")
         options+=("MOUNT" "Select the partitions to mount")
         options+=("SETUP USER" "Setup a user and root password")
         options+=("INSTALL" "Perform Arch Linux base Installation")
@@ -130,9 +130,6 @@ enablelvm(){
         dd if=/dev/zero of=header.img bs=16M count=1
         cryptsetup luksFormat $realrootdev --offset 32768 --header header.img
         cryptsetup open --header header.img $realrootdev cryptlvm
-        
-        #cryptsetup luksFormat $realrootdev 
-        #cryptsetup open $realrootdev cryptlvm
 
         CRYPTHEADERUUID=$(blkid -s UUID -o value header.img)
         CRYPTROOTUUID=$(blkid -s UUID -o value $realrootdev)
@@ -554,8 +551,9 @@ installbootloader-grub(){
 
         if [[ "$USE_CRYPT" -eq 1 ]]
         then
-
-                arch-chroot /mnt sed -i "s|^GRUB_CMDLINE_LINUX=.*$|GRUB_CMDLINE_LINUX=\"rd.luks.name=$CRYPTROOTUUID=cryptlvm root=/dev/vg1/root resume=$swapdev\"|" /etc/default/grub
+                mv header.img /mnt/boot
+                BOOTUUID=$(blkid -s UUID -o value $bootdev)
+                arch-chroot /mnt sed -i "s|^GRUB_CMDLINE_LINUX=.*$|GRUB_CMDLINE_LINUX=\"rd.luks.name=$CRYPTHEADERUUID=cryptlvm rd.luks.options=$CRYPTHEADERUUID=header=/header.img:UUID=$BOOTUUID rd.luks.data=$CRYPTHEADERUUID=$realrootdev root=/dev/vg1/root rw rootflags=subvol=@ resume=$swapdev\"|" /etc/default/grub
         else   
                 arch-chroot /mnt sed -i "s|^GRUB_CMDLINE_LINUX=.*$|GRUB_CMDLINE_LINUX=\"resume=$swapdev\"|" /etc/default/grub
         fi
@@ -583,13 +581,12 @@ installbootloader-systemd(){
         echo "### Installing bootctl... ____________________"
 
         arch-chroot /mnt bootctl install
-        mv header.img /mnt/boot
-        BOOTUUID=$(blkid -s UUID -o value $bootdev)
-
+        
         if [[ "$USE_CRYPT" -eq 1 ]]
         then
-                options="rd.luks.name=$CRYPTHEADERUUID=cryptlvm rd.luks.options=$CRYPTHEADERUUID=header=/header.img:UUID=$BOOTUUID rd.luks.data=$CRYPTHEADERUUID=$realrootdev"
-                #options="options rd.luks.name=$CRYPTROOTUUID=cryptlvm root=/dev/vg1/root rw rootflags=subvol=@ resume=$swapdev quiet loglevel=3 systemd.show_status=auto rd.udev.log_level=3 nowatchdog mitigations=off"
+                mv header.img /mnt/boot
+                BOOTUUID=$(blkid -s UUID -o value $bootdev)
+                options="rd.luks.name=$CRYPTHEADERUUID=cryptlvm rd.luks.options=$CRYPTHEADERUUID=header=/header.img:UUID=$BOOTUUID rd.luks.data=$CRYPTHEADERUUID=$realrootdev root=/dev/vg1/root rw rootflags=subvol=@ resume=$swapdev quiet loglevel=3 systemd.show_status=auto rd.udev.log_level=3 nowatchdog mitigations=off"
         else
                 options="root=UUID=$ROOTUUID rw rootflags=subvol=@ resume=$swapdev quiet loglevel=3 systemd.show_status=auto rd.udev.log_level=3 nowatchdog mitigations=off" 
         fi
