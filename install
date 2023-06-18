@@ -584,7 +584,7 @@ installbootloader-systemd(){
 
         arch-chroot /mnt bootctl install
         mv header.img /mnt/boot
-        $BOOTUUID=
+        BOOTUUID=$(blkid -s UUID -o value $bootdev)
 
         if [[ "$USE_CRYPT" -eq 1 ]]
         then
