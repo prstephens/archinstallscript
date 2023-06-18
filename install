@@ -127,9 +127,14 @@ enablelvm(){
         clear
         echo "### CREATING LUKS PARTITION ON ${realrootdev} ____________________"
 
-        cryptsetup luksFormat $realrootdev 
-        cryptsetup open $realrootdev cryptlvm
+        dd if=/dev/zero of=header.img bs=16M count=1
+        cryptsetup luksFormat $realrootdev --offset 32768 --header header.img
+        cryptsetup open --header header.img $realrootdev cryptlvm
+        
+        #cryptsetup luksFormat $realrootdev 
+        #cryptsetup open $realrootdev cryptlvm
 
+        CRYPTHEADERUUID=$(blkid -s UUID -o value header.img)
         CRYPTROOTUUID=$(blkid -s UUID -o value $realrootdev)
 
         # create the LVM partitons
@@ -578,10 +583,13 @@ installbootloader-systemd(){
         echo "### Installing bootctl... ____________________"
 
         arch-chroot /mnt bootctl install
+        mv header.img /mnt/boot
+        $BOOTUUID=
 
         if [[ "$USE_CRYPT" -eq 1 ]]
         then
-                options="options rd.luks.name=$CRYPTROOTUUID=cryptlvm root=/dev/vg1/root rw rootflags=subvol=@ resume=$swapdev quiet loglevel=3 systemd.show_status=auto rd.udev.log_level=3 nowatchdog mitigations=off"
+                options="rd.luks.name=$CRYPTHEADERUUID=cryptlvm rd.luks.options=$CRYPTHEADERUUID=header=/header.img:UUID=$BOOTUUID rd.luks.data=$CRYPTHEADERUUID=$realrootdev"
+                #options="options rd.luks.name=$CRYPTROOTUUID=cryptlvm root=/dev/vg1/root rw rootflags=subvol=@ resume=$swapdev quiet loglevel=3 systemd.show_status=auto rd.udev.log_level=3 nowatchdog mitigations=off"
         else
                 options="root=UUID=$ROOTUUID rw rootflags=subvol=@ resume=$swapdev quiet loglevel=3 systemd.show_status=auto rd.udev.log_level=3 nowatchdog mitigations=off" 
         fi
