@@ -128,6 +128,7 @@ enablelvm(){
         echo "### CREATING LUKS PARTITION ON ${realrootdev} ____________________"
 
         dd if=/dev/zero of=header.img bs=16M count=1
+        chmod 600 header.img
         cryptsetup luksFormat $realrootdev --offset 32768 --header header.img
         cryptsetup open --header header.img $realrootdev cryptlvm
 
