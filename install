@@ -510,9 +510,6 @@ EOT
         arch-chroot /mnt curl -sL $BASE_URL/fonts/acorn/console/acorn.psf.gz -o /usr/share/kbd/consolefonts/acorn.psf.gz
         echo "FONT=bedstead-20" >> /mnt/etc/vconsole.conf
 
-        # ### Make the Boot files ###
-        arch-chroot /mnt mkinitcpio -P
-
         # Enable services
         echo "Enabling services..."
         arch-chroot /mnt systemctl enable NetworkManager.service
@@ -544,6 +541,9 @@ installbootloader(){
         else
                 installbootloader-systemd
         fi
+
+        # ### Make the Boot files ###
+        arch-chroot /mnt mkinitcpio -P
 }
 
 installbootloader-grub(){
@@ -586,8 +586,16 @@ installbootloader-systemd(){
         if [[ "$USE_CRYPT" -eq 1 ]]
         then
                 mv header.img /mnt/boot
+
+                # create a luks key so we dont have to enter a passphase on boot
+                arch-chroot /mnt dd bs=512 count=4 if=/dev/random of=/crypto_keyfile.bin iflag=fullblock
+                arch-chroot /mnt chmod 600 /crypto_keyfile.bin
+                arch-chroot /mnt cryptsetup luksAddKey $realrootdev /crypto_keyfile.bin --header /boot/header.img
+                arch-chroot /mnt sed -i 's/FILES=()/FILES=(/crypto_keyfile.bin)/' /etc/mkinitcpio.conf
+
                 BOOTUUID=$(blkid -s UUID -o value $bootdev)
-                options="rd.luks.name=$CRYPTHEADERUUID=cryptlvm rd.luks.options=$CRYPTHEADERUUID=header=/header.img:UUID=$BOOTUUID rd.luks.data=$CRYPTHEADERUUID=$realrootdev root=/dev/vg1/root rw rootflags=subvol=@ resume=$swapdev quiet loglevel=3 systemd.show_status=auto rd.udev.log_level=3 nowatchdog mitigations=off"
+
+                options="rd.luks.name=$CRYPTHEADERUUID=cryptlvm rd.luks.options=$CRYPTHEADERUUID=header=/header.img:UUID=$BOOTUUID rd.luks.key=/crypto_keyfile.bin rd.luks.data=$CRYPTHEADERUUID=$realrootdev root=/dev/vg1/root rw rootflags=subvol=@ resume=$swapdev quiet loglevel=3 systemd.show_status=auto rd.udev.log_level=3 nowatchdog mitigations=off"
         else
                 options="root=UUID=$ROOTUUID rw rootflags=subvol=@ resume=$swapdev quiet loglevel=3 systemd.show_status=auto rd.udev.log_level=3 nowatchdog mitigations=off" 
         fi
