@@ -591,7 +591,7 @@ installbootloader-systemd(){
                 arch-chroot /mnt dd bs=512 count=4 if=/dev/random of=/crypto_keyfile.bin iflag=fullblock
                 arch-chroot /mnt chmod 600 /crypto_keyfile.bin
                 arch-chroot /mnt cryptsetup luksAddKey $realrootdev /crypto_keyfile.bin --header /boot/header.img
-                arch-chroot /mnt sed -i 's/FILES=()/FILES=(/crypto_keyfile.bin)/' /etc/mkinitcpio.conf
+                arch-chroot /mnt sed -i 's/FILES=()/FILES=(\/crypto_keyfile.bin)/' /etc/mkinitcpio.conf
 
                 BOOTUUID=$(blkid -s UUID -o value $bootdev)
 
