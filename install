@@ -133,7 +133,6 @@ enablelvm(){
         cryptsetup open --header header.img $realrootdev cryptlvm
 
         CRYPTHEADERUUID=$(blkid -s UUID -o value header.img)
-        CRYPTROOTUUID=$(blkid -s UUID -o value $realrootdev)
 
         # create the LVM partitons
         pvcreate /dev/mapper/cryptlvm
