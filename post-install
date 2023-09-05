@@ -69,8 +69,8 @@ install_fonts(){
         curl -sL $BASE_URL/fonts/win/windowsfonts.tar.gz.partaa -o /tmp/windowsfonts.tar.gz.partaa
         curl -sL $BASE_URL/fonts/win/windowsfonts.tar.gz.partab -o /tmp/windowsfonts.tar.gz.partab
         curl -sL $BASE_URL/fonts/win/windowsfonts.tar.gz.partac -o /tmp/windowsfonts.tar.gz.partac
-        curl -sL $BASE_URL/fonts/win/windowsfonts.tar.gz.partac -o /tmp/windowsfonts.tar.gz.partad
-        curl -sL $BASE_URL/fonts/win/windowsfonts.tar.gz.partac -o /tmp/windowsfonts.tar.gz.partae
+        curl -sL $BASE_URL/fonts/win/windowsfonts.tar.gz.partad -o /tmp/windowsfonts.tar.gz.partad
+        curl -sL $BASE_URL/fonts/win/windowsfonts.tar.gz.partae -o /tmp/windowsfonts.tar.gz.partae
 
         cat /tmp/windowsfonts.tar.gz.parta* > /tmp/windowsfonts.tar.gz
 
