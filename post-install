@@ -41,9 +41,6 @@ mainmenu(){
                 "GNOME MAC OS")
                     install_gnome_mac
                 ;;
-                "GNOME POP!_OS")
-                    install_popshell
-                ;;
                 "APPLICATIONS)")
                     install_apps
                 ;;
@@ -115,6 +112,9 @@ install_gnome(){
         
         # Remove some trash from Gnome
         sudo pacman -Rs epiphany gnome-music cheese totem gnome-tour
+
+        # pin some nice favourites to the dash
+        gsettings set org.gnome.shell favorite-apps "$(gsettings get org.gnome.shell favorite-apps | sed s/.$//), 'urxvt.desktop', 'firefox.desktop', 'org.gnome.Calendar.desktop', 'org.gnome.Contacts.desktop', 'org.gnome.Calculator.desktop', 'code-oss.desktop', 'org.gnome.Photos.desktop', 'org.manjaro.pamac.manager.desktop', 'org.gnome.tweaks.desktop', 'com.mattjakeman.ExtensionManager.desktop', 'org.gnome.Settings.desktop']"
 
 	sudo systemctl enable gdm
 
@@ -316,73 +316,6 @@ install_whitesur(){
         # Tray icons reloaded
 }
 
-install_popshell(){
-        install_gnome
-
-        # dependancies
-        yay -S typescript ninja meson pop-fonts
-        fc-cache -f
-
-        # GTK Theme
-        git clone https://github.com/pop-os/gtk-theme.git /tmp/gtk-theme
-        cd /tmp/gtk-theme
-        meson build && cd build
-        ninja
-        ninja install
-
-        # Icon theme
-        git clone https://github.com/pop-os/icon-theme /tmp/pop-icon-theme
-        cd /tmp/pop-icon-theme
-        meson build
-        sudo ninja -C "build" install
-
-        # pop shell cosmic dock
-        https://github.com/pop-os/cosmic-dock.git /tmp/cosmic-dock
-        cd /tmp/cosmic-dock
-        make
-        make install
-
-        # cosmic workspaces
-        git clone https://github.com/pop-os/cosmic-workspaces.git /tmp/cosmic-workspaces
-        cd /tmp/cosmic-workspaces
-        make
-        make install
-
-        # desktop widgets
-        https://github.com/pop-os/desktop-widget.git /tmp/desktop-widget
-        cd /tmp/desktop-widget
-        make install
-
-        # COSMIC
-        git clone https://github.com/pop-os/cosmic /tmp/cosmic
-        cd /tmp/cosmic
-        make && make install
-
-        apply_pop
-
-        # Pop shell extension
-        yay -S gnome-shell-extension-pop-shell-git
-        git clone https://github.com/pop-os/shell.git /tmp/shell
-        cd /tmp/shell
-        make local-install    
-
-        whiptail --backtitle "$BACKTITLE" --msgbox --title "Gnome Pop!_OS Installed" "Its best to logout or reboot now" 0 78
-}
-
-apply_pop(){
-        gsettings set org.gnome.desktop.interface gtk-theme Pop-dark
-        gsettings set org.gnome.desktop.interface icon-theme Pop
-        gsettings set org.gnome.desktop.interface cursor-theme Pop
-        gsettings set org.gnome.shell.extensions.user-theme name Pop
-
-        gsettings set org.gnome.desktop.interface font-name "Fira Sans Book 10"
-        gsettings set org.gnome.desktop.interface document-font-name "Roboto Slab Regular 11"
-        gsettings set org.gnome.desktop.interface monospace-font-name "Fira Mono Regular 11"
-        gsettings set org.gnome.desktop.wm.preferences titlebar-font "Fira Sans SemiBold 10"
-
-        gsettings set org.gnome.desktop.wm.preferences button-layout ":minimize,close"
-}
-
 install_profile-sync-daemon(){
         sudo pacman -S profile-sync-daemon
         psd
@@ -481,7 +414,7 @@ initialise(){
         sudo sed -i 's/^COMPRESSLZ4.*/COMPRESSLZ4=(lz4 -q --best)/' /etc/makepkg.conf
 
         # install yay
-        git clone https://aur.archlinux.org/yay.git $HOME/yay
+        git clone https://aur.archlinux.org/yay-bin.git $HOME/yay
         cd $HOME/yay
         makepkg -si
         cd
