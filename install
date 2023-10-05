@@ -302,7 +302,7 @@ performinstall(){
         mount -o noatime,commit=120,compress=zstd,space_cache=v2,subvol=@ $rootdev /mnt
         
         # You need to manually create folders to mount the other subvolumes at
-        mkdir -p /mnt/{boot/efi,home,var/log,.snapshots}
+        mkdir -p /mnt/{boot,home,var/log,.snapshots}
 
         mount -o noatime,commit=120,compress=zstd,space_cache=v2,discard=async,subvol=@home $rootdev /mnt/home
 
@@ -723,7 +723,6 @@ while [[ $# -gt 0 ]]; do
                 -c)
                         swapoff -a
                         rm /tmp/packages
-                        [[ -d /mnt/boot/efi ]] && umount -A /mnt/boot/efi
                         [[ -d /mnt/boot ]] && umount -A /mnt/boot
                         [[ -d /mnt ]] && umount -A /mnt; shift ;;
                 -m)
