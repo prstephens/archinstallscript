@@ -64,15 +64,20 @@ install_fonts(){
 
         echo "Windows fonts..."
         yay -S ttf-ms-win11-auto
-        # curl -sL $BASE_URL/fonts/win/windowsfonts.tar.gz.partaa -o /tmp/windowsfonts.tar.gz.partaa
-        # curl -sL $BASE_URL/fonts/win/windowsfonts.tar.gz.partab -o /tmp/windowsfonts.tar.gz.partab
-        # curl -sL $BASE_URL/fonts/win/windowsfonts.tar.gz.partac -o /tmp/windowsfonts.tar.gz.partac
-        # curl -sL $BASE_URL/fonts/win/windowsfonts.tar.gz.partad -o /tmp/windowsfonts.tar.gz.partad
-        # curl -sL $BASE_URL/fonts/win/windowsfonts.tar.gz.partae -o /tmp/windowsfonts.tar.gz.partae
 
-        # cat /tmp/windowsfonts.tar.gz.parta* > /tmp/windowsfonts.tar.gz
+        fc-cache -f
+}
 
-        # sudo tar -zxvf /tmp/windowsfonts.tar.gz -C /
+install_windows_11_fonts(){
+        curl -sL $BASE_URL/fonts/win/windowsfonts.tar.gz.partaa -o /tmp/windowsfonts.tar.gz.partaa
+        curl -sL $BASE_URL/fonts/win/windowsfonts.tar.gz.partab -o /tmp/windowsfonts.tar.gz.partab
+        curl -sL $BASE_URL/fonts/win/windowsfonts.tar.gz.partac -o /tmp/windowsfonts.tar.gz.partac
+        curl -sL $BASE_URL/fonts/win/windowsfonts.tar.gz.partad -o /tmp/windowsfonts.tar.gz.partad
+        curl -sL $BASE_URL/fonts/win/windowsfonts.tar.gz.partae -o /tmp/windowsfonts.tar.gz.partae
+
+        cat /tmp/windowsfonts.tar.gz.parta* > /tmp/windowsfonts.tar.gz
+
+        sudo tar -zxvf /tmp/windowsfonts.tar.gz -C /
 
         fc-cache -f
 }
@@ -172,11 +177,11 @@ install_gnome_mac(){
         # Remove 'Utilities' folder in app grid so all apps are in view
         gsettings set org.gnome.desktop.app-folders folder-children "['YaST']"
 
-        # install dash to dock extension
-        install_dash_to_dock
-
         # install the Mac theme set
         install_whitesur
+
+        # install dash to dock extension
+        install_dash_to_dock
 
         # blur my shell
         git clone https://github.com/aunetx/blur-my-shell /tmp/blur-my-shell
