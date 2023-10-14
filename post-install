@@ -144,8 +144,6 @@ install_dash_to_dock(){
         git clone https://github.com/micheleg/dash-to-dock.git -b ubuntu-dock /tmp/ubuntu-dock
         cd /tmp/ubuntu-dock
 
-        ### TEMP - old commit before Gnome 45 fixes broke Gnome 44
-        git checkout cc089fedb6d9dadbe24b33aa71703292760398ae
         # Change the icon spacing to 0 so the dock isnt so stretched
         sed -i 's/$dock_icons_distance: 4px;/$dock_icons_distance: 0px;/' _stylesheet.scss
         make
