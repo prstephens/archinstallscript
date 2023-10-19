@@ -621,8 +621,8 @@ setupuser(){
 
         # Set root password
         echo "Setting user and root password..."
-        echo "${user}:${password}" | arch-chroot /mnt chpasswd
-        echo "root:${password}" | arch-chroot /mnt chpasswd
+        echo "${user}:${password}" | arch-chroot /mnt chpasswd --md5
+        echo "root:${password}" | arch-chroot /mnt chpasswd --md5
 
         # config files
         echo "Getting some config files..."
