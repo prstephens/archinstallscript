@@ -26,7 +26,6 @@ mainmenu(){
         options=()
         options+=("GNOME" "Vanilla GNOME install")
         options+=("GNOME MAC OS" "Install GNOME with Mac OS theme")
-        options+=("GNOME POP!_OS" "Install GNOME with the Pop!_OS Pop Shell and configurations")
         options+=("APPLICATIONS)" "Install some useful Applications")
         options+=("QEMU)" "QEMU/KVM")
 
@@ -116,7 +115,7 @@ install_gnome(){
         gnome-extensions enable arch-update@RaphaelRochet
         
         # Remove some trash from Gnome
-        sudo pacman -Rs epiphany gnome-music cheese totem gnome-tour
+        sudo pacman -Rs epiphany gnome-music totem gnome-connections
 
         # pin some nice favourites to the dash
         gsettings set org.gnome.shell favorite-apps "$(gsettings get org.gnome.shell favorite-apps | sed s/.$//), 'urxvt.desktop', 'firefox.desktop', 'org.gnome.Calendar.desktop', 'org.gnome.Contacts.desktop', 'org.gnome.Calculator.desktop', 'code-oss.desktop', 'org.gnome.Photos.desktop', 'org.manjaro.pamac.manager.desktop', 'org.gnome.tweaks.desktop', 'com.mattjakeman.ExtensionManager.desktop', 'org.gnome.Settings.desktop']"
