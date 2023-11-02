@@ -446,14 +446,14 @@ initialise(){
         sudo systemctl enable --now snapper-cleanup.timer
         sudo systemctl enable --now btrfs-scrub@-.timer
 
-        yay -S snapper-rollback snp
+        yay -S snapper-rollback snp --noconfirm
 
         # put root dev into snapper-rollback.conf
         echo "dev=${rootdev}" | sudo tee -a /etc/snapper-rollback.conf
 
         if [[ "$USE_GRUB" -eq 1 ]]
         then
-                yay -S snap-pac-grub
+                yay -S snap-pac-grub --noconfirm
 
                 # config for booting a snapshot in read only
                 sudo cp /lib/initcpio/hooks/grub-btrfs-overlayfs /etc/initcpio/hooks
@@ -476,7 +476,7 @@ initialise(){
                         fi
                 fi
         else
-                yay -S snap-pac systemd-boot-pacman-hook
+                yay -S snap-pac systemd-boot-pacman-hook --noconfirm
         fi
 
         sudo mkinitcpio -P
