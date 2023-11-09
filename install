@@ -534,6 +534,19 @@ EOT
 }
 
 installbootloader(){
+        if [[ "$USE_CRYPT" -eq 1 ]]
+        then
+                mv header.img /mnt/boot
+
+                # create a luks key so we dont have to enter a passphase on boot
+                arch-chroot /mnt dd bs=512 count=4 if=/dev/random of=/crypto_keyfile.bin iflag=fullblock
+                arch-chroot /mnt chmod 600 /crypto_keyfile.bin
+                arch-chroot /mnt cryptsetup luksAddKey $realrootdev /crypto_keyfile.bin --header /boot/header.img
+                arch-chroot /mnt sed -i 's/FILES=()/FILES=(\/crypto_keyfile.bin)/' /etc/mkinitcpio.conf
+
+                BOOTUUID=$(blkid -s UUID -o value $bootdev)
+        fi
+
         if [[ "$USE_GRUB" -eq 1 ]]
         then
                 installbootloader-grub
@@ -551,11 +564,9 @@ installbootloader-grub(){
 
         if [[ "$USE_CRYPT" -eq 1 ]]
         then
-                mv header.img /mnt/boot
-                BOOTUUID=$(blkid -s UUID -o value $bootdev)
-                arch-chroot /mnt sed -i "s|^GRUB_CMDLINE_LINUX=.*$|GRUB_CMDLINE_LINUX=\"rd.luks.name=$CRYPTHEADERUUID=cryptlvm rd.luks.options=$CRYPTHEADERUUID=header=/header.img:UUID=$BOOTUUID rd.luks.data=$CRYPTHEADERUUID=$realrootdev root=/dev/vg1/root rw rootflags=subvol=@ resume=$swapdev\"|" /etc/default/grub
+                arch-chroot /mnt sed -i "s|^GRUB_CMDLINE_LINUX=.*$|GRUB_CMDLINE_LINUX=\"rd.luks.name=$CRYPTHEADERUUID=cryptlvm rd.luks.options=$CRYPTHEADERUUID=header=/header.img:UUID=$BOOTUUID rd.luks.key=/crypto_keyfile.bin rd.luks.data=$CRYPTHEADERUUID=$realrootdev root=/dev/vg1/root rw rootflags=subvol=@ resume=$swapdev\"|" /etc/default/grub
         else   
-                arch-chroot /mnt sed -i "s|^GRUB_CMDLINE_LINUX=.*$|GRUB_CMDLINE_LINUX=\"resume=$swapdev\"|" /etc/default/grub
+                arch-chroot /mnt sed -i "s|^GRUB_CMDLINE_LINUX=.*$|GRUB_CMDLINE_LINUX=\"root=UUID=$ROOTUUID rw rootflags=subvol=@ resume=$swapdev\"|" /etc/default/grub
         fi
 
         # faster grub boot time - displays no menu. be warned
@@ -584,16 +595,6 @@ installbootloader-systemd(){
         
         if [[ "$USE_CRYPT" -eq 1 ]]
         then
-                mv header.img /mnt/boot
-
-                # create a luks key so we dont have to enter a passphase on boot
-                arch-chroot /mnt dd bs=512 count=4 if=/dev/random of=/crypto_keyfile.bin iflag=fullblock
-                arch-chroot /mnt chmod 600 /crypto_keyfile.bin
-                arch-chroot /mnt cryptsetup luksAddKey $realrootdev /crypto_keyfile.bin --header /boot/header.img
-                arch-chroot /mnt sed -i 's/FILES=()/FILES=(\/crypto_keyfile.bin)/' /etc/mkinitcpio.conf
-
-                BOOTUUID=$(blkid -s UUID -o value $bootdev)
-
                 options="rd.luks.name=$CRYPTHEADERUUID=cryptlvm rd.luks.options=$CRYPTHEADERUUID=header=/header.img:UUID=$BOOTUUID rd.luks.key=/crypto_keyfile.bin rd.luks.data=$CRYPTHEADERUUID=$realrootdev root=/dev/vg1/root rw rootflags=subvol=@ resume=$swapdev quiet loglevel=3 systemd.show_status=auto rd.udev.log_level=3 nowatchdog mitigations=off"
         else
                 options="root=UUID=$ROOTUUID rw rootflags=subvol=@ resume=$swapdev quiet loglevel=3 systemd.show_status=auto rd.udev.log_level=3 nowatchdog mitigations=off" 
