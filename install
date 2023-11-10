@@ -68,8 +68,8 @@ mainmenu(){
                         "INSTALL")
                                 performinstall
                                 configuration
-                                installbootloader
                                 setupuser
+                                installbootloader
                                 finish
                                 nextitem="FINISH"
                         ;;
@@ -334,8 +334,6 @@ performinstall(){
         then
                 USE_GRUB=1
                 echo $'\ngrub\nos-prober\ngrub-btrfs' >> /tmp/packages
-        else
-                USE_GRUB=0
         fi
 
         if [[ "$USE_RAID" -eq 1 ]]
