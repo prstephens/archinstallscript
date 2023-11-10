@@ -324,11 +324,15 @@ performinstall(){
                 echo $'\ntlp' >> /tmp/packages 
         fi
 
-        bootloader="Systemd"
-        bootloader=$(whiptail --backtitle "$BACKTITLE" --title "Select a bootloader to install" --radiolist "Choose" 20 30 5 \
-        "Systemd" "" Systemd \
-        "GRUB" "" GRUB \
-        3>&1 1>&2 2>&3)
+        if [[ "$USE_CRYPT" -eq 1 ]]
+        then
+                bootloader="Systemd"
+        else
+                bootloader=$(whiptail --backtitle "$BACKTITLE" --title "Select a bootloader to install" --radiolist "Choose" 20 30 5 \
+                "Systemd" "" Systemd \
+                "GRUB" "" GRUB \
+                3>&1 1>&2 2>&3) 
+        fi
 
         if [[ "$bootloader" == "GRUB" ]]
         then
@@ -559,14 +563,9 @@ installbootloader(){
 installbootloader-grub(){
         clear
         echo "### Installing GRUB... ____________________"
-
-        if [[ "$USE_CRYPT" -eq 1 ]]
-        then
-                arch-chroot /mnt sed -i "s|^GRUB_CMDLINE_LINUX=.*$|GRUB_CMDLINE_LINUX=\"rd.luks.name=$CRYPTHEADERUUID=cryptlvm rd.luks.options=$CRYPTHEADERUUID=header=/header.img:UUID=$BOOTUUID rd.luks.key=/crypto_keyfile.bin rd.luks.data=$CRYPTHEADERUUID=$realrootdev root=/dev/vg1/root rw rootflags=subvol=@ resume=$swapdev\"|" /etc/default/grub
-        else   
-                arch-chroot /mnt sed -i "s|^GRUB_CMDLINE_LINUX=.*$|GRUB_CMDLINE_LINUX=\"root=UUID=$ROOTUUID rw rootflags=subvol=@ resume=$swapdev\"|" /etc/default/grub
-        fi
-
+  
+        arch-chroot /mnt sed -i "s|^GRUB_CMDLINE_LINUX=.*$|GRUB_CMDLINE_LINUX=\"root=UUID=$ROOTUUID rw rootflags=subvol=@ resume=$swapdev\"|" /etc/default/grub
+        
         # faster grub boot time - displays no menu. be warned
         cat <<EOT >> /mnt/etc/default/grub
 GRUB_FORCE_HIDDEN_MENU=true
