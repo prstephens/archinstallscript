@@ -191,8 +191,8 @@ install_gnome_mac(){
         make install
 
         # rounded corners
-        curl -sL https://github.com/yilozt/rounded-window-corners/releases/download/v11/rounded-window-corners@yilozt.shell-extension.zip -o /tmp/rounded.zip
-        gnome-extensions install /tmp/rounded.zip
+        #curl -sL https://github.com/yilozt/rounded-window-corners/releases/download/v11/rounded-window-corners@yilozt.shell-extension.zip -o /tmp/rounded.zip
+        #gnome-extensions install /tmp/rounded.zip
 
         # panel corners
         git clone https://github.com/aunetx/panel-corners.git /tmp/panel-corners
@@ -205,7 +205,7 @@ install_gnome_mac(){
         make install
 
         # sur clock
-        git clone https://github.com/MedaiP90/gnome-sur-clock.git ~/.local/share/gnome-shell/extensions/Sur_Clock\@medaip90.com
+        #git clone https://github.com/MedaiP90/gnome-sur-clock.git ~/.local/share/gnome-shell/extensions/Sur_Clock\@medaip90.com
 
         # Unite 
         git clone https://github.com/hardpixel/unite-shell.git /tmp/unite
