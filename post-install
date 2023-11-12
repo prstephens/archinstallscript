@@ -17,7 +17,7 @@ USE_CRYPT=0 # changed on the fly during install
 USE_RAID=0 # changed on the fly during install
 USE_GRUB=0 # changed on the fly during install
 
-$theme="Light"
+theme="Light"
 
 set -o pipefail
 #set -x #toggle for debug. Will print all commands.
