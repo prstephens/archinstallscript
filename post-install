@@ -28,8 +28,9 @@ mainmenu(){
         options=()
         options+=("GNOME" "Vanilla GNOME install")
         options+=("GNOME MAC OS" "Install GNOME with Mac OS theme")
-        options+=("APPLICATIONS)" "Install some useful Applications")
-        options+=("QEMU)" "QEMU/KVM")
+        options+=("CHICARGO95" "Install Windows 95 theme with XFCE")
+        options+=("APPLICATIONS" "Install some useful Applications")
+        options+=("QEMU" "QEMU/KVM")
 
         sel=$(whiptail --backtitle "${BACKTITLE}" --fb --title "Arch Linux Post Installer" --menu "" --cancel-button "Exit" --default-item "." 20 78 0 \
             "${options[@]}" \
@@ -42,10 +43,13 @@ mainmenu(){
                 "GNOME MAC OS")
                     install_gnome_mac
                 ;;
-                "APPLICATIONS)")
+                "CHICARGO95")
+                    install_chicargo95
+                ;;
+                "APPLICATIONS")
                     install_apps
                 ;;
-                "QEMU)")
+                "QEMU")
                     install_qemu
                 ;;
             esac
@@ -391,6 +395,13 @@ EOT
         #
         # Regedit hack (for upgrading from Windows 10 ONLY)
         # HKEY_LOCAL_MACHINE\SYSTEM\Setup\MoSetup > New > DWORD (32-bit) Value. Name the value “AllowUpgradesWithUnsupportedTPMOrCPU" set it to 1
+}
+
+install_chicargo95(){
+        yay -S xfce4 xfce4-panel-profiles
+        git clone https://github.com/grassmunk/Chicago95.git /tmp/chicargo95
+        cd /tmp/chicargo95
+        ./installer.py
 }
 
 initialise(){
