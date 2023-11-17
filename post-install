@@ -290,9 +290,9 @@ install_whitesur(){
         ./install.sh
 
         # MacOS calendar icon fix
-        git clone https://github.com/prstephens/mac-dynamic-calendar.git /tmp/mac-dynamic-calendar
-        cp -R /tmp/mac-dynamic-calendar/mac-dynamic-calendar\@prstephens.github.com $HOME/.local/share/gnome-shell/extensions/
-        gnome-extensions enable mac-dynamic-calendar@prstephens.github.com
+        git clone https://github.com/fcusr/dynamic-calendar-and-clocks-icons.git /tmp/mac-dynamic-calendar
+        cp -R /tmp/mac-dynamic-calendar/dynamic-calendar-and-clocks-icons\@fcusr.github.com $HOME/.local/share/gnome-shell/extensions/
+        gnome-extensions enable dynamic-calendar-and-clocks-icons@fcusr.github.com
 
         gsettings set org.gnome.desktop.interface gtk-theme WhiteSur-$theme
         gsettings set org.gnome.desktop.interface cursor-theme WhiteSur-cursors
