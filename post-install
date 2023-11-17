@@ -199,10 +199,6 @@ install_gnome_mac(){
         cd /tmp/blur-my-shell
         make install
 
-        # rounded corners
-        #curl -sL https://github.com/yilozt/rounded-window-corners/releases/download/v11/rounded-window-corners@yilozt.shell-extension.zip -o /tmp/rounded.zip
-        #gnome-extensions install /tmp/rounded.zip
-
         # panel corners
         git clone https://github.com/aunetx/panel-corners.git /tmp/panel-corners
         cd /tmp/panel-corners
@@ -212,9 +208,6 @@ install_gnome_mac(){
         git clone https://github.com/Aryan20/Logomenu.git /tmp/logo-menu
         cd /tmp/logo-menu
         make install
-
-        # sur clock
-        #git clone https://github.com/MedaiP90/gnome-sur-clock.git ~/.local/share/gnome-shell/extensions/Sur_Clock\@medaip90.com
 
         # Unite 
         git clone https://github.com/hardpixel/unite-shell.git /tmp/unite
@@ -226,23 +219,17 @@ install_gnome_mac(){
         curl -sL $BASE_URL/configs/extensions/blur-my-shell-settings -o /tmp/blur-my-shell-settings
         curl -sL $BASE_URL/configs/extensions/panel-corners-settings -o /tmp/panel-corners-settings
         curl -sL $BASE_URL/configs/extensions/logo-menu-settings -o /tmp/logo-menu-settings
-        curl -sL $BASE_URL/configs/extensions/sur-clock-settings -o /tmp/sur-clock-settings
         curl -sL $BASE_URL/configs/extensions/unite-settings -o /tmp/unite-settings
-        curl -sL $BASE_URL/configs/extensions/rounded-window-corners-settings -o /tmp/rounded-window-corners-settings
 
         dconf load /org/gnome/shell/extensions/blur-my-shell/ < /tmp/blur-my-shell-settings
         dconf load /org/gnome/shell/extensions/panel-corners/ < /tmp/panel-corners-settings
         dconf load /org/gnome/shell/extensions/Logo-menu/ < /tmp/logo-menu-settings
-        dconf load /org/gnome/shell/extensions/sur-clock/ < /tmp/sur-clock-settings
         dconf load /org/gnome/shell/extensions/unite/ < /tmp/unite-settings
-        dconf load /org/gnome/shell/extensions/rounded-window-corners/ < /tmp/rounded-window-corners-settings
 
         gnome-extensions enable ubuntu-dock@ubuntu.com
         gnome-extensions enable blur-my-shell@aunetx
-        gnome-extensions enable rounded-window-corners@yilozt
         gnome-extensions enable panel-corners@aunetx
         gnome-extensions enable logomenu@aryan_k
-        gnome-extensions enable Sur_Clock@medaip90.com
         gnome-extensions enable unite@hardpixel.eu
 }
 
