@@ -62,7 +62,7 @@ mainmenu(){
 
 install_fonts(){
         echo "Installing fonts..."
-        yay -S apple-fonts otf-cascadia-code ttf-menlo-powerline-git
+        yay -S apple-fonts otf-cascadia-code ttf-cascadia-code-nerd ttf-menlo-powerline-git
 
         [[ ! -d $HOME/.local/share/fonts ]] && mkdir $HOME/.local/share/fonts
         curl -sL $BASE_URL/fonts/HelveticaNeueLt.ttf -o $HOME/.local/share/fonts/HelveticaNeueLt.ttf
