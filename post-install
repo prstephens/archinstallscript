@@ -16,6 +16,7 @@ rootdev=/root/dev # changed on the fly during install
 USE_CRYPT=0 # changed on the fly during install
 USE_RAID=0 # changed on the fly during install
 USE_GRUB=0 # changed on the fly during install
+TLP=0 # changed on the fly during install
 
 theme="Light"
 
@@ -115,6 +116,13 @@ install_gnome(){
         gsettings set org.gnome.shell.extensions.arch-update strip-versions true
         gsettings set org.gnome.shell disable-extension-version-validation "true"
         gsettings set org.gnome.desktop.input-sources sources "[('xkb', 'gb')]"
+
+        if [[ "$TLP" -eq 1 ]]
+        then
+                git clone https://github.com/arelange/gnome-shell-extension-hibernate-status.git /tmp/gnome-shell-extension-hibernate-status
+                cp -r /tmp/gnome-shell-extension-hibernate-status $HOME/.local/share/gnome-shell/extensions/hibernate-status\@dromi
+                gnome-extensions enable hibernate-status@dromi
+        fi
 
         # Turn on some extensions
         gnome-extensions enable user-theme@gnome-shell-extensions.gcampax.github.com

@@ -641,6 +641,7 @@ setupuser(){
         arch-chroot /mnt sed -i "s|^USE_CRYPT=.*$|USE_CRYPT=${USE_CRYPT}|" /home/$user/post-install
         arch-chroot /mnt sed -i "s|^USE_RAID=.*$|USE_RAID=${USE_RAID}|" /home/$user/post-install
         arch-chroot /mnt sed -i "s|^USE_GRUB=.*$|USE_GRUB=${USE_GRUB}|" /home/$user/post-install
+        arch-chroot /mnt sed -i "s|^TLP=.*$|TLP=${TLP}|" /home/$user/post-install
         arch-chroot /mnt chmod a+x /home/$user/post-install
 
         # Add shell-option to ~/.inputrc to enable case-insensitive tab completion
