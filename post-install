@@ -69,7 +69,8 @@ install_fonts(){
         curl -sL $BASE_URL/fonts/acorn/bedstead.otf -o $HOME/.local/share/fonts/bedstead.otf
 
         echo "Windows fonts..."
-        yay -S ttf-ms-win11-auto
+        #yay -S ttf-ms-win11-auto
+        install_windows_11_fonts
 
         fc-cache -f
 }
@@ -93,7 +94,7 @@ install_gnome(){
         
         echo "Installing Gnome.."
         sudo pacman -S gnome gnome-tweaks xscreensaver firefox sassc seahorse gparted wmctrl flatpak code rxvt-unicode cool-retro-term pavucontrol
-        yay -S pamac-aur snapper-gui-git rar cava extension-manager
+        yay -S snapper-gui-git rar cava extension-manager
         
         install_fonts
 
@@ -106,7 +107,6 @@ install_gnome(){
         yay -S gnome-shell-extension-arch-update
         gsettings set org.gnome.shell.extensions.arch-update check-cmd "/bin/sh -c \"(/usr/bin/checkupdates; /usr/bin/yay -Qqu --color never | sed 's/Get .*//') | sort -u -t' ' -k1,1\""
         gsettings set org.gnome.shell.extensions.arch-update update-cmd 'cool-retro-term -e sh -c "wmctrl -r :ACTIVE: -b toggle,fullscreen;yay -Syu ; echo Done - Press enter to exit; read"'
-        gsettings set org.gnome.shell.extensions.arch-update package-manager 'pamac-manager'
         gsettings set org.gnome.shell.extensions.arch-update use-buildin-icons true
         gsettings set org.gnome.shell.extensions.arch-update strip-versions true
         gsettings set org.gnome.shell disable-extension-version-validation "true"
@@ -320,7 +320,6 @@ install_whitesur(){
         # Compiz alike magic lamp effect
         # Desktop Icons NG (DING)
         # Espresso
-        # Gnome 4x UI Improvements
         # Hibernate status button
         # Just perfection
         # Search Light
@@ -403,7 +402,12 @@ EOT
 }
 
 install_chicargo95(){
-        yay -S xfce4 xfce4-panel-profiles
+        yay -S xfce4 xfce4-panel-profiles xfce4-whiskermenu-plugin
+
+        if [[ "$TLP" -eq 1 ]]
+        then
+                yay -S xfce4-power-manager
+        fi
         git clone https://github.com/grassmunk/Chicago95.git /tmp/chicargo95
         cd /tmp/chicargo95
         ./installer.py
