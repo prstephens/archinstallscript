@@ -216,10 +216,14 @@ install_gnome_mac(){
         git clone https://github.com/hardpixel/unite-shell.git /tmp/unite
         cp -r /tmp/unite/unite\@hardpixel.eu ~/.local/share/gnome-shell/extensions
 
-        # JUst Perfection
+        # Just Perfection
         git clone https://gitlab.gnome.org/jrahmatzadeh/just-perfection.git /tmp/just-perfection
         cd /tmp/just-perfection
         ./scripts/build.sh -i
+
+        # Favourites in app grid
+        git clone https://gitlab.gnome.org/harshadgavali/favourites-in-appgrid.git /tmp/favourites-in-appgrid
+        cp -r /tmp/favourites-in-appgrid/ ~/.local/share/gnome-shell/extensions/favourites-in-appgrid\@harshadgavali.gitlab.org
 
         # plymouth macos loading theme        
         install_plymouth
@@ -242,6 +246,7 @@ install_gnome_mac(){
         gnome-extensions enable logomenu@aryan_k
         gnome-extensions enable unite@hardpixel.eu
         gnome-extensions enable just-perfection-desktop@just-perfection
+        gnome-extensions enable favourites-in-appgrid@harshadgavali.gitlab.org
 }
 
 install_whitesur(){
@@ -314,14 +319,11 @@ install_whitesur(){
         # Gnome Extensions
         # ==================================================================================
         #
-        # Alpabetical App Grid
-        # Favourites in AppGrid
         # clipboard indicator
         # Compiz alike magic lamp effect
         # Desktop Icons NG (DING)
         # Espresso
         # Hibernate status button
-        # Just perfection
         # Search Light
         # Tray icons reloaded
 }
