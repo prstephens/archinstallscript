@@ -34,7 +34,7 @@
 *color15: #A5ADCB
 
 URxvt.background: #24273A
-URxvt.letterSpace: 0
+URxvt.letterSpace: -1
 URxvt.lineSpace: 0
 URxvt.internalBorder: 30
 URxvt.cursorBlink: true
@@ -54,4 +54,4 @@ URxvt.urlButton:                  1
 
 URxvt.keysym.Control-Shift-V: perl:pasta:paste
 URxvt.perl-ext-common: selection-to-clipboard,pasta
-URxvt.font: xft:Menlo for Powerline:pixelsize=11
+URxvt.font: xft:MesloLGS NF:pixelsize=11
