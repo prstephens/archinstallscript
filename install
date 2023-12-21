@@ -84,11 +84,16 @@ mainmenu(){
         fi
 }
 
+yesno(){
+        title=$1
+        msg=$2 
+        whiptail --backtitle "${BACKTITLE}" --title "${title}" --fb --yesno "${msg}" --defaultno 0 78
+}
+
 preparedisk(){
         wipedevice=$( selectdisk "Choose device to be wiped" )
 
-        if (whiptail --backtitle "${BACKTITLE}" --title "### WARNING ###" --yesno "Are you sure you want to secure wipe ${wipedevice}? \n\nTHIS CANNOT BE UNDONE. ALL DATA WILL BE PERMANENTLY LOST!" --defaultno --fb 0 78) then
-		cryptsetup open --type plain -d /dev/urandom ${wipedevice} to_be_wiped
+        if (yesno "### WARNING ###" "Are you sure you want to secure wipe ${wipedevice}? \n\nTHIS CANNOT BE UNDONE. ALL DATA WILL BE PERMANENTLY LOST!") then
                 dd if=/dev/zero of=/dev/mapper/to_be_wiped status=progress || :
                 cryptsetup close to_be_wiped
 	fi 
@@ -227,7 +232,7 @@ choosepartitions(){
         msg=${msg}"Swap          : "${swapdev}"\n"
         msg=${msg}"Root          : "${rootdev}"\n"
 
-        if !(whiptail --backtitle "${BACKTITLE}" --title "Are these values correct?" --fb --yesno "${msg}" 0 78) then
+        if !(yesno "Are these values correct?" "${msg}") then
                 choosepartitions
         fi      
 }
@@ -253,17 +258,16 @@ getuserinfo(){
 }
 
 performinstall(){
-        if (whiptail --backtitle "${BACKTITLE}" --title "RAID" --yesno "Is a RAID Array being used?" --defaultno --fb 0 78) then
+        if (yesno "RAID" "Is a RAID Array being used?") then
                 USE_RAID=1
                 msg=${msg}"Use RAID?     : "${USE_RAID}"\n\n"
 	fi
 
-        whiptail --backtitle "${BACKTITLE}" --title "Are these values correct?" --yesno "${msg}" --fb 0 78 3>&1 1>&2 2>&3
-        if ([ ! "$?" = "0" ];) then
+        if !(yesno "Are these values correct?" "${msg}") then
 		mainmenu "1)"
 	fi
 
-        if (whiptail --backtitle "${BACKTITLE}" --title "### WARNING ###" --yesno "Do you want to format ${bootdev}? \n\nTHIS COULD ERASE EXISITING OPERATING SYSTEM BOOTLOADERS" --defaultno --fb 0 78) then
+        if (yesno "### WARNING ###" "Do you want to format ${bootdev}? \n\nTHIS COULD ERASE EXISITING OPERATING SYSTEM BOOTLOADERS") then
 		mkfs.fat -F 32 ${bootdev}
 	fi
         
@@ -660,7 +664,7 @@ finish(){
 }
 
 rebootpc(){
-        if (whiptail --backtitle "${BACKTITLE}" --yesno "Reboot?" --defaultno --fb 0 78) then
+        if (yesno "Reboot?") then
                 clear
                 umount -a
                 reboot
