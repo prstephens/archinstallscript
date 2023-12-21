@@ -29,7 +29,7 @@ mainmenu(){
         options=()
         options+=("GNOME" "Vanilla GNOME install")
         options+=("GNOME MAC OS" "Install GNOME with Mac OS theme")
-        options+=("CHICARGO95" "Install Windows 95 theme with XFCE")
+        options+=("CHICAGO95" "Install Windows 95 theme with XFCE")
         options+=("APPLICATIONS" "Install some useful Applications")
         options+=("QEMU" "QEMU/KVM")
 
@@ -44,7 +44,7 @@ mainmenu(){
                 "GNOME MAC OS")
                     install_gnome_mac
                 ;;
-                "CHICARGO95")
+                "CHICAGO95")
                     install_chicargo95
                 ;;
                 "APPLICATIONS")
