@@ -64,7 +64,7 @@ install_fonts(){
         echo "Installing fonts..."
         yay -S apple-fonts ttf-cascadia-code-nerd ttf-meslo-nerd-font-powerlevel10k
 
-        [[ ! -d $HOME/.local/share/fonts ]] && mkdir -p $HOME/{.local/share/fonts}
+        [[ ! -d $HOME/.local/share/fonts ]] && mkdir -p $HOME/.local/share/fonts
         curl -sL $BASE_URL/fonts/HelveticaNeueLt.ttf -o $HOME/.local/share/fonts/HelveticaNeueLt.ttf
         curl -sL $BASE_URL/fonts/acorn/bedstead.otf -o $HOME/.local/share/fonts/bedstead.otf
 
@@ -252,7 +252,7 @@ install_gnome_mac(){
 install_whitesur(){
         gsettings set org.gnome.desktop.interface clock-show-weekday true
 
-        [[ ! -d $HOME/.local/share/backgrounds ]] && mkdir $HOME/.local/share/backgrounds
+        [[ ! -d $HOME/.local/share/backgrounds ]] && mkdir -p $HOME/.local/share/backgrounds
 
         curl -sL $BASE_URL/wallpaper/macos/ventura-light.jpg -o $HOME/.local/share/backgrounds/ventura-Light.jpg
         curl -sL $BASE_URL/wallpaper/macos/ventura-dark.jpg -o $HOME/.local/share/backgrounds/ventura-Dark.jpg
