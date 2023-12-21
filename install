@@ -691,7 +691,6 @@ getpackagelist(){
 }
 
 initialise(){
-        checkconnection
         dependencies
         updatemirrors
         getpackagelist
@@ -728,6 +727,7 @@ while [[ $# -gt 0 ]]; do
         esac
 done
 
+checkconnection
 self_update
 
 [[ ! -f /tmp/packages ]] && initialise
