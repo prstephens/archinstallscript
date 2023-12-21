@@ -64,7 +64,7 @@ install_fonts(){
         echo "Installing fonts..."
         yay -S apple-fonts ttf-cascadia-code-nerd ttf-meslo-nerd-font-powerlevel10k
 
-        [[ ! -d $HOME/.local/share/fonts ]] && mkdir $HOME/.local/share/fonts
+        [[ ! -d $HOME/.local/share/fonts ]] && mkdir -p $HOME/{.local/share/fonts}
         curl -sL $BASE_URL/fonts/HelveticaNeueLt.ttf -o $HOME/.local/share/fonts/HelveticaNeueLt.ttf
         curl -sL $BASE_URL/fonts/acorn/bedstead.otf -o $HOME/.local/share/fonts/bedstead.otf
 
