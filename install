@@ -399,6 +399,11 @@ EOT
 192.168.1.66    libreelec.localdomain libreelec
 EOT
 
+        echo "127.0.1.1 ${hostname}.localdomain  ${hostname}" >> /mnt/etc/hosts
+        
+        # make a copy of the host file to be used later in the AdAway service
+        arch-chroot /mnt cp /etc/hosts /etc/hosts.base
+
         echo "Updating pacman mirrors to awesomeness..."
         # Update pacman mirror list
         arch-chroot /mnt reflector --verbose -c $MIRROR_COUNTRY -l 25 --age 12 -p https --sort rate --save /etc/pacman.d/mirrorlist
@@ -418,7 +423,6 @@ EOT
 
         # Set hostname
         echo "${hostname}" > /mnt/etc/hostname
-        echo "127.0.1.1 ${hostname}.localdomain  ${hostname}" >> /mnt/etc/hosts
 
         # Set keyboard FN keys to act normal!
         echo "options hid_apple fnmode=2" > /mnt/etc/modprobe.d/hid_apple.conf

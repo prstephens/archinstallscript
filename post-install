@@ -31,6 +31,7 @@ mainmenu(){
         options+=("GNOME MAC OS" "Install GNOME with Mac OS theme")
         options+=("CHICAGO95" "Install Windows 95 theme with XFCE")
         options+=("APPLICATIONS" "Install some useful Applications")
+        options+=("ADAWAY" "Setup a service to update hosts files and block ads")
         options+=("QEMU" "QEMU/KVM")
 
         sel=$(whiptail --backtitle "${BACKTITLE}" --fb --title "Arch Linux Post Installer" --menu "" --cancel-button "Exit" --default-item "." 20 78 0 \
@@ -49,6 +50,9 @@ mainmenu(){
                 ;;
                 "APPLICATIONS")
                     install_apps
+                ;;
+                "ADAWAY")
+                    setup_adaway
                 ;;
                 "QEMU")
                     install_qemu
@@ -413,6 +417,44 @@ install_chicargo95(){
         git clone https://github.com/grassmunk/Chicago95.git /tmp/chicargo95
         cd /tmp/chicargo95
         ./installer.py
+}
+
+setup_adaway(){
+
+        sudo bash -c 'sudo cat <<EOT > /usr/bin/adaway
+#! /bin/bash
+cp /etc/hosts.base /etc/hosts
+curl -sL https://adaway.org/hosts.txt >> /etc/hosts
+curl -sL https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts >> /etc/hosts
+curl -sL "https://pgl.yoyo.org/adservers/serverlist.php?hostformat=hosts&showintro=0&mimetype=plaintext" >> /etc/hosts
+EOT'
+
+        sudo chmod +x /usr/bin/adaway
+        sudo bash -c 'sudo cat <<EOT > /etc/systemd/system/adaway.timer
+[Unit]
+Description=Refresh Host file with AdAway hosts weekly.
+
+[Timer]
+OnCalendar=weekly
+Unit=adaway.service
+
+[Install]
+WantedBy=multi-user.target
+EOT'
+
+        sudo bash -c 'sudo cat <<EOT > /etc/systemd/system/adaway.service 
+[Unit]
+Description=AdAway hosts update
+Wants=network-online.target
+After=network-online.target nss-lookup.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/adaway
+EOT'
+
+        sudo systemctl start adaway.service
+        sudo systemctl enable --now adaway.timer
 }
 
 initialise(){
