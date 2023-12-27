@@ -486,7 +486,7 @@ initialise(){
         cd
 
         # remove annoying yay questions
-        yay --save --answerdiff None --answerclean None --removemake --batchinstall --devel
+        yay --save --answerdiff None --answerclean None --removemake --batchinstall --devel --builddir /tmp/yay
 
         # snapper config
         sudo umount /.snapshots
@@ -598,6 +598,6 @@ self_update(){
 checkconnection
 self_update
 
-[[ ! -d $HOME/yay ]] && initialise
+[[ ! -d $HOME/.config/yay ]] && initialise
 
 mainmenu
