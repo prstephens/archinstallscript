@@ -265,7 +265,7 @@ performinstall(){
 	fi
 
         if !(yesno "Are these values correct?" "${msg}") then
-		mainmenu "1)"
+		mainmenu "MOUNT"
 	fi
 
         if (yesno "### WARNING ###" "Do you want to format ${bootdev}? \n\nTHIS COULD ERASE EXISITING OPERATING SYSTEM BOOTLOADERS") then
@@ -277,15 +277,12 @@ performinstall(){
         timedatectl set-ntp true
 
         # Setup the partitions
-        echo "____________________ ### STARTING INSTALL ### ____________________"
-        read -p "You are about to wipe ${rootdev}? [y/N]: " wipe
-        if [ $wipe = 'y' ]
+        if (yesno "### WARNING ###" "Are you sure you want install to ${rootdev} and format?") then
         then
                 wipefs -a $rootdev
                 mkfs.btrfs $rootdev
         else
-                echo "Install stopped"
-                exit
+                mainmenu "MOUNT"
         fi
 
         if [ ! "${swapdev}" = "" ]
