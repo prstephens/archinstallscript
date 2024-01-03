@@ -278,7 +278,6 @@ performinstall(){
 
         # Setup the partitions
         if (yesno "### WARNING ###" "Are you sure you want install to ${rootdev} and format?") then
-        then
                 wipefs -a $rootdev
                 mkfs.btrfs $rootdev
         else
