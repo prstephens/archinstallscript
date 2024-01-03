@@ -46,7 +46,7 @@ mainmenu(){
                     install_gnome_mac
                 ;;
                 "CHICAGO95")
-                    install_chicargo95
+                    install_chicago95
                 ;;
                 "APPLICATIONS")
                     install_apps
@@ -407,7 +407,7 @@ EOT
         # HKEY_LOCAL_MACHINE\SYSTEM\Setup\MoSetup > New > DWORD (32-bit) Value. Name the value “AllowUpgradesWithUnsupportedTPMOrCPU" set it to 1
 }
 
-install_chicargo95(){
+install_chicago95(){
         yay -S xfce4 xfce4-panel-profiles xfce4-whiskermenu-plugin xfce4-pulseaudio-plugin
 
         if [[ "$TLP" -eq 1 ]]
