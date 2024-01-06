@@ -288,7 +288,7 @@ install_whitesur(){
         sudo flatpak override --filesystem=xdg-config/gtk-4.0
 
         git clone https://github.com/prstephens/WhiteSur-icon-theme.git /tmp/WhiteSur-icon-theme
-        /tmp/WhiteSur-icon-theme/install.sh
+        /tmp/WhiteSur-icon-theme/install.sh -b
         # change some icons to a better mac version
         cp -R /tmp/WhiteSur-icon-theme/original/*.svg $HOME/.local/share/icons/WhiteSur/apps/scalable/
 
