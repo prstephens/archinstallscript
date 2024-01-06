@@ -68,7 +68,6 @@ mainmenu(){
                         "INSTALL")
                                 performinstall
                                 configuration
-                                setup_zram
                                 setupuser
                                 installbootloader
                                 finish
