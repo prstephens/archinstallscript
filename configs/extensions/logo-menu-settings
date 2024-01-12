@@ -1,7 +1,7 @@
 [/]
 menu-button-extensions-app='com.mattjakeman.ExtensionManager.desktop'
 menu-button-icon-image=0
-menu-button-icon-size=24
+menu-button-icon-size=28
 menu-button-software-center='pamac-manager'
 menu-button-terminal='urxvt'
 show-activities-button=false

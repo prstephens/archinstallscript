@@ -138,6 +138,8 @@ if [ "$XDG_SESSION_TYPE" = "wayland" ]; then
     export MOZ_ENABLE_WAYLAND=1
 fi
 EOT
+        install_ufw
+
 	sudo systemctl enable gdm
 
         # create a snapshot
@@ -154,6 +156,18 @@ EOT
         #         background-image: url("/home/paul/Downloads/croped-colorful-abstract-background-wallpaper.jpg");
         #         background-size: cover;
         # }              
+}
+
+install_ufw(){
+        sudo pacman -S ufw gufw
+        sudo systemctl enable ufw.service
+
+        sudo ufw default deny
+        sudo ufw allow from 192.168.1.0/24
+        sudo ufw limit ssh
+        sudo ufw logging off
+
+        sudo ufw enable
 }
 
 install_dash_to_dock(){
