@@ -38,6 +38,7 @@ pulsemixer
 wget
 cups
 hplip
+python-pyqt5
 rsync
 archlinux-keyring
 pacman-contrib
