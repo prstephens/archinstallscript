@@ -29,6 +29,7 @@ mainmenu(){
         options=()
         options+=("GNOME" "Vanilla GNOME install")
         options+=("GNOME MAC OS" "Install GNOME with Mac OS theme")
+        options+=("PLASMA" "Install KDE Plasma")
         options+=("CHICAGO95" "Install Windows 95 theme with XFCE")
         options+=("APPLICATIONS" "Install some useful Applications")
         options+=("ADAWAY" "Setup a service to update hosts files and block ads")
@@ -44,6 +45,9 @@ mainmenu(){
                 ;;
                 "GNOME MAC OS")
                     install_gnome_mac
+                ;;
+                "PLASMA")
+                    install_plasma
                 ;;
                 "CHICAGO95")
                     install_chicago95
@@ -344,6 +348,11 @@ install_whitesur(){
         # Hibernate status button
         # Search Light
         # Tray icons reloaded
+}
+
+install_plasma(){
+        sudo pacman -S plasma-meta plasma-wayland-session kde-system-meta firefox kvantum sddm
+        sudo systemctl enable sddm.service
 }
 
 install_profile-sync-daemon(){
