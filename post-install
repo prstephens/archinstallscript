@@ -70,7 +70,7 @@ mainmenu(){
 
 install_fonts(){
         echo "Installing fonts..."
-        yay -S apple-fonts ttf-cascadia-code-nerd ttf-meslo-nerd-font-powerlevel10k
+        yay -S apple-fonts ttf-cascadia-code-nerd ttf-meslo-nerd-font-powerlevel10k ttf-croscore ttf-google-sans
 
         [[ ! -d $HOME/.local/share/fonts ]] && mkdir -p $HOME/.local/share/fonts
         curl -sL $BASE_URL/fonts/HelveticaNeueLt.ttf -o $HOME/.local/share/fonts/HelveticaNeueLt.ttf
@@ -352,7 +352,7 @@ install_whitesur(){
 
 install_plasma(){
         sudo pacman -S plasma-meta plasma-wayland-session kde-system-meta firefox kvantum sddm code rxvt-unicode
-        yay -S snapper-gui-git rar cava
+        yay -S snapper-gui-git rar cava checkupdates-with-aur
         sudo systemctl enable sddm.service
         install_ufw
 }
