@@ -351,7 +351,7 @@ install_whitesur(){
 }
 
 install_plasma(){
-        sudo pacman -S plasma-meta plasma-wayland-session kde-system-meta firefox kvantum sddm code rxvt-unicode
+        sudo pacman -S plasma-meta kde-system-meta firefox kvantum sddm code rxvt-unicode
         yay -S snapper-gui-git rar cava
         sudo systemctl enable sddm.service
         install_ufw
