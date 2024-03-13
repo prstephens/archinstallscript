@@ -357,6 +357,30 @@ install_plasma(){
         install_ufw
 }
 
+install_xp(){
+        apply_xp_theme
+}
+
+apply_xp_theme(){
+        xfconf-query -c xsettings -p /Net/IconThemeName -s "Windows-XP"
+        xfconf-query -c xsettings -p /Net/SoundThemeName -s "Windows XP Default"
+        xfconf-query -c xsettings -p /Net/ThemeName -s "Windows XP style (Blue)"
+        xfconf-query -c xsettings -p /Net/EnableEventSounds -s "true"
+        xfconf-query -c xsettings -p /Net/EnableInputFeedbackSounds -s "true"
+
+        xfconf-query -c xsettings -p /Gtk/FontName -s "Tahoma 8"
+        xfconf-query -c xsettings -p /Gtk/CursorThemeName -s "standard-with-shadow"
+
+        xfconf-query -c xfwm4 -p /general/title_font -s "Trebuchet MS Bold 10"
+        xfconf-query -c xfwm4 -p /general/theme -s "Windows XP style (Blue)"
+
+        xfconf-query -c xfce4-notifyd -p /notify-location -s "bottom-right"
+        xfconf-query -c xfce4-desktop -p /desktop-icons/icon-size -s "48"
+        xfconf-query -c xfce4-desktop -p /desktop-icons/primary -s "true"
+        
+        xfconf-query -c keyboard-layout -p /Default/XkbLayout -s "gb"
+}
+
 install_profile-sync-daemon(){
         sudo pacman -S profile-sync-daemon
         psd
