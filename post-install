@@ -31,6 +31,7 @@ mainmenu(){
         options+=("GNOME MAC OS" "Install GNOME with Mac OS theme")
         options+=("PLASMA" "Install KDE Plasma")
         options+=("CHICAGO95" "Install Windows 95 theme with XFCE")
+        options+=("WINDOWS XP" "Install XFCE with the iconic Windows XP theme")
         options+=("APPLICATIONS" "Install some useful Applications")
         options+=("ADAWAY" "Setup a service to update hosts files and block ads")
         options+=("QEMU" "QEMU/KVM")
@@ -41,25 +42,30 @@ mainmenu(){
         if [ "$?" = "0" ]; then
             case ${sel} in
                 "GNOME")
-                    install_gnome
+                        install_gnome
                 ;;
                 "GNOME MAC OS")
-                    install_gnome_mac
+                        install_gnome_mac
                 ;;
                 "PLASMA")
-                    install_plasma
+                        install_plasma
                 ;;
                 "CHICAGO95")
-                    install_chicago95
+                        install_xfce
+                        install_chicago95
+                ;;
+                "WINDOWS XP")
+                        install_xfce
+                        install_xp
                 ;;
                 "APPLICATIONS")
-                    install_apps
+                        install_apps
                 ;;
                 "ADAWAY")
-                    setup_adaway
+                        setup_adaway
                 ;;
                 "QEMU")
-                    install_qemu
+                        install_qemu
                 ;;
             esac
             mainmenu
@@ -106,10 +112,7 @@ install_gnome(){
         
         install_fonts
 
-        # xscreensaver settings - 10 min timeout - GL matrix 
-        curl -sL $BASE_URL/configs/home/.xscreensaver -o $HOME/.xscreensaver
-        if [ ! -d $HOME/.config/autostart/ ];then mkdir $HOME/.config/autostart;fi
-        curl -sL $BASE_URL/configs/home/xscreensaver.desktop -o $HOME/.config/autostart/xscreensaver.desktop
+        apply_xcreensaver
 
         # add arch updater extension
         yay -S gnome-shell-extension-arch-update
@@ -174,6 +177,13 @@ install_ufw(){
         sudo ufw enable
 }
 
+apply_xcreensaver(){
+        # xscreensaver settings - 10 min timeout - GL matrix 
+        curl -sL $BASE_URL/configs/home/.xscreensaver -o $HOME/.xscreensaver
+        if [ ! -d $HOME/.config/autostart/ ];then mkdir $HOME/.config/autostart;fi
+        curl -sL $BASE_URL/configs/home/xscreensaver.desktop -o $HOME/.config/autostart/xscreensaver.desktop
+}
+
 install_dash_to_dock(){
         # add dash to dock extension - use ubuntu-dock branch. better compatibility with blur my shell
         git clone https://github.com/micheleg/dash-to-dock.git -b ubuntu-dock /tmp/ubuntu-dock
@@ -200,11 +210,17 @@ install_plymouth(){
         fi
 
         sudo sed -i 's/systemd/systemd plymouth/' /etc/mkinitcpio.conf
-        sudo mkinitcpio -P
+        sudo mkinitcpio -P     
+}
 
+apply_plymouth_mac(){
         git clone https://github.com/fathyar/mac-plymouth.git /tmp/mac-plymouth
         sudo cp -r /tmp/mac-plymouth/mac/ /usr/share/plymouth/themes/
         sudo plymouth-set-default-theme -R mac    
+}
+
+apply_plymouth_xp(){
+        sudo plymouth-set-default-theme -R bootvid    
 }
 
 install_gnome_mac(){
@@ -249,6 +265,7 @@ install_gnome_mac(){
 
         # plymouth macos loading theme        
         install_plymouth
+        apply_plymouth_mac
         
         curl -sL $BASE_URL/configs/extensions/blur-my-shell-settings -o /tmp/blur-my-shell-settings
         curl -sL $BASE_URL/configs/extensions/panel-corners-settings -o /tmp/panel-corners-settings
@@ -357,7 +374,26 @@ install_plasma(){
         install_ufw
 }
 
+install_xfce(){
+        sudo pacman -S xfce4 xfce4-panel-profiles xfce4-whiskermenu-plugin xfce4-pulseaudio-plugin thunar-archive-plugin gvfs ark gdm xscreensaver xfce4-pulseaudio-plugin
+
+        if [[ "$TLP" -eq 1 ]]
+        then
+                yay -S xfce4-power-manager
+        fi
+        
+        apply_xcreensaver
+        install_fonts
+        install_plymouth
+        install_ufw
+
+	sudo systemctl enable gdm
+}
+
 install_xp(){
+        yay -S xfce-winxp-tc-git
+        git clone https://github.com/prstephens/Windows-XP.git $HOME/.icons/Windows-XP
+
         apply_xp_theme
 }
 
@@ -379,6 +415,8 @@ apply_xp_theme(){
         xfconf-query -c xfce4-desktop -p /desktop-icons/primary -s "true"
         
         xfconf-query -c keyboard-layout -p /Default/XkbLayout -s "gb"
+
+        apply_plymouth_xp
 }
 
 install_profile-sync-daemon(){
@@ -457,12 +495,6 @@ EOT
 }
 
 install_chicago95(){
-        yay -S xfce4 xfce4-panel-profiles xfce4-whiskermenu-plugin xfce4-pulseaudio-plugin
-
-        if [[ "$TLP" -eq 1 ]]
-        then
-                yay -S xfce4-power-manager
-        fi
         git clone https://github.com/grassmunk/Chicago95.git /tmp/chicargo95
         cd /tmp/chicargo95
         ./installer.py
