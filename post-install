@@ -375,7 +375,7 @@ install_plasma(){
 }
 
 install_xfce(){
-        sudo pacman -S xfce4 xfce4-panel-profiles xfce4-whiskermenu-plugin xfce4-pulseaudio-plugin thunar-archive-plugin gvfs ark gdm xscreensaver xfce4-pulseaudio-plugin
+        yay -S xfce4 xfce4-panel-profiles xfce4-whiskermenu-plugin xfce4-pulseaudio-plugin thunar-archive-plugin gvfs ark gdm xscreensaver xfce4-pulseaudio-plugin
 
         if [[ "$TLP" -eq 1 ]]
         then
