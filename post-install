@@ -74,6 +74,11 @@ mainmenu(){
         fi
 }
 
+install_base_packages(){
+        sudo pacman -S xscreensaver firefox sassc seahorse gparted wmctrl code rxvt-unicode pavucontrol
+        yay -S snapper-gui-git rar cava
+}
+
 install_fonts(){
         echo "Installing fonts..."
         yay -S apple-fonts ttf-cascadia-code-nerd ttf-meslo-nerd-font-powerlevel10k ttf-croscore ttf-google-sans
@@ -107,8 +112,10 @@ install_gnome(){
         clear
         
         echo "Installing Gnome.."
-        sudo pacman -S gnome gnome-tweaks xscreensaver firefox sassc seahorse gparted wmctrl flatpak code rxvt-unicode cool-retro-term pavucontrol
-        yay -S snapper-gui-git rar cava extension-manager
+
+        install_base_packages
+
+        sudo pacman -S gnome gnome-tweaks flatpak cool-retro-term
         
         install_fonts
 
@@ -368,14 +375,17 @@ install_whitesur(){
 }
 
 install_plasma(){
-        sudo pacman -S plasma-meta kde-system-meta firefox kvantum sddm code rxvt-unicode
-        yay -S snapper-gui-git rar cava
+        install_base_packages
+        sudo pacman -S plasma-meta kde-system-meta kvantum sddm 
         sudo systemctl enable sddm.service
+        apply_xcreensaver
+        install_fonts
         install_ufw
 }
 
 install_xfce(){
-        yay -S xfce4 xfce4-panel-profiles xfce4-whiskermenu-plugin xfce4-pulseaudio-plugin thunar-archive-plugin gvfs ark gdm xscreensaver xfce4-pulseaudio-plugin
+        install_base_packages
+        yay -S xfce4 xdg-user-dir xfce4-panel-profiles xfce4-whiskermenu-plugin xfce4-pulseaudio-plugin thunar-archive-plugin gvfs ark gdm
 
         if [[ "$TLP" -eq 1 ]]
         then
@@ -403,6 +413,8 @@ apply_xp_theme(){
         xfconf-query -c xsettings -p /Net/ThemeName -s "Windows XP style (Blue)"
         xfconf-query -c xsettings -p /Net/EnableEventSounds -s "true"
         xfconf-query -c xsettings -p /Net/EnableInputFeedbackSounds -s "true"
+
+        xfconf-query -c xsettings -p /Xfce/SyncThemes -s "true"
 
         xfconf-query -c xsettings -p /Gtk/FontName -s "Tahoma 8"
         xfconf-query -c xsettings -p /Gtk/CursorThemeName -s "standard-with-shadow"
