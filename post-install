@@ -403,6 +403,8 @@ install_xfce(){
 install_xp(){
         yay -S xfce-winxp-tc-git
         git clone https://github.com/prstephens/Windows-XP.git $HOME/.icons/Windows-XP
+        git clone https://github.com/prstephens/xp-wallpapers.git /tmp/xp-wallpapers
+        sudo cp -R /tmp/xp-wallpapers /usr/share/backgrounds/   
 
         apply_xp_theme
 }
@@ -425,8 +427,11 @@ apply_xp_theme(){
         xfconf-query -c xfce4-notifyd -p /notify-location -s "bottom-right"
         xfconf-query -c xfce4-desktop -p /desktop-icons/icon-size -s "48"
         xfconf-query -c xfce4-desktop -p /desktop-icons/primary -s "true"
+        xfconf-query -c xfce4-desktop -p /desktop-icons/tooltip-size "32.000000"
         
         xfconf-query -c keyboard-layout -p /Default/XkbLayout -s "gb"
+
+        xfconf-query -c xfce4-desktop -p $(xfconf-query -c xfce4-desktop -l | grep "workspace0/last-image") -s /usr/share/backgrounds/xp-wallpapers/Bliss.jpg 
 
         apply_plymouth_xp
 }
