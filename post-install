@@ -416,7 +416,7 @@ apply_xp_theme(){
         xfconf-query -c xsettings -p /Net/EnableEventSounds -s "true"
         xfconf-query -c xsettings -p /Net/EnableInputFeedbackSounds -s "true"
 
-        xfconf-query -c xsettings -p /Xfce/SyncThemes -s "true"
+        xfconf-query --create -c xsettings -p /Xfce/SyncThemes -n -t bool -s "true"
 
         xfconf-query -c xsettings -p /Gtk/FontName -s "Tahoma 8"
         xfconf-query -c xsettings -p /Gtk/CursorThemeName -s "standard-with-shadow"
@@ -424,10 +424,10 @@ apply_xp_theme(){
         xfconf-query -c xfwm4 -p /general/title_font -s "Trebuchet MS Bold 10"
         xfconf-query -c xfwm4 -p /general/theme -s "Windows XP style (Blue)"
 
-        xfconf-query -c xfce4-notifyd -p /notify-location -s "bottom-right"
+        xfconf-query -c xfce4-notifyd -p /notify-location -n -t string -s "bottom-right"
         xfconf-query -c xfce4-desktop -p /desktop-icons/icon-size -s "48"
         xfconf-query -c xfce4-desktop -p /desktop-icons/primary -s "true"
-        xfconf-query -c xfce4-desktop -p /desktop-icons/tooltip-size "32.000000"
+        xfconf-query -c xfce4-desktop -p /desktop-icons/tooltip-size -s "32.000000"
         
         xfconf-query -c keyboard-layout -p /Default/XkbLayout -s "gb"
 
