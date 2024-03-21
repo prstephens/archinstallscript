@@ -489,18 +489,18 @@ EOT
         then
                 mdadm --detail --scan >> /mnt/etc/mdadm.conf
                 sed -i 's/^BINARIES=.*$/BINARIES=(mdmon)/' /mnt/etc/mkinitcpio.conf
-                sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect keyboard sd-vconsole modconf kms block mdadm_udev filesystems)/' /mnt/etc/mkinitcpio.conf
+                sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect microcode keyboard sd-vconsole modconf kms block mdadm_udev filesystems)/' /mnt/etc/mkinitcpio.conf
 
                 if [[ "$USE_CRYPT" -eq 1 ]]
                 then
-                        sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect keyboard sd-vconsole modconf kms block mdadm_udev sd-encrypt lvm2 filesystems)/' /mnt/etc/mkinitcpio.conf
+                        sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect microcode keyboard sd-vconsole modconf kms block mdadm_udev sd-encrypt lvm2 filesystems)/' /mnt/etc/mkinitcpio.conf
                 fi
         else
                 if [[ "$USE_CRYPT" -eq 1 ]]
                 then
-                        sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect keyboard sd-vconsole modconf kms block sd-encrypt lvm2 filesystems)/' /mnt/etc/mkinitcpio.conf
+                        sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect microcode keyboard sd-vconsole modconf kms block sd-encrypt lvm2 filesystems)/' /mnt/etc/mkinitcpio.conf
                 else
-                        sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect keyboard sd-vconsole modconf kms block filesystems)/' /mnt/etc/mkinitcpio.conf
+                        sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect microcode keyboard sd-vconsole modconf kms block filesystems)/' /mnt/etc/mkinitcpio.conf
                 fi
         fi
 
@@ -602,7 +602,6 @@ installbootloader-systemd(){
         cat <<EOT >> /mnt/boot/loader/entries/arch.conf
 title   Arch Linux
 linux   /vmlinuz-linux-zen
-initrd  /intel-ucode.img
 initrd  /initramfs-linux-zen.img
 options $options
 EOT
