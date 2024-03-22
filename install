@@ -12,7 +12,12 @@ set -e
 set -o pipefail
 #set -x #toggle for debug. Will print all commands.
 
-# Globals
+#   ============ VARS ==============
+#
+#   Global variables
+#
+#   ================================
+
 VERSION="2"
 BACKTITLE="Arch Installer v"$VERSION
 BASE_URL="https://raw.githubusercontent.com/prstephens/archinstallscript/master/"
@@ -21,8 +26,13 @@ USE_RAID=0
 TLP=0
 USE_GRUB=0
 MIRROR_COUNTRY=GB
+AUTO=0 # switch to make a non interactive install (for testing)
 
-# --------------------------------------------------------
+#   ========== FUNCTIONS ===========
+#
+#   Installation main functions
+#
+#   ================================
 
 mainmenu(){
         if [ "${1}" = "" ]; then
@@ -258,7 +268,7 @@ getuserinfo(){
         msg=${msg}"User          : "${user}"\n\n"
 }
 
-performinstall(){
+checks(){
         if (yesno "RAID" "Is a RAID Array being used?") then
                 USE_RAID=1
                 msg=${msg}"Use RAID?     : "${USE_RAID}"\n\n"
@@ -271,18 +281,21 @@ performinstall(){
         if (yesno "### WARNING ###" "Do you want to format ${bootdev}? \n\nTHIS COULD ERASE EXISITING OPERATING SYSTEM BOOTLOADERS") then
 		mkfs.fat -F 32 ${bootdev}
 	fi
+}
+
+performinstall(){
+        if [[ ! "$AUTO" -eq 1 ]] then
+                checks
+        fi
         
         clear
 
         timedatectl set-ntp true
 
         # Setup the partitions
-        if (yesno "### WARNING ###" "Are you sure you want install to ${rootdev} and format?") then
-                wipefs -a $rootdev
-                mkfs.btrfs $rootdev
-        else
-                mainmenu "MOUNT"
-        fi
+        wipefs -a $rootdev
+        mkfs.btrfs $rootdev
+      
 
         if [ ! "${swapdev}" = "" ]
         then
@@ -325,7 +338,7 @@ performinstall(){
                 echo $'\ntlp' >> /tmp/packages 
         fi
 
-        if [[ "$USE_CRYPT" -eq 1 ]]
+        if [[ "$USE_CRYPT" -eq 1 || "$AUTO" -eq 1]]
         then
                 bootloader="Systemd"
         else
@@ -705,7 +718,7 @@ rebootpc(){
 
 #   ============ initialisation functions ==============
 #
-#   =====================================================
+#   ====================================================
 
 checkconnection(){
         if [[ $(ping -q -w1 -c1 google.com &>/dev/null && echo online || echo offline) == "offline" ]]; 
@@ -749,6 +762,19 @@ self_update(){
         fi
 }
 
+slient_install()
+{
+        bootdev=/dev/vda1
+        swapdev=/dev/vda2
+        rootdev=/dev/vda3
+        user="paul"
+        passsword="password"
+        hostname="archvm"
+        
+        mkfs.fat -F 32 ${bootdev}
+        performinstall()
+}
+
 help()
 {
    echo
@@ -757,6 +783,7 @@ help()
    echo "h     Print this Help."
    echo "c     Try and clean current install state"
    echo "m     Change the mirror country eg. GB or US"
+   echo "s     Run a silent install with set defaults (for testing)"
    echo
 }
 
@@ -766,24 +793,33 @@ help()
 #   initialize and display the menu
 #
 #   ================================
-
-while getopts ":chm:" option; do
+while getopts ":chm:s" option; do
         case $option in
                 c) # clean
                         swapoff -a
                         rm /tmp/packages
                         [[ -d /mnt/boot ]] && umount -A /mnt/boot
                         [[ -d /mnt ]] && umount -A /mnt
-                        lsblk;;
+                        lsblk
+                        ;;
                 h) # display Help
                         help
-                        exit;;
+                        exit
+                        ;;
                 m) # mirror to use
-                        MIRROR_COUNTRY=$OPTARG;;
-                
-                \?) # Invalid option
-                echo "Error: Invalid option"
-                exit;;
+                        MIRROR_COUNTRY=$OPTARG
+                        ;;
+                s) # non interactive install (for testing)
+                        AUTO=1
+                        ;;
+                \?) 
+                        echo "Error: Invalid option"
+                        exit
+                        ;;
+                :) 
+                        echo "Option -$OPTARG requires an argument"
+                        exit
+                        ;;
         esac
 done
 
@@ -792,4 +828,8 @@ self_update
 
 [[ ! -f /tmp/packages ]] && initialise
 
-mainmenu
+if [[ "$AUTO" -eq 1 ]] then
+        slient_install
+else
+        mainmenu
+fi
