@@ -768,7 +768,7 @@ slient_install()
         swapdev=/dev/vda2
         rootdev=/dev/vda3
         user="paul"
-        passsword="password"
+        password="password"
         hostname="archvm"
 
         mkfs.fat -F 32 ${bootdev}
