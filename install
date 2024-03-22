@@ -602,7 +602,6 @@ installbootloader-systemd(){
         cat <<EOT >> /mnt/boot/loader/entries/arch.conf
 title   Arch Linux
 linux   /vmlinuz-linux-zen
-initrd  /intel-ucode.img
 initrd  /initramfs-linux-zen.img
 options $options
 EOT
