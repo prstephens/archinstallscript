@@ -804,6 +804,7 @@ while getopts ":chm:s" option; do
                         [[ -d /mnt/boot ]] && umount -A /mnt/boot
                         [[ -d /mnt ]] && umount -A /mnt
                         lsblk
+                        exit
                         ;;
                 h) # display Help
                         help
