@@ -338,7 +338,7 @@ performinstall(){
                 echo $'\ntlp' >> /tmp/packages 
         fi
 
-        if [[ "$USE_CRYPT" -eq 1 || "$AUTO" -eq 1]]
+        if [[ "$USE_CRYPT" -eq 1 || "$AUTO" -eq 1 ]]
         then
                 bootloader="Systemd"
         else
@@ -770,15 +770,15 @@ slient_install()
         user="paul"
         passsword="password"
         hostname="archvm"
-        
+
         mkfs.fat -F 32 ${bootdev}
-        performinstall()
+        performinstall
 }
 
 help()
 {
    echo
-   echo "Syntax: install [-c|h|m COUNTRY_CODE]"
+   echo "Syntax: install [-c|h|m COUNTRY_CODE|s]"
    echo "options:"
    echo "h     Print this Help."
    echo "c     Try and clean current install state"
