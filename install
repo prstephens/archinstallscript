@@ -703,7 +703,9 @@ rebootpc(){
         fi
 }
 
-# --------------------------------------------------------
+#   ============ initialisation functions ==============
+#
+#   =====================================================
 
 checkconnection(){
         if [[ $(ping -q -w1 -c1 google.com &>/dev/null && echo online || echo offline) == "offline" ]]; 
@@ -747,19 +749,41 @@ self_update(){
         fi
 }
 
-# --------------------------------------------------------
+help()
+{
+   echo
+   echo "Syntax: install [-c|h|m COUNTRY_CODE]"
+   echo "options:"
+   echo "h     Print this Help."
+   echo "c     Try and clean current install state"
+   echo "m     Change the mirror country eg. GB or US"
+   echo
+}
 
-while [[ $# -gt 0 ]]; do
-        case "${1}" in
-                -c)
+#   ============ MAIN ==============
+#
+#   Check options, check connection,
+#   initialize and display the menu
+#
+#   ================================
+
+while getopts ":chm:" option; do
+        case $option in
+                c) # clean
                         swapoff -a
                         rm /tmp/packages
                         [[ -d /mnt/boot ]] && umount -A /mnt/boot
-                        [[ -d /mnt ]] && umount -A /mnt; shift ;;
-                -m)
-                        MIRROR_COUNTRY="${2}" && shift 2 || shift ;;
-                *)
-                        echo "ERROR: Unrecognized installation option '${1}'."; shift 2 ;;
+                        [[ -d /mnt ]] && umount -A /mnt
+                        lsblk;;
+                h) # display Help
+                        help
+                        exit;;
+                m) # mirror to use
+                        MIRROR_COUNTRY=$OPTARG;;
+                
+                \?) # Invalid option
+                echo "Error: Invalid option"
+                exit;;
         esac
 done
 
