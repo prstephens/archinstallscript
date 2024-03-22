@@ -773,6 +773,9 @@ slient_install()
 
         mkfs.fat -F 32 ${bootdev}
         performinstall
+        configuration
+        setupuser
+        installbootloader
 }
 
 help()
