@@ -385,7 +385,7 @@ install_plasma(){
 
 install_xfce(){
         install_base_packages
-        yay -S xfce4 xdg-user-dir xfce4-panel-profiles xfce4-whiskermenu-plugin xfce4-pulseaudio-plugin thunar-archive-plugin gvfs ark gdm
+        yay -S xfce4 xdg-user-dirs xfce4-panel-profiles xfce4-whiskermenu-plugin xfce4-pulseaudio-plugin thunar-archive-plugin gvfs ark gdm
 
         if [[ "$TLP" -eq 1 ]]
         then
@@ -410,6 +410,8 @@ install_xp(){
 }
 
 apply_xp_theme(){
+        xdg-user-dirs-update
+
         xfconf-query -c xsettings -p /Net/IconThemeName -s "Windows-XP"
         xfconf-query -c xsettings -p /Net/SoundThemeName -s "Windows XP Default"
         xfconf-query -c xsettings -p /Net/ThemeName -s "Windows XP style (Blue)"
