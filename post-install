@@ -116,6 +116,7 @@ install_gnome(){
         install_base_packages
 
         sudo pacman -S gnome gnome-tweaks flatpak cool-retro-term
+        yay -S extension-manager
         
         install_fonts
 
