@@ -45,6 +45,7 @@ mainmenu(){
                         install_gnome
                 ;;
                 "GNOME MAC OS")
+                        install_gnome
                         install_gnome_mac
                 ;;
                 "PLASMA")
@@ -57,6 +58,7 @@ mainmenu(){
                 "WINDOWS XP")
                         install_xfce
                         install_xp
+                        apply_xp_theme
                 ;;
                 "APPLICATIONS")
                         install_apps
@@ -232,8 +234,6 @@ apply_plymouth_xp(){
 }
 
 install_gnome_mac(){
-        install_gnome
-
         # Remove 'Utilities' folder in app grid so all apps are in view
         gsettings set org.gnome.desktop.app-folders folder-children "['YaST']"
 
@@ -405,9 +405,7 @@ install_xp(){
         yay -S xfce-winxp-tc-git
         git clone https://github.com/prstephens/Windows-XP.git $HOME/.icons/Windows-XP
         git clone https://github.com/prstephens/xp-wallpapers.git /tmp/xp-wallpapers
-        sudo cp -R /tmp/xp-wallpapers /usr/share/backgrounds/   
-
-        apply_xp_theme
+        sudo cp -R /tmp/xp-wallpapers /usr/share/backgrounds/
 }
 
 apply_xp_theme(){
