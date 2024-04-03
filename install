@@ -104,6 +104,7 @@ preparedisk(){
         wipedevice=$( selectdisk "Choose device to be wiped" )
 
         if (yesno "### WARNING ###" "Are you sure you want to secure wipe ${wipedevice}? \n\nTHIS CANNOT BE UNDONE. ALL DATA WILL BE PERMANENTLY LOST!") then
+                figlet -t -f wiping device $wipedevice...
                 cryptsetup open --type plain -d /dev/urandom ${wipedevice} to_be_wiped
                 dd if=/dev/zero of=/dev/mapper/to_be_wiped status=progress || :
                 cryptsetup close to_be_wiped
@@ -140,8 +141,8 @@ selectdisk(){
 enablelvm(){
         USE_CRYPT=1
         chooseencryptpartition
-        clear
-        echo "### CREATING LUKS PARTITION ON ${realrootdev} ____________________"
+        
+        figlet -t -f pagga creating encrypted drive $realrootdev...
 
         dd if=/dev/zero of=header.img bs=16M count=1
         chmod 600 header.img
@@ -288,7 +289,7 @@ performinstall(){
                 checks
         fi
         
-        clear
+        figlet -t -f pagga installing...
 
         timedatectl set-ntp true
 
@@ -306,7 +307,7 @@ performinstall(){
         #root
         mount $rootdev /mnt
 
-        echo "### Creating BTRFS subvolumes... ____________________"
+        echo "Creating BTRFS subvolumes..."
         btrfs su cr /mnt/@
         btrfs su cr /mnt/@home
         btrfs su cr /mnt/@var_log
@@ -364,8 +365,6 @@ performinstall(){
                 echo $'\nlvm2' >> /tmp/packages
         fi
 
-        echo "### Installing packages... ____________________"
-
         pacstrap /mnt $(< /tmp/packages)
         
         genfstab -U /mnt >> /mnt/etc/fstab
@@ -380,8 +379,7 @@ exists_in_list() {
 
 
 configuration(){
-        clear
-        echo "### Configuring system... ____________________"
+        figlet -t -f pagga configuring...
 
         # Set Cloudfare as our DNS
         cat <<EOT > /mnt/etc/resolv.conf
@@ -566,8 +564,7 @@ installbootloader(){
 }
 
 installbootloader-grub(){
-        clear
-        echo "### Installing GRUB... ____________________"
+        figlet -t -f pagga installing grub...
   
         arch-chroot /mnt sed -i "s|^GRUB_CMDLINE_LINUX=.*$|GRUB_CMDLINE_LINUX=\"root=UUID=$ROOTUUID rw rootflags=subvol=@ resume=$swapdev\"|" /etc/default/grub
         
@@ -590,8 +587,7 @@ EOT
 }
 
 installbootloader-systemd(){
-        clear
-        echo "### Installing bootctl... ____________________"
+        figlet -t -f pagga installing bootctl...
 
         arch-chroot /mnt bootctl install
         
@@ -621,8 +617,7 @@ EOT
 }
 
 setupuser(){
-        clear
-        echo "### Setting up user... ____________________"
+        figlet -t -f pagga creating user...
 
         arch-chroot /mnt useradd -m -G wheel $user
         arch-chroot /mnt sed -i 's/# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
@@ -743,8 +738,10 @@ getpackagelist(){
 }
 
 initialise(){
-        figlet -t -f pagga initialising...
         dependencies
+
+        figlet -t -f pagga initialising...
+
         updatemirrors
         getpackagelist
 
