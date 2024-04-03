@@ -729,7 +729,8 @@ checkconnection(){
 }
 
 dependencies(){
-        pacman -Sy --noconfirm archlinux-keyring
+        pacman -Sy --noconfirm archlinux-keyring figlet
+        curl -sL $BASE_URL/fonts/figlet/pagga.tlf -o pagga.tlf
 }
 
 updatemirrors(){
@@ -742,6 +743,7 @@ getpackagelist(){
 }
 
 initialise(){
+        figlet -t -f pagga initialising...
         dependencies
         updatemirrors
         getpackagelist
