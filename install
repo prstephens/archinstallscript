@@ -104,7 +104,7 @@ preparedisk(){
         wipedevice=$( selectdisk "Choose device to be wiped" )
 
         if (yesno "### WARNING ###" "Are you sure you want to secure wipe ${wipedevice}? \n\nTHIS CANNOT BE UNDONE. ALL DATA WILL BE PERMANENTLY LOST!") then
-                figlet -t -f wiping device $wipedevice...
+                figlet -t -f pagga wiping device $wipedevice...
                 cryptsetup open --type plain -d /dev/urandom ${wipedevice} to_be_wiped
                 dd if=/dev/zero of=/dev/mapper/to_be_wiped status=progress || :
                 cryptsetup close to_be_wiped
