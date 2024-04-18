@@ -77,7 +77,7 @@ mainmenu(){
 }
 
 install_base_packages(){
-        sudo pacman -S xscreensaver firefox sassc seahorse gparted wmctrl code rxvt-unicode pavucontrol
+        sudo pacman -S --noconfirm xscreensaver firefox sassc seahorse gparted wmctrl code rxvt-unicode pavucontrol
         yay -S snapper-gui-git rar cava
 }
 
@@ -117,7 +117,7 @@ install_gnome(){
 
         install_base_packages
 
-        sudo pacman -S gnome gnome-tweaks flatpak cool-retro-term
+        sudo pacman -S --noconfirm gnome gnome-tweaks flatpak cool-retro-term
         yay -S extension-manager
         
         install_fonts
@@ -145,7 +145,7 @@ install_gnome(){
         gnome-extensions enable arch-update@RaphaelRochet
         
         # Remove some trash from Gnome
-        sudo pacman -Rs epiphany gnome-music totem gnome-connections
+        sudo pacman -Rs --noconfirm epiphany gnome-music totem gnome-connections
 
         # pin some nice favourites to the dash
         gsettings set org.gnome.shell favorite-apps "$(gsettings get org.gnome.shell favorite-apps | sed s/.$//), 'urxvt.desktop', 'firefox.desktop', 'org.gnome.Calendar.desktop', 'org.gnome.Contacts.desktop', 'org.gnome.Calculator.desktop', 'code-oss.desktop', 'org.gnome.Photos.desktop', 'org.manjaro.pamac.manager.desktop', 'org.gnome.tweaks.desktop', 'com.mattjakeman.ExtensionManager.desktop', 'org.gnome.Settings.desktop']"
@@ -176,7 +176,7 @@ EOT
 }
 
 install_ufw(){
-        sudo pacman -S ufw gufw
+        sudo pacman -S --noconfirm ufw gufw
         sudo systemctl enable ufw.service
 
         sudo ufw default deny
@@ -209,7 +209,7 @@ install_dash_to_dock(){
 }
 
 install_plymouth(){
-        sudo pacman -S plymouth
+        sudo pacman -S --noconfirm plymouth
 
         if [[ "$USE_GRUB" -eq 1 ]]
         then
@@ -377,7 +377,7 @@ install_whitesur(){
 
 install_plasma(){
         install_base_packages
-        sudo pacman -S plasma-meta kde-system-meta kvantum sddm 
+        sudo pacman -S --noconfirm plasma-meta kde-system-meta kvantum sddm 
         sudo systemctl enable sddm.service
         apply_xcreensaver
         install_fonts
@@ -438,7 +438,7 @@ apply_xp_theme(){
 }
 
 install_profile-sync-daemon(){
-        sudo pacman -S profile-sync-daemon
+        sudo pacman -S --noconfirm profile-sync-daemon
         psd
         sed -i 's/^#BROWSERS=.*$/BROWSERS=(google-chrome firefox)/' $HOME/.config/psd/psd.conf
         sed -i 's/^#USE_OVERLAYFS=.*$/USE_OVERLAYFS="yes"/' $HOME/.config/psd/psd.conf
@@ -447,7 +447,7 @@ install_profile-sync-daemon(){
 }
 
 install_anything-sync-daemon(){
-        sudo pacman -S anything-sync-daemon
+        sudo pacman -S --noconfirm anything-sync-daemon
         sudo sed -i "s/^WHATTOSYNC=.*$/WHATTOSYNC=('$HOME/.cache')/" /etc/asd.conf
         sudo sed -i 's/^#USE_OVERLAYFS=.*$/USE_OVERLAYFS="yes"/' /etc/asd.conf
         sudo sed -i 's/^#VOLATILE=.*$/VOLATILE=("\/dev\/shm")/' /etc/asd.conf
@@ -619,22 +619,24 @@ initialise(){
                 sudo cp /lib/initcpio/hooks/grub-btrfs-overlayfs /etc/initcpio/hooks
                 sudo cp /lib/initcpio/install/grub-btrfs-overlayfs /etc/initcpio/install
 
-                if [[ "$USE_RAID" -eq 1 ]]
-                then
-                        sudo sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect keyboard microcode sd-vconsole modconf kms block mdadm_udev filesystems grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
-
-                        if [[ "$USE_CRYPT" -eq 1 ]]
-                        then
-                                sudo sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect microcode keyboard sd-vconsole modconf kms block mdadm_udev sd-encrypt lvm2 filesystems grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
+                HOOKS="(systemd autodetect microcode keyboard sd-vconsole modconf kms block filesystems grub-btrfs-overlayfs)"
+                HOOKS_RAID="(systemd autodetect keyboard microcode sd-vconsole modconf kms block mdadm_udev filesystems grub-btrfs-overlayfs)"
+                HOOKS_CRYPT="(systemd autodetect microcode keyboard sd-vconsole modconf kms block sd-encrypt lvm2 filesystems grub-btrfs-overlayfs)"
+                HOOKS_RAID_CRYPT="(systemd autodetect microcode keyboard sd-vconsole modconf kms block mdadm_udev sd-encrypt lvm2 filesystems grub-btrfs-overlayfs)"
+                
+                if [[ "$USE_CRYPT" -eq 1 ]]; then
+                        if [[ "$USE_RAID" -eq 1 ]]; then
+                                HOOKS="$HOOKS_RAID_CRYPT"
+                        else
+                                HOOKS="$HOOKS_CRYPT"
                         fi
                 else
-                        if [[ "$USE_CRYPT" -eq 1 ]]
-                        then
-                                sudo sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect microcode keyboard sd-vconsole modconf kms block sd-encrypt lvm2 filesystems grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
-                        else
-                                sudo sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect microcode keyboard sd-vconsole modconf kms block filesystems grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
+                        if [[ "$USE_RAID" -eq 1 ]]; then
+                                HOOKS="$HOOKS_RAID"
                         fi
                 fi
+
+                sed -i "s|^HOOKS=.*$|HOOKS=${HOOKS}|" /mnt/etc/mkinitcpio.conf
         else
                 yay -S snap-pac systemd-boot-pacman-hook --noconfirm
         fi
