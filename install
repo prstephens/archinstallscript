@@ -519,7 +519,7 @@ EOT
                 fi
         fi
 
-        sed -i "s/^HOOKS=.*$/HOOKS=($HOOKS)/" /mnt/etc/mkinitcpio.conf
+        sed -i "s|^HOOKS=.*$|HOOKS=${HOOKS}|" /mnt/etc/mkinitcpio.conf
 
         # Bluetooth config
         arch-chroot /mnt sed -i 's/^#DiscoverableTimeout = 0/DiscoverableTimeout = 0/' /etc/bluetooth/main.conf
