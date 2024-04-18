@@ -563,9 +563,6 @@ initialise(){
         sudo sed -i 's/^#MAKEFLAGS="-j2"/MAKEFLAGS="-j$(nproc)"/' /etc/makepkg.conf
         sudo sed -i "s/^PKGEXT=.*$/PKGEXT='.pkg.tar'/" /etc/makepkg.conf
 
-        sudo sed -i 's/^CFLAGS.*/CFLAGS="-march=native -mtune=native -O2 -pipe -fstack-protector-strong --param=ssp-buffer-size=4 -fno-plt"/' /etc/makepkg.conf
-        sudo sed -i '/CFLAGS/{n;N;d}' /etc/makepkg.conf
-        
         sudo sed -i 's/^#RUSTFLAGS.*/RUSTFLAGS="-C opt-level=2 -C target-cpu=native"/' /etc/makepkg.conf
         sudo sed -i 's/^#BUILDDIR.*/BUILDDIR=\/tmp\/makepkg/' /etc/makepkg.conf
         sudo sed -i 's/^COMPRESSGZ.*/COMPRESSGZ=(pigz -c -f -n)/' /etc/makepkg.conf
@@ -624,18 +621,18 @@ initialise(){
 
                 if [[ "$USE_RAID" -eq 1 ]]
                 then
-                        sudo sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect keyboard sd-vconsole modconf kms block mdadm_udev filesystems grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
+                        sudo sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect keyboard microcode sd-vconsole modconf kms block mdadm_udev filesystems grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
 
                         if [[ "$USE_CRYPT" -eq 1 ]]
                         then
-                                sudo sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect keyboard sd-vconsole modconf kms block mdadm_udev sd-encrypt lvm2 filesystems grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
+                                sudo sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect microcode keyboard sd-vconsole modconf kms block mdadm_udev sd-encrypt lvm2 filesystems grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
                         fi
                 else
                         if [[ "$USE_CRYPT" -eq 1 ]]
                         then
-                                sudo sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect keyboard sd-vconsole modconf kms block sd-encrypt lvm2 filesystems grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
+                                sudo sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect microcode keyboard sd-vconsole modconf kms block sd-encrypt lvm2 filesystems grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
                         else
-                                sudo sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect keyboard sd-vconsole modconf kms block filesystems grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
+                                sudo sed -i 's/^HOOKS=.*$/HOOKS=(systemd autodetect microcode keyboard sd-vconsole modconf kms block filesystems grub-btrfs-overlayfs)/' /etc/mkinitcpio.conf
                         fi
                 fi
         else
