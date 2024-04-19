@@ -21,6 +21,7 @@ mesa
 vulkan-intel
 nano
 nano-syntax-highlighting
+bash-completion
 sudo
 git
 pigz
