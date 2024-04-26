@@ -563,7 +563,6 @@ EOT'
 setup_zram(){
         ram=$(expr $(grep MemTotal /proc/meminfo | awk '{print $2}') / 1000 / 1000 / 2)
 
-
         sudo tee -a /usr/local/bin/zram_start >/dev/null <<'EOT'
 #!/bin/bash
 sudo bash -c "echo 0 > /sys/module/zswap/parameters/enabled"
@@ -594,6 +593,8 @@ WantedBy=multi-user.target
 EOT
 
         sudo systemctl enable zram-swap.service
+
+        sudo sed -i '/swap/s/^/#/' /etc/fstab
 }
 
 initialise(){
