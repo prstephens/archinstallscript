@@ -595,6 +595,8 @@ EOT
         sudo systemctl enable zram-swap.service
 
         sudo sed -i '/swap/s/^/#/' /etc/fstab
+
+        whiptail --backtitle "$BACKTITLE" --msgbox --title "ZRAM" "To enable ZRAM please reboot" 0 78
 }
 
 initialise(){
