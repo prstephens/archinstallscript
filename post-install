@@ -563,20 +563,22 @@ EOT'
 setup_zram(){
         ram=$(expr $(grep MemTotal /proc/meminfo | awk '{print $2}') / 1000 / 1000 / 2)
 
-        sudo cat <<EOT >> /usr/local/bin/zram_start
+
+        sudo tee -a /usr/local/bin/zram_start >/dev/null <<'EOT'
 #!/bin/bash
 sudo bash -c "echo 0 > /sys/module/zswap/parameters/enabled"
 sudo swapoff --all
 sudo modprobe zram num_devices=1
 sudo bash -c "echo zstd > /sys/block/zram0/comp_algorithm"
-sudo bash -c "echo ${ram}G > /sys/block/zram0/disksize"
+sudo bash -c "echo [RAM]G > /sys/block/zram0/disksize"
 sudo mkswap --label zram0 /dev/zram0
 sudo swapon --priority 32767 /dev/zram0
 EOT
 
+        sudo sed -i "s|[RAM]|${ram}|" /usr/local/bin/zram_start
         sudo chmod +x /usr/local/bin/zram_start
 
-        sudo cat <<EOT >> /etc/systemd/system/zram-swap.service
+        sudo tee -a /etc/systemd/system/zram-swap.service >/dev/null <<'EOT'
 [Unit]
 Description=Configure zram swap device
 After=local-fs.target
