@@ -570,12 +570,12 @@ sudo bash -c "echo 0 > /sys/module/zswap/parameters/enabled"
 sudo swapoff --all
 sudo modprobe zram num_devices=1
 sudo bash -c "echo zstd > /sys/block/zram0/comp_algorithm"
-sudo bash -c "echo [RAM]G > /sys/block/zram0/disksize"
+sudo bash -c "echo ZRAM_SIZE > /sys/block/zram0/disksize"
 sudo mkswap --label zram0 /dev/zram0
 sudo swapon --priority 32767 /dev/zram0
 EOT
 
-        sudo sed -i "s|[RAM]|${ram}|" /usr/local/bin/zram_start
+        sudo sed -i "s|ZRAM_SIZE|${ram}G|" /usr/local/bin/zram_start
         sudo chmod +x /usr/local/bin/zram_start
 
         sudo tee -a /etc/systemd/system/zram-swap.service >/dev/null <<'EOT'
