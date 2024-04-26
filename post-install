@@ -34,6 +34,7 @@ mainmenu(){
         options+=("WINDOWS XP" "Install XFCE with the iconic Windows XP theme")
         options+=("APPLICATIONS" "Install some useful Applications")
         options+=("ADAWAY" "Setup a service to update hosts files and block ads")
+        options+=("ZRAM" "Use ZRAM as the swap (defaults to half your memory)")
         options+=("QEMU" "QEMU/KVM")
 
         sel=$(whiptail --backtitle "${BACKTITLE}" --fb --title "Arch Linux Post Installer" --menu "" --cancel-button "Exit" --default-item "." 20 78 0 \
@@ -65,6 +66,9 @@ mainmenu(){
                 ;;
                 "ADAWAY")
                         setup_adaway
+                ;;
+                "ZRAM")
+                        setup_zram
                 ;;
                 "QEMU")
                         install_qemu
@@ -554,6 +558,40 @@ EOT'
 
         sudo systemctl start adaway.service
         sudo systemctl enable --now adaway.timer
+}
+
+setup_zram(){
+        ram=expr $(grep MemTotal /proc/meminfo | awk '{print $2}') / 1000 / 1000 / 2
+
+        cat <<EOT >> /usr/local/bin/zram_start
+#!/bin/bash
+sudo bash -c "echo 0 > /sys/module/zswap/parameters/enabled"
+sudo swapoff --all
+sudo modprobe zram num_devices=1
+sudo bash -c "echo zstd > /sys/block/zram0/comp_algorithm"
+sudo bash -c "echo ${ram}G > /sys/block/zram0/disksize"
+sudo mkswap --label zram0 /dev/zram0
+sudo swapon --priority 32767 /dev/zram0
+EOT
+
+        chmod +x /usr/local/bin/zram_start
+
+        cat <<EOT >> /etc/systemd/system/zram-swap.service
+[Unit]
+Description=Configure zram swap device
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/zram_start
+#ExecStop=/usr/local/bin/zram_stop
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOT
+
+        systemctl enable zram-swap.service
 }
 
 initialise(){

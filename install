@@ -673,38 +673,6 @@ setupuser(){
         arch-chroot /mnt chown -R $user:$user /home/$user/
 }
 
-setup_zram(){
-        cat <<EOT >> /mnt/usr/local/bin/zram_start
-#!/bin/bash
-sudo bash -c "echo 0 > /sys/module/zswap/parameters/enabled"
-sudo swapoff --all
-sudo modprobe zram num_devices=1
-sudo bash -c "echo zstd > /sys/block/zram0/comp_algorithm"
-sudo bash -c "echo 8G > /sys/block/zram0/disksize"
-sudo mkswap --label zram0 /dev/zram0
-sudo swapon --priority 32767 /dev/zram0
-EOT
-
-        chmod +x /mnt/usr/local/bin/zram_start
-
-        cat <<EOT >> /mnt/etc/systemd/system/zram-swap.service
-[Unit]
-Description=Configure zram swap device
-After=local-fs.target
-
-[Service]
-Type=oneshot
-ExecStart=/usr/local/bin/zram_start
-#ExecStop=/usr/local/bin/zram_stop
-RemainAfterExit=yes
-
-[Install]
-WantedBy=multi-user.target
-EOT
-
-        systemctl enable zram-swap.service
-}
-
 finish(){
         whiptail --backtitle "$BACKTITLE" --msgbox --title "Congratulations" "Install Complete\n\nReturn to main menu and select 'Finsh and Reboot'" --fb 0 78
 }
