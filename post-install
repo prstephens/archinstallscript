@@ -82,7 +82,7 @@ mainmenu(){
 
 install_base_packages(){
         sudo pacman -S --noconfirm xscreensaver firefox sassc seahorse gparted wmctrl code rxvt-unicode pavucontrol
-        yay -S snapper-gui-git rar cava
+        yay -S snapper-gui-git rar cava btrfs-assistant
 }
 
 install_fonts(){
