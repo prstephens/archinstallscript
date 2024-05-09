@@ -325,8 +325,6 @@ performinstall(){
 
         mount -o noatime,commit=120,compress=zstd,space_cache=v2,discard=async,subvol=@snapshots $rootdev /mnt/.snapshots
 
-        mount $bootdev /mnt/boot
-
         ROOTUUID=$(blkid -s UUID -o value $rootdev)
 
         # determine if we are installing on a laptop or desktop
@@ -342,6 +340,7 @@ performinstall(){
         if [[ "$USE_CRYPT" -eq 1 || "$AUTO" -eq 1 ]]
         then
                 bootloader="Systemd"
+                mount $bootdev /mnt/boot
         else
                 bootloader=$(whiptail --backtitle "$BACKTITLE" --title "Select a bootloader to install" --radiolist "Choose" 20 30 5 \
                 "Systemd" "" Systemd \
@@ -353,6 +352,11 @@ performinstall(){
         then
                 USE_GRUB=1
                 echo $'\ngrub\nos-prober\ngrub-btrfs' >> /tmp/packages
+
+                mkdir /mnt/boot/efi
+                mount $bootdev /mnt/boot/efi
+        else
+                mount $bootdev /mnt/boot
         fi
 
         if [[ "$USE_RAID" -eq 1 ]]
