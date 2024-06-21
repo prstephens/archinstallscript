@@ -125,17 +125,17 @@ install_gnome(){
 
         install_base_packages
 
-        sudo pacman -S --noconfirm gnome gnome-tweaks flatpak cool-retro-term
-        yay -S extension-manager
+        sudo pacman -S --noconfirm gnome gnome-tweaks file-roller
+        yay -S --noconfirm extension-manager
         
         install_fonts
 
         apply_xcreensaver
 
         # add arch updater extension
-        yay -S gnome-shell-extension-arch-update
+        yay -S --noconfirm gnome-shell-extension-arch-update
         gsettings set org.gnome.shell.extensions.arch-update check-cmd "/bin/sh -c \"(/usr/bin/checkupdates; /usr/bin/yay -Qqu --color never | sed 's/Get .*//') | sort -u -t' ' -k1,1\""
-        gsettings set org.gnome.shell.extensions.arch-update update-cmd 'cool-retro-term -e sh -c "wmctrl -r :ACTIVE: -b toggle,fullscreen;yay -Syu ; echo Done - Press enter to exit; read"'
+        gsettings set org.gnome.shell.extensions.arch-update update-cmd 'urxvt -e sh -c "wmctrl -r :ACTIVE: -b toggle,fullscreen;yay -Syu ; echo Done - Press enter to exit; read"'
         gsettings set org.gnome.shell.extensions.arch-update use-buildin-icons true
         gsettings set org.gnome.shell.extensions.arch-update strip-versions true
         gsettings set org.gnome.shell disable-extension-version-validation "true"
@@ -153,7 +153,7 @@ install_gnome(){
         gnome-extensions enable arch-update@RaphaelRochet
         
         # Remove some trash from Gnome
-        sudo pacman -Rs --noconfirm epiphany gnome-music totem gnome-connections gedit gnome-text-editor gnome-tour gnome-console gnome-user-docs yelp
+        sudo pacman -Rs --noconfirm epiphany gnome-music totem gnome-connections gedit gnome-text-editor gnome-tour gnome-console gnome-user-docs yelp gnome-maps
 
         # pin some nice favourites to the dash
         gsettings set org.gnome.shell favorite-apps "$(gsettings get org.gnome.shell favorite-apps | sed s/.$//), 'urxvt.desktop', 'firefox.desktop', 'org.gnome.Calendar.desktop', 'org.gnome.Contacts.desktop', 'org.gnome.Calculator.desktop', 'code-oss.desktop', 'org.gnome.Photos.desktop', 'org.gnome.tweaks.desktop', 'com.mattjakeman.ExtensionManager.desktop', 'org.gnome.Settings.desktop']"
