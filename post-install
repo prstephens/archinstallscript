@@ -34,6 +34,7 @@ mainmenu(){
         options+=("WINDOWS XP" "Install XFCE with the iconic Windows XP theme")
         options+=("APPLICATIONS" "Install some useful Applications")
         options+=("ADAWAY" "Setup a service to update hosts files and block ads")
+        options+=("WARP" "Setup Cloudfare WARP (Poor man VPN)")
         options+=("ZRAM" "Use ZRAM as the swap (defaults to half your memory)")
         options+=("QEMU" "QEMU/KVM")
 
@@ -66,6 +67,9 @@ mainmenu(){
                 ;;
                 "ADAWAY")
                         setup_adaway
+                ;;
+                "WARP")
+                        setup_cloudflare_warp
                 ;;
                 "ZRAM")
                         setup_zram
@@ -600,6 +604,11 @@ EOT
         sudo sed -i '/swap/s/^/#/' /etc/fstab
 
         whiptail --backtitle "$BACKTITLE" --msgbox --title "ZRAM" "To enable ZRAM please reboot" 0 78
+}
+
+setup_cloudflare_warp(){
+        yay -S cloudflare-warp-bin warpgui-bin
+        susdo systemctl enable --now warp-svc.service
 }
 
 initialise(){
