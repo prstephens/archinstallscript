@@ -607,8 +607,8 @@ EOT
 }
 
 setup_cloudflare_warp(){
-        yay -S cloudflare-warp-bin warpgui-bin
-        susdo systemctl enable --now warp-svc.service
+        yay -S --noconfirm cloudflare-warp-bin warpgui-bin
+        sudo systemctl enable --now warp-svc.service
 }
 
 initialise(){
