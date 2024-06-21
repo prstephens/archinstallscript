@@ -277,8 +277,9 @@ install_gnome_mac(){
 
         # Favourites in app grid
         git clone https://gitlab.gnome.org/harshadgavali/favourites-in-appgrid.git /tmp/favourites-in-appgrid
-        cp -r /tmp/favourites-in-appgrid/ ~/.local/share/gnome-shell/extensions/favourites-in-appgrid\@harshadgavali.gitlab.org
-
+        cd /tmp/favourites-in-appgrid
+        make
+        
         # plymouth macos loading theme        
         install_plymouth
         apply_plymouth_mac
