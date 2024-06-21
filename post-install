@@ -153,10 +153,10 @@ install_gnome(){
         gnome-extensions enable arch-update@RaphaelRochet
         
         # Remove some trash from Gnome
-        sudo pacman -Rs --noconfirm epiphany gnome-music totem gnome-connections
+        sudo pacman -Rs --noconfirm epiphany gnome-music totem gnome-connections gedit gnome-text-editor gnome-tour gnome-console gnome-user-docs yelp
 
         # pin some nice favourites to the dash
-        gsettings set org.gnome.shell favorite-apps "$(gsettings get org.gnome.shell favorite-apps | sed s/.$//), 'urxvt.desktop', 'firefox.desktop', 'org.gnome.Calendar.desktop', 'org.gnome.Contacts.desktop', 'org.gnome.Calculator.desktop', 'code-oss.desktop', 'org.gnome.Photos.desktop', 'org.manjaro.pamac.manager.desktop', 'org.gnome.tweaks.desktop', 'com.mattjakeman.ExtensionManager.desktop', 'org.gnome.Settings.desktop']"
+        gsettings set org.gnome.shell favorite-apps "$(gsettings get org.gnome.shell favorite-apps | sed s/.$//), 'urxvt.desktop', 'firefox.desktop', 'org.gnome.Calendar.desktop', 'org.gnome.Contacts.desktop', 'org.gnome.Calculator.desktop', 'code-oss.desktop', 'org.gnome.Photos.desktop', 'org.gnome.tweaks.desktop', 'com.mattjakeman.ExtensionManager.desktop', 'org.gnome.Settings.desktop']"
 
         cat <<EOT >> $HOME/.bash_profile
 if [ "$XDG_SESSION_TYPE" = "wayland" ]; then
