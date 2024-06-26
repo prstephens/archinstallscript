@@ -23,7 +23,7 @@ panel-static-blur=true
 blur=true
 
 [applications]
-blacklist=['Google-chrome', 'firefox', 'gjs']
+blacklist=['Google-chrome', 'google-chrome', 'firefox', 'gjs']
 blur=true
 blur-on-overview=true
 brightness=1.0

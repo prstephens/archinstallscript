@@ -125,7 +125,7 @@ install_gnome(){
 
         install_base_packages
 
-        sudo pacman -S --noconfirm gnome gnome-tweaks file-roller
+        sudo pacman -S --noconfirm gnome gnome-tweaks file-roller gnome-terminal
         yay -S --noconfirm extension-manager
         
         install_fonts
