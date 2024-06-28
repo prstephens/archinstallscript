@@ -85,7 +85,7 @@ mainmenu(){
 }
 
 install_base_packages(){
-        sudo pacman -S --noconfirm xscreensaver firefox sassc seahorse gparted wmctrl code pavucontrol
+        sudo pacman -S --noconfirm xscreensaver firefox sassc seahorse gparted code pavucontrol
         yay -S snapper-gui-git rar btrfs-assistant
 }
 
@@ -334,7 +334,7 @@ install_whitesur(){
         cd /tmp/WhiteSur-gtk-theme
 
         ./install.sh -m -o normal -N glassy -c $theme -s 280 -l -c $theme
-        sudo ./tweaks.sh -g -c $theme -b $HOME/.local/share/backgrounds/sonoma-Light.jpg
+        sudo ./tweaks.sh -g -c $theme -b $HOME/.local/share/backgrounds/sequoia-Light.jpg
         gsettings set org.gnome.desktop.background picture-uri file:////$HOME/.local/share/backgrounds/sequoia-Light.png
         curl -sL $BASE_URL/configs/home/.Xresources-$theme -o $HOME/.Xresources
         ./tweaks.sh -d -c $theme
