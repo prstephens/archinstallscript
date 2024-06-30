@@ -85,7 +85,7 @@ mainmenu(){
 }
 
 install_base_packages(){
-        sudo pacman -S --noconfirm xscreensaver firefox sassc seahorse gparted code pavucontrol
+        sudo pacman -S --noconfirm xscreensaver firefox sassc seahorse gparted code meld pavucontrol
         yay -S snapper-gui-git rar btrfs-assistant
 }
 
