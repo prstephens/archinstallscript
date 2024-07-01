@@ -153,7 +153,7 @@ install_gnome(){
         gnome-extensions enable arch-update@RaphaelRochet
         
         # Remove some trash from Gnome
-        sudo pacman -Rs --noconfirm epiphany gnome-music totem gnome-connections gnome-text-editor gnome-tour gnome-console gnome-user-docs yelp gnome-maps
+        sudo pacman -Rs --noconfirm epiphany gnome-music totem gnome-connections gnome-text-editor gnome-tour gnome-console gnome-user-docs yelp gnome-maps gnome-software
 
         # pin some nice favourites to the dash
         gsettings set org.gnome.shell favorite-apps "$(gsettings get org.gnome.shell favorite-apps | sed s/.$//), 'org.gnome.Terminal.desktop', 'firefox.desktop', 'org.gnome.Calendar.desktop', 'org.gnome.Contacts.desktop', 'org.gnome.Calculator.desktop', 'code-oss.desktop', 'org.gnome.Photos.desktop', 'org.gnome.tweaks.desktop', 'com.mattjakeman.ExtensionManager.desktop', 'org.gnome.Settings.desktop']"
@@ -170,6 +170,14 @@ EOT
         # create a snapshot
         for i in `seq 2 50`; do sudo snapper delete $i; done;
         sudo snapper -c root create --description "### FRESH INSTALL - Including Gnome ###" # ID 2
+
+        # gnome-terminal padding add to ~/.config/gtk-3.0/gtk.css
+        # VteTerminal,
+        # erminalScreen,
+        # vte-terminal {
+        #         padding: 20px 20px 20px 20px;
+        #         -VteTerminal-inner-border: 10px 10px 10px 10px;
+        # }
 
         # Change Google Drive name in Nautilus sidebar
         # ~/.config/goa-1.0/accounts.conf
@@ -334,7 +342,7 @@ install_whitesur(){
         cd /tmp/WhiteSur-gtk-theme
 
         ./install.sh -m -o normal -N glassy -c $theme -s 280 -l -c $theme
-        sudo ./tweaks.sh -g -c $theme -b $HOME/.local/share/backgrounds/sequoia-Light.jpg
+        sudo ./tweaks.sh -g -c $theme -b $HOME/.local/share/backgrounds/sequoia-Light.png
         gsettings set org.gnome.desktop.background picture-uri file:////$HOME/.local/share/backgrounds/sequoia-Light.png
         curl -sL $BASE_URL/configs/home/.Xresources-$theme -o $HOME/.Xresources
         ./tweaks.sh -d -c $theme
