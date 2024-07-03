@@ -361,7 +361,7 @@ install_whitesur(){
 
         # MacOS calendar icon fix
         git clone https://github.com/prstephens/mac-dynamic-calendar.git /tmp/mac-dynamic-calendar
-        cp -R /tmp/mac-dynamic-calendar/dynamic-calendar-and-clocks-icons\@fcusr.github.com $HOME/.local/share/gnome-shell/extensions/
+        cp -R /tmp/mac-dynamic-calendar/dynamic-calendar-and-clocks-icons\@fcusr.github.com $HOME/.local/share/gnome-shell/extensions
         curl -sL $BASE_URL/configs/extensions/mac-dynamic-calendar-settings -o /tmp/mac-dynamic-calendar-settings
         dconf load /org/gnome/shell/extensions/dynamic-calendar-and-clocks-icons/ < /tmp/mac-dynamic-calendar-settings
         gnome-extensions enable dynamic-calendar-and-clocks-icons@fcusr.github.com
