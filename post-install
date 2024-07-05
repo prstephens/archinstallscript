@@ -302,6 +302,9 @@ install_gnome_mac(){
         # get the catppuccin themes for gnome-terminal
         curl -L https://raw.githubusercontent.com/catppuccin/gnome-terminal/v0.2.0/install.py | python3 -
 
+        # set the defualt theme to Macchiato
+        dconf write /org/gnome/terminal/legacy/profiles:/default "'5083e06b-024e-46be-9cd2-892b814f1fc8'"
+
         # gnome-terminal padding add to ~/.config/gtk-3.0/gtk.css
         cat <<EOT >> $HOME/.config/gtk-3.0/gtk.css
 
