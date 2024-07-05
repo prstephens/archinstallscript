@@ -183,14 +183,6 @@ EOT
         for i in `seq 2 50`; do sudo snapper delete $i; done;
         sudo snapper -c root create --description "### FRESH INSTALL - Including Gnome ###" # ID 2
 
-        # gnome-terminal padding add to ~/.config/gtk-3.0/gtk.css
-        # VteTerminal,
-        # erminalScreen,
-        # vte-terminal {
-        #         padding: 20px 20px 20px 20px;
-        #         -VteTerminal-inner-border: 10px 10px 10px 10px;
-        # }
-
         # Change Google Drive name in Nautilus sidebar
         # ~/.config/goa-1.0/accounts.conf
         # PresentationIdentity=Google Drive
@@ -308,7 +300,18 @@ install_gnome_mac(){
 
         # get the catppuccin themes for gnome-terminal
         curl -L https://raw.githubusercontent.com/catppuccin/gnome-terminal/v0.2.0/install.py | python3 -
-        
+
+        # gnome-terminal padding add to ~/.config/gtk-3.0/gtk.css
+        cat <<EOT >> $HOME/.config/gtk-3.0/gtk.css
+
+VteTerminal,
+TerminalScreen,
+vte-terminal {
+    padding: 20px 20px 20px 20px;
+    -VteTerminal-inner-border: 10px 10px 10px 10px;
+}
+EOT
+
         # plymouth macos loading theme        
         install_plymouth
         apply_plymouth_mac
