@@ -299,6 +299,12 @@ install_gnome_mac(){
         git clone https://gitlab.gnome.org/harshadgavali/favourites-in-appgrid.git /tmp/favourites-in-appgrid
         cd /tmp/favourites-in-appgrid
         make
+
+        # Alphabetical App Grid
+        git clone https://github.com/stuarthayhurst/alphabetical-grid-extension.git /tmp/alphabetical-grid-extension
+        cd /tmp/alphabetical-grid-extension
+        make build
+        make install
         
         # plymouth macos loading theme        
         install_plymouth
@@ -323,6 +329,7 @@ install_gnome_mac(){
         gnome-extensions enable unite@hardpixel.eu
         gnome-extensions enable just-perfection-desktop@just-perfection
         gnome-extensions enable favourites-in-appgrid@harshadgavali.gitlab.org
+        gnome-extensions enable AlphabeticalAppGrid@stuarthayhurst
 }
 
 install_whitesur(){
