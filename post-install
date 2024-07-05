@@ -305,6 +305,9 @@ install_gnome_mac(){
         cd /tmp/alphabetical-grid-extension
         make build
         make install
+
+        # get the catppuccin themes for gnome-terminal
+        curl -L https://raw.githubusercontent.com/catppuccin/gnome-terminal/v0.2.0/install.py | python3 -
         
         # plymouth macos loading theme        
         install_plymouth
@@ -363,7 +366,6 @@ install_whitesur(){
         ./install.sh -m -o normal -N glassy -c $theme -s 280 -l -c $theme
         sudo ./tweaks.sh -g -c $theme -b $HOME/.local/share/backgrounds/sequoia-Light.png
         gsettings set org.gnome.desktop.background picture-uri file:////$HOME/.local/share/backgrounds/sequoia-Light.png
-        curl -sL $BASE_URL/configs/home/.Xresources-$theme -o $HOME/.Xresources
         ./tweaks.sh -d -c $theme
         ./tweaks.sh -f monterey
         ./tweaks.sh -F
@@ -388,7 +390,7 @@ install_whitesur(){
         gsettings set org.gnome.desktop.interface gtk-theme WhiteSur-$theme
         gsettings set org.gnome.desktop.interface cursor-theme WhiteSur-cursors
         gsettings set org.gnome.shell.extensions.user-theme name WhiteSur-$theme
-        gsettings set org.gnome.desktop.interface icon-theme WhiteSur
+        gsettings set org.gnome.desktop.interface icon-theme WhiteSur-light
 
         if [[ "$theme" == "Dark" ]]
         then
