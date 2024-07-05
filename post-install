@@ -102,7 +102,7 @@ install_fonts(){
         install_windows_11_fonts
 
         # disable all bitmap font rendering
-        [[ ! -d $HOME/.config/fontconfig ]] && mkdir -p $HOME/.config/fontconfig
+        [[ ! -d $HOME/.config/fontconfigconf.d ]] && mkdir -p $HOME/.config/fontconfig/conf.d
         cat <<EOT > $HOME/.config/fontconfig/conf.d/20-no-embedded.conf
 <?xml version="1.0"?>
 <!DOCTYPE fontconfig SYSTEM "urn:fontconfig:fonts.dtd">
