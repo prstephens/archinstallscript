@@ -147,7 +147,7 @@ install_gnome(){
         # add arch updater extension
         yay -S --noconfirm gnome-shell-extension-arch-update
         gsettings set org.gnome.shell.extensions.arch-update check-cmd "/bin/sh -c \"(/usr/bin/checkupdates; /usr/bin/yay -Qqu --color never | sed 's/Get .*//') | sort -u -t' ' -k1,1\""
-        gsettings set org.gnome.shell.extensions.arch-update update-cmd 'urxvt -e sh -c "wmctrl -r :ACTIVE: -b toggle,fullscreen;yay -Syu ; echo Done - Press enter to exit; read"'
+        gsettings set org.gnome.shell.extensions.arch-update update-cmd 'gnome-terminal -- bash -c "yay; echo Done - Press enter to exit; read"'
         gsettings set org.gnome.shell.extensions.arch-update use-buildin-icons true
         gsettings set org.gnome.shell.extensions.arch-update strip-versions true
         gsettings set org.gnome.shell disable-extension-version-validation "true"
