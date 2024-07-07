@@ -6,59 +6,68 @@ blur-dash=false
 blur-overview=true
 blur-panel=true
 blur-window-list=false
-brightness=0.59999999999999998
-color-and-noise=false
 dash-opacity=0.12
 dash-to-dock-blur=true
 dash-to-dock-override-background=false
-hacks-level=3
+hacks-level=2
 hidetopbar=true
 panel-blur=true
 panel-brightness=1.0
 panel-customize=true
 panel-sigma=100
 panel-static-blur=true
+pipelines={'pipeline_default': {'name': <'Default'>, 'effects': <[<{'type': <'native_static_gaussian_blur'>, 'id': <'effect_000000000000'>, 'params': <{'radius': <30>, 'brightness': <1>, 'unscaled_radius': <30>}>}>]>}, 'pipeline_default_rounded': {'name': <'Default rounded'>, 'effects': <[<{'type': <'native_static_gaussian_blur'>, 'id': <'effect_000000000001'>, 'params': <{'radius': <30>, 'brightness': <1>, 'unscaled_radius': <100>}>}>, <{'type': <'corner'>, 'id': <'effect_000000000002'>, 'params': <{'radius': <24>}>}>]>}}
+settings-version=2
 
 [appfolder]
 blur=true
+brightness=0.59999999999999998
+sigma=30
 
 [applications]
-blacklist=['Google-chrome', 'google-chrome', 'firefox', 'gjs']
+blacklist=['Google-chrome', 'firefox', 'gjs', 'google-chrome', 'virt-manager']
 blur=true
 blur-on-overview=true
 brightness=1.0
-customize=true
+dynamic-opacity=false
 enable-all=true
-opacity=240
+opacity=245
 sigma=8
 
 [dash-to-dock]
 blur=true
 brightness=1.0
-customize=true
 override-background=false
+pipeline='pipeline_default_rounded'
 sigma=5
-style-dash-to-dock=1
+static-blur=true
+style-dash-to-dock=0
 unblur-in-overview=false
 
 [hidetopbar]
 compatibility=false
 
 [lockscreen]
-customize=true
+pipeline='pipeline_default'
 
 [overview]
 blur=true
-customize=true
-sigma=64
+pipeline='pipeline_default'
 style-components=1
 
 [panel]
 blur=true
 brightness=1.0
-customize=true
 override-background=false
 override-background-dynamically=false
+pipeline='pipeline_default'
 sigma=10
 static-blur=true
 style-panel=2
+
+[screenshot]
+pipeline='pipeline_default'
+
+[window-list]
+brightness=0.59999999999999998
+sigma=30
