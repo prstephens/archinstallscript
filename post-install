@@ -307,17 +307,6 @@ install_gnome_mac(){
         dconf write /org/gnome/terminal/legacy/profiles:/:5083e06b-024e-46be-9cd2-892b814f1fc8/default-size-columns 120
         dconf write /org/gnome/terminal/legacy/profiles:/:5083e06b-024e-46be-9cd2-892b814f1fc8/font "'MesloLGS NF 9'"
 
-        # gnome-terminal padding add to ~/.config/gtk-3.0/gtk.css
-        cat <<EOT >> $HOME/.config/gtk-3.0/gtk.css
-
-VteTerminal,
-TerminalScreen,
-vte-terminal {
-    padding: 20px 20px 20px 20px;
-    -VteTerminal-inner-border: 10px 10px 10px 10px;
-}
-EOT
-
         # plymouth macos loading theme        
         install_plymouth
         apply_plymouth_mac
@@ -342,6 +331,17 @@ EOT
         gnome-extensions enable just-perfection-desktop@just-perfection
         gnome-extensions enable favourites-in-appgrid@harshadgavali.gitlab.org
         gnome-extensions enable AlphabeticalAppGrid@stuarthayhurst
+
+        # gnome-terminal padding add to ~/.config/gtk-3.0/gtk.css
+        cat <<EOT >> $HOME/.config/gtk-3.0/gtk.css
+
+VteTerminal,
+TerminalScreen,
+vte-terminal {
+    padding: 20px 20px 20px 20px;
+    -VteTerminal-inner-border: 10px 10px 10px 10px;
+}
+EOT
 }
 
 install_whitesur(){
