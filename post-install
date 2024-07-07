@@ -304,6 +304,8 @@ install_gnome_mac(){
 
         # set the defualt theme to Macchiato
         dconf write /org/gnome/terminal/legacy/profiles:/default "'5083e06b-024e-46be-9cd2-892b814f1fc8'"
+        dconf write /org/gnome/terminal/legacy/profiles:/:5083e06b-024e-46be-9cd2-892b814f1fc8/default-size-columns 120
+        dconf write /org/gnome/terminal/legacy/profiles:/:5083e06b-024e-46be-9cd2-892b814f1fc8/font "'MesloLGS NF 9'"
 
         # gnome-terminal padding add to ~/.config/gtk-3.0/gtk.css
         cat <<EOT >> $HOME/.config/gtk-3.0/gtk.css
@@ -388,6 +390,7 @@ install_whitesur(){
         ./install.sh
 
         # MacOS calendar icon fix
+        [[ ! -d $HOME/.local/share/gnome-shell/extensions ]] && mkdir -p $HOME/.local/share/gnome-shell/extensions
         git clone https://github.com/prstephens/mac-dynamic-calendar.git /tmp/mac-dynamic-calendar
         cp -R /tmp/mac-dynamic-calendar/dynamic-calendar-and-clocks-icons\@fcusr.github.com $HOME/.local/share/gnome-shell/extensions
         curl -sL $BASE_URL/configs/extensions/mac-dynamic-calendar-settings -o /tmp/mac-dynamic-calendar-settings
