@@ -2,8 +2,7 @@
 menu-button-extensions-app='com.mattjakeman.ExtensionManager.desktop'
 menu-button-icon-image=0
 menu-button-icon-size=24
-menu-button-software-center='pamac-manager'
-menu-button-terminal='urxvt'
+menu-button-terminal='gnome-terminal'
 show-activities-button=false
 show-lockscreen=true
 show-power-options=true
