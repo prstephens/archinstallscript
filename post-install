@@ -306,6 +306,7 @@ install_gnome_mac(){
         dconf write /org/gnome/terminal/legacy/profiles:/default "'5083e06b-024e-46be-9cd2-892b814f1fc8'"
         dconf write /org/gnome/terminal/legacy/profiles:/:5083e06b-024e-46be-9cd2-892b814f1fc8/default-size-columns 120
         dconf write /org/gnome/terminal/legacy/profiles:/:5083e06b-024e-46be-9cd2-892b814f1fc8/font "'MesloLGS NF 9'"
+        dconf write /org/gnome/terminal/legacy/profiles:/:5083e06b-024e-46be-9cd2-892b814f1fc8/use-system-font false
 
         # plymouth macos loading theme        
         install_plymouth
