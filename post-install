@@ -230,18 +230,22 @@ install_dash_to_dock(){
 }
 
 install_plymouth(){
-        sudo pacman -S --noconfirm plymouth
 
-        if [[ "$USE_GRUB" -eq 1 ]]
+        if ! pacman -Qs plymouth > /dev/null
         then
-                sudo sed -i 's/quiet/quiet splash/' /etc/default/grub
-                sudo grub-mkconfig -o /boot/grub/grub.cfg
-        else
-                sudo sed -i 's/quiet/quiet splash/' /boot/loader/entries/arch.conf
-        fi
+                sudo pacman -S --noconfirm plymouth
 
-        sudo sed -i 's/systemd/systemd plymouth/' /etc/mkinitcpio.conf
-        sudo mkinitcpio -P     
+                if [[ "$USE_GRUB" -eq 1 ]]
+                then
+                        sudo sed -i 's/quiet/quiet splash/' /etc/default/grub
+                        sudo grub-mkconfig -o /boot/grub/grub.cfg
+                else
+                        sudo sed -i 's/quiet/quiet splash/' /boot/loader/entries/arch.conf
+                fi
+
+                sudo sed -i 's/systemd/systemd plymouth/' /etc/mkinitcpio.conf
+                sudo mkinitcpio -P
+        fi
 }
 
 apply_plymouth_mac(){
