@@ -1,9 +1,9 @@
 #! /bin/bash
 
-# Arch Linux Post Install Script 
+# Arch Linux Post Install Script
 # ------------------------------
 # author    : prstephens
-#             https://github.com/prstephens           
+#             https://github.com/prstephens
 # project   : https://github.com/prstephens/archinstallscript
 # license   : LGPL-3.0 (http://opensource.org/licenses/lgpl-3.0.html)
 # referance : https://wiki.archlinux.org/index.php/Installation_guide
@@ -13,10 +13,10 @@ BACKTITLE="Arch Installer v"$VERSION
 BASE_URL="https://raw.githubusercontent.com/prstephens/archinstallscript/master/"
 
 rootdev=/root/dev # changed on the fly during install
-USE_CRYPT=0 # changed on the fly during install
-USE_RAID=0 # changed on the fly during install
-USE_GRUB=0 # changed on the fly during install
-TLP=0 # changed on the fly during install
+USE_CRYPT=0       # changed on the fly during install
+USE_RAID=0        # changed on the fly during install
+USE_GRUB=0        # changed on the fly during install
+TLP=0             # changed on the fly during install
 
 theme="Light"
 
@@ -25,7 +25,7 @@ set -o pipefail
 
 # --------------------------------------------------------
 
-mainmenu(){
+mainmenu() {
         options=()
         options+=("GNOME" "Vanilla GNOME install")
         options+=("GNOME MAC OS" "Install GNOME with Mac OS theme")
@@ -39,57 +39,57 @@ mainmenu(){
         options+=("QEMU" "QEMU/KVM")
 
         sel=$(whiptail --backtitle "${BACKTITLE}" --fb --title "Arch Linux Post Installer" --menu "" --cancel-button "Exit" --default-item "." 20 78 0 \
-            "${options[@]}" \
-            3>&1 1>&2 2>&3)
+                "${options[@]}" \
+                3>&1 1>&2 2>&3)
         if [ "$?" = "0" ]; then
-            case ${sel} in
+                case ${sel} in
                 "GNOME")
                         install_gnome
-                ;;
+                        ;;
                 "GNOME MAC OS")
                         install_gnome
                         install_gnome_mac
-                ;;
+                        ;;
                 "PLASMA")
                         install_plasma
-                ;;
+                        ;;
                 "CHICAGO95")
                         install_xfce
                         install_chicago95
-                ;;
+                        ;;
                 "WINDOWS XP")
                         install_xfce
                         install_xp
                         apply_xp_theme
-                ;;
+                        ;;
                 "APPLICATIONS")
                         install_apps
-                ;;
+                        ;;
                 "ADAWAY")
                         setup_adaway
-                ;;
+                        ;;
                 "WARP")
                         setup_cloudflare_warp
-                ;;
+                        ;;
                 "ZRAM")
                         setup_zram
-                ;;
+                        ;;
                 "QEMU")
                         install_qemu
-                ;;
-            esac
-            mainmenu
+                        ;;
+                esac
+                mainmenu
         else
-            clear
+                clear
         fi
 }
 
-install_base_packages(){
+install_base_packages() {
         sudo pacman -S --noconfirm --needed xscreensaver firefox sassc seahorse gparted code meld pavucontrol
         yay -S --needed snapper-gui-git rar btrfs-assistant
 }
 
-install_fonts(){
+install_fonts() {
         echo "Installing fonts..."
         yay -S --noconfirm --needed apple-fonts ttf-cascadia-code-nerd ttf-meslo-nerd-font-powerlevel10k ttf-croscore ttf-google-sans
 
@@ -103,7 +103,7 @@ install_fonts(){
 
         # disable all bitmap font rendering
         [[ ! -d $HOME/.config/fontconfig/conf.d ]] && mkdir -p $HOME/.config/fontconfig/conf.d
-        cat <<EOT > $HOME/.config/fontconfig/conf.d/20-no-embedded.conf
+        cat <<EOT >$HOME/.config/fontconfig/conf.d/20-no-embedded.conf
 <?xml version="1.0"?>
 <!DOCTYPE fontconfig SYSTEM "urn:fontconfig:fonts.dtd">
 <fontconfig>
@@ -117,30 +117,30 @@ EOT
         fc-cache -f
 }
 
-install_windows_11_fonts(){
+install_windows_11_fonts() {
         curl -sL $BASE_URL/fonts/win/windowsfonts.tar.gz.partaa -o /tmp/windowsfonts.tar.gz.partaa
         curl -sL $BASE_URL/fonts/win/windowsfonts.tar.gz.partab -o /tmp/windowsfonts.tar.gz.partab
         curl -sL $BASE_URL/fonts/win/windowsfonts.tar.gz.partac -o /tmp/windowsfonts.tar.gz.partac
         curl -sL $BASE_URL/fonts/win/windowsfonts.tar.gz.partad -o /tmp/windowsfonts.tar.gz.partad
         curl -sL $BASE_URL/fonts/win/windowsfonts.tar.gz.partae -o /tmp/windowsfonts.tar.gz.partae
 
-        cat /tmp/windowsfonts.tar.gz.parta* > /tmp/windowsfonts.tar.gz
+        cat /tmp/windowsfonts.tar.gz.parta* >/tmp/windowsfonts.tar.gz
 
         sudo tar -zxvf /tmp/windowsfonts.tar.gz -C /
 
         fc-cache -f
 }
 
-install_gnome(){
+install_gnome() {
         clear
-        
+
         echo "Installing Gnome.."
 
         install_base_packages
 
         sudo pacman -S --noconfirm --needed gnome gnome-tweaks file-roller gnome-terminal
         yay -S --noconfirm --needed extension-manager
-        
+
         install_fonts
 
         apply_xcreensaver
@@ -154,8 +154,7 @@ install_gnome(){
         gsettings set org.gnome.shell disable-extension-version-validation "true"
         gsettings set org.gnome.desktop.input-sources sources "[('xkb', 'gb')]"
 
-        if [[ "$TLP" -eq 1 ]]
-        then
+        if [[ "$TLP" -eq 1 ]]; then
                 git clone https://github.com/arelange/gnome-shell-extension-hibernate-status.git /tmp/gnome-shell-extension-hibernate-status
                 cp -r /tmp/gnome-shell-extension-hibernate-status $HOME/.local/share/gnome-shell/extensions/hibernate-status\@dromi
                 gnome-extensions enable hibernate-status@dromi
@@ -164,24 +163,24 @@ install_gnome(){
         # Turn on some extensions
         gnome-extensions enable user-theme@gnome-shell-extensions.gcampax.github.com
         gnome-extensions enable arch-update@RaphaelRochet
-        
+
         # Remove some trash from Gnome
         sudo pacman -Rs --noconfirm epiphany gnome-music totem gnome-connections gnome-text-editor gnome-tour gnome-console gnome-user-docs yelp gnome-maps gnome-software
 
         # pin some nice favourites to the dash
         gsettings set org.gnome.shell favorite-apps "$(gsettings get org.gnome.shell favorite-apps | sed s/.$//), 'org.gnome.Terminal.desktop', 'firefox.desktop', 'org.gnome.Calendar.desktop', 'org.gnome.Contacts.desktop', 'org.gnome.Calculator.desktop', 'code-oss.desktop', 'org.gnome.Photos.desktop', 'org.gnome.tweaks.desktop', 'com.mattjakeman.ExtensionManager.desktop', 'org.gnome.Settings.desktop']"
 
-        cat <<EOT >> $HOME/.bash_profile
+        cat <<EOT >>$HOME/.bash_profile
 if [ "$XDG_SESSION_TYPE" = "wayland" ]; then
     export MOZ_ENABLE_WAYLAND=1
 fi
 EOT
         install_ufw
 
-	sudo systemctl enable gdm
+        sudo systemctl enable gdm
 
         # create a snapshot
-        for i in `seq 2 50`; do sudo snapper delete $i; done;
+        for i in $(seq 2 50); do sudo snapper delete $i; done
         sudo snapper -c root create --description "### FRESH INSTALL - Including Gnome ###" # ID 2
 
         # Change Google Drive name in Nautilus sidebar
@@ -193,10 +192,10 @@ EOT
         # #overviewGroup {
         #         background-image: url("/home/paul/Downloads/croped-colorful-abstract-background-wallpaper.jpg");
         #         background-size: cover;
-        # }              
+        # }
 }
 
-install_ufw(){
+install_ufw() {
         sudo pacman -S --noconfirm --needed ufw gufw
         sudo systemctl enable ufw.service
 
@@ -208,14 +207,14 @@ install_ufw(){
         sudo ufw enable
 }
 
-apply_xcreensaver(){
-        # xscreensaver settings - 10 min timeout - GL matrix 
+apply_xcreensaver() {
+        # xscreensaver settings - 10 min timeout - GL matrix
         curl -sL $BASE_URL/configs/home/.xscreensaver -o $HOME/.xscreensaver
-        if [ ! -d $HOME/.config/autostart/ ];then mkdir $HOME/.config/autostart;fi
+        if [ ! -d $HOME/.config/autostart/ ]; then mkdir $HOME/.config/autostart; fi
         curl -sL $BASE_URL/configs/home/xscreensaver.desktop -o $HOME/.config/autostart/xscreensaver.desktop
 }
 
-install_dash_to_dock(){
+install_dash_to_dock() {
         # add dash to dock extension - use ubuntu-dock branch. better compatibility with blur my shell
         git clone https://github.com/micheleg/dash-to-dock.git -b ubuntu-dock /tmp/ubuntu-dock
         cd /tmp/ubuntu-dock
@@ -226,17 +225,15 @@ install_dash_to_dock(){
         make install
 
         curl -sL $BASE_URL/configs/extensions/dash-to-dock-settings-$theme -o /tmp/dash-to-dock-settings
-        dconf load /org/gnome/shell/extensions/dash-to-dock/ < /tmp/dash-to-dock-settings
+        dconf load /org/gnome/shell/extensions/dash-to-dock/ </tmp/dash-to-dock-settings
 }
 
-install_plymouth(){
+install_plymouth() {
 
-        if ! pacman -Qs plymouth > /dev/null
-        then
+        if ! pacman -Qs plymouth >/dev/null; then
                 sudo pacman -S --noconfirm --needed plymouth
 
-                if [[ "$USE_GRUB" -eq 1 ]]
-                then
+                if [[ "$USE_GRUB" -eq 1 ]]; then
                         sudo sed -i 's/quiet/quiet splash/' /etc/default/grub
                         sudo grub-mkconfig -o /boot/grub/grub.cfg
                 else
@@ -248,17 +245,17 @@ install_plymouth(){
         fi
 }
 
-apply_plymouth_mac(){
+apply_plymouth_mac() {
         git clone https://github.com/fathyar/mac-plymouth.git /tmp/mac-plymouth
         sudo cp -r /tmp/mac-plymouth/mac/ /usr/share/plymouth/themes/
-        sudo plymouth-set-default-theme -R mac    
+        sudo plymouth-set-default-theme -R mac
 }
 
-apply_plymouth_xp(){
-        sudo plymouth-set-default-theme -R bootvid    
+apply_plymouth_xp() {
+        sudo plymouth-set-default-theme -R bootvid
 }
 
-install_gnome_mac(){
+install_gnome_mac() {
         # Remove 'Utilities' folder in app grid so all apps are in view
         gsettings set org.gnome.desktop.app-folders folder-children "['YaST']"
 
@@ -283,7 +280,7 @@ install_gnome_mac(){
         cd /tmp/logo-menu
         make install
 
-        # Unite 
+        # Unite
         git clone https://github.com/hardpixel/unite-shell.git /tmp/unite
         cp -r /tmp/unite/unite\@hardpixel.eu ~/.local/share/gnome-shell/extensions
 
@@ -312,21 +309,21 @@ install_gnome_mac(){
         dconf write /org/gnome/terminal/legacy/profiles:/:5083e06b-024e-46be-9cd2-892b814f1fc8/font "'MesloLGS NF 9'"
         dconf write /org/gnome/terminal/legacy/profiles:/:5083e06b-024e-46be-9cd2-892b814f1fc8/use-system-font false
 
-        # plymouth macos loading theme        
+        # plymouth macos loading theme
         install_plymouth
         apply_plymouth_mac
-        
+
         curl -sL $BASE_URL/configs/extensions/blur-my-shell-settings -o /tmp/blur-my-shell-settings
         curl -sL $BASE_URL/configs/extensions/panel-corners-settings -o /tmp/panel-corners-settings
         curl -sL $BASE_URL/configs/extensions/logo-menu-settings -o /tmp/logo-menu-settings
         curl -sL $BASE_URL/configs/extensions/unite-settings -o /tmp/unite-settings
         curl -sL $BASE_URL/configs/extensions/just-perfection-settings -o /tmp/just-perfection-settings
 
-        dconf load /org/gnome/shell/extensions/blur-my-shell/ < /tmp/blur-my-shell-settings
-        dconf load /org/gnome/shell/extensions/panel-corners/ < /tmp/panel-corners-settings
-        dconf load /org/gnome/shell/extensions/Logo-menu/ < /tmp/logo-menu-settings
-        dconf load /org/gnome/shell/extensions/unite/ < /tmp/unite-settings
-        dconf load /org/gnome/shell/extensions/just-perfection/ < /tmp/just-perfection-settings
+        dconf load /org/gnome/shell/extensions/blur-my-shell/ </tmp/blur-my-shell-settings
+        dconf load /org/gnome/shell/extensions/panel-corners/ </tmp/panel-corners-settings
+        dconf load /org/gnome/shell/extensions/Logo-menu/ </tmp/logo-menu-settings
+        dconf load /org/gnome/shell/extensions/unite/ </tmp/unite-settings
+        dconf load /org/gnome/shell/extensions/just-perfection/ </tmp/just-perfection-settings
 
         gnome-extensions enable ubuntu-dock@ubuntu.com
         gnome-extensions enable blur-my-shell@aunetx
@@ -338,7 +335,7 @@ install_gnome_mac(){
         gnome-extensions enable AlphabeticalAppGrid@stuarthayhurst
 
         # gnome-terminal padding add to ~/.config/gtk-3.0/gtk.css
-        cat <<EOT >> $HOME/.config/gtk-3.0/gtk.css
+        cat <<EOT >>$HOME/.config/gtk-3.0/gtk.css
 
 VteTerminal,
 TerminalScreen,
@@ -349,7 +346,7 @@ vte-terminal {
 EOT
 }
 
-install_whitesur(){
+install_whitesur() {
         gsettings set org.gnome.desktop.interface clock-show-weekday true
 
         [[ ! -d $HOME/.local/share/backgrounds ]] && mkdir -p $HOME/.local/share/backgrounds
@@ -370,9 +367,9 @@ install_whitesur(){
         curl -sL $BASE_URL/wallpaper/macos/sequoia-dark.png -o $HOME/.local/share/backgrounds/sequoia-Dark.png
 
         theme=$(whiptail --backtitle "$BACKTITLE" --title "Select theme variation" --radiolist "Choose" 20 30 5 \
-        "Light" "" light \
-        "Dark" "" dark \
-        3>&1 1>&2 2>&3)
+                "Light" "" light \
+                "Dark" "" dark \
+                3>&1 1>&2 2>&3)
 
         git clone https://github.com/prstephens/WhiteSur-gtk-theme.git /tmp/WhiteSur-gtk-theme
         cd /tmp/WhiteSur-gtk-theme
@@ -399,7 +396,7 @@ install_whitesur(){
         git clone https://github.com/prstephens/mac-dynamic-calendar.git /tmp/mac-dynamic-calendar
         cp -R /tmp/mac-dynamic-calendar/dynamic-calendar-and-clocks-icons\@fcusr.github.com $HOME/.local/share/gnome-shell/extensions
         curl -sL $BASE_URL/configs/extensions/mac-dynamic-calendar-settings -o /tmp/mac-dynamic-calendar-settings
-        dconf load /org/gnome/shell/extensions/dynamic-calendar-and-clocks-icons/ < /tmp/mac-dynamic-calendar-settings
+        dconf load /org/gnome/shell/extensions/dynamic-calendar-and-clocks-icons/ </tmp/mac-dynamic-calendar-settings
         gnome-extensions enable dynamic-calendar-and-clocks-icons@fcusr.github.com
 
         gsettings set org.gnome.desktop.interface gtk-theme WhiteSur-$theme
@@ -407,8 +404,7 @@ install_whitesur(){
         gsettings set org.gnome.shell.extensions.user-theme name WhiteSur-$theme
         gsettings set org.gnome.desktop.interface icon-theme WhiteSur-light
 
-        if [[ "$theme" == "Dark" ]]
-        then
+        if [[ "$theme" == "Dark" ]]; then
                 gsettings set org.gnome.desktop.interface icon-theme WhiteSur-dark
         fi
 
@@ -431,40 +427,39 @@ install_whitesur(){
         # Tray icons reloaded
 }
 
-install_plasma(){
+install_plasma() {
         install_base_packages
-        sudo pacman -S --noconfirm --needed plasma-meta kde-system-meta kvantum sddm 
+        sudo pacman -S --noconfirm --needed plasma-meta kde-system-meta kvantum sddm
         sudo systemctl enable sddm.service
         apply_xcreensaver
         install_fonts
         install_ufw
 }
 
-install_xfce(){
+install_xfce() {
         install_base_packages
         yay -S --noconfirm --needed xfce4 xdg-user-dirs xfce4-panel-profiles xfce4-whiskermenu-plugin xfce4-pulseaudio-plugin thunar-archive-plugin gvfs ark gdm
 
-        if [[ "$TLP" -eq 1 ]]
-        then
+        if [[ "$TLP" -eq 1 ]]; then
                 yay -S --noconfirm --needed xfce4-power-manager
         fi
-        
+
         apply_xcreensaver
         install_fonts
         install_plymouth
         install_ufw
 
-	sudo systemctl enable gdm
+        sudo systemctl enable gdm
 }
 
-install_xp(){
+install_xp() {
         yay -S --noconfirm --needed xfce-winxp-tc-git
         git clone https://github.com/prstephens/Windows-XP.git $HOME/.icons/Windows-XP
         git clone https://github.com/prstephens/xp-wallpapers.git /tmp/xp-wallpapers
         sudo cp -R /tmp/xp-wallpapers /usr/share/backgrounds/
 }
 
-apply_xp_theme(){
+apply_xp_theme() {
         xdg-user-dirs-update
 
         xfconf-query -c xsettings -p /Net/IconThemeName -s "Windows-XP"
@@ -485,24 +480,24 @@ apply_xp_theme(){
         xfconf-query -c xfce4-desktop -p /desktop-icons/icon-size -s "48"
         xfconf-query -c xfce4-desktop -p /desktop-icons/primary -s "true"
         xfconf-query -c xfce4-desktop -p /desktop-icons/tooltip-size -s "32.000000"
-        
+
         xfconf-query -c keyboard-layout -p /Default/XkbLayout -s "gb"
 
-        xfconf-query -c xfce4-desktop -p $(xfconf-query -c xfce4-desktop -l | grep "workspace0/last-image") -s /usr/share/backgrounds/xp-wallpapers/Bliss.jpg 
+        xfconf-query -c xfce4-desktop -p $(xfconf-query -c xfce4-desktop -l | grep "workspace0/last-image") -s /usr/share/backgrounds/xp-wallpapers/Bliss.jpg
 
         apply_plymouth_xp
 }
 
-install_profile-sync-daemon(){
+install_profile-sync-daemon() {
         sudo pacman -S --noconfirm --needed profile-sync-daemon
         psd
         sed -i 's/^#BROWSERS=.*$/BROWSERS=(google-chrome firefox)/' $HOME/.config/psd/psd.conf
         sed -i 's/^#USE_OVERLAYFS=.*$/USE_OVERLAYFS="yes"/' $HOME/.config/psd/psd.conf
         echo "$USER ALL=(ALL) NOPASSWD: /usr/bin/psd-overlay-helper" | sudo tee -a /etc/sudoers
-        systemctl --user enable --now psd.service  
+        systemctl --user enable --now psd.service
 }
 
-install_anything-sync-daemon(){
+install_anything-sync-daemon() {
         sudo pacman -S --noconfirm --needed anything-sync-daemon
         sudo sed -i "s/^WHATTOSYNC=.*$/WHATTOSYNC=('$HOME/.cache')/" /etc/asd.conf
         sudo sed -i 's/^#USE_OVERLAYFS=.*$/USE_OVERLAYFS="yes"/' /etc/asd.conf
@@ -510,14 +505,14 @@ install_anything-sync-daemon(){
         sudo systemctl enable --now asd
 }
 
-install_apps(){
+install_apps() {
         clear
 
         echo "Installing Chrome, OnlyOffice, Gimp..."
         yay -S --noconfirm --needed spotify-launcher google-chrome onlyoffice-bin gimp vlc kodi dropbox handbrake geary ventoy-bin etcher-bin
 }
 
-install_qemu(){
+install_qemu() {
         clear
 
         echo "Installing QEMU/KVM"
@@ -568,13 +563,13 @@ EOT
         # HKEY_LOCAL_MACHINE\SYSTEM\Setup\MoSetup > New > DWORD (32-bit) Value. Name the value “AllowUpgradesWithUnsupportedTPMOrCPU" set it to 1
 }
 
-install_chicago95(){
+install_chicago95() {
         git clone https://github.com/grassmunk/Chicago95.git /tmp/chicargo95
         cd /tmp/chicargo95
         ./installer.py
 }
 
-setup_adaway(){
+setup_adaway() {
 
         sudo bash -c 'sudo cat <<EOT > /usr/bin/adaway
 #! /bin/bash
@@ -612,7 +607,7 @@ EOT'
         sudo systemctl enable --now adaway.timer
 }
 
-setup_zram(){
+setup_zram() {
         ram=$(expr $(grep MemTotal /proc/meminfo | awk '{print $2}') / 1000 / 1000 / 2)
 
         sudo tee -a /usr/local/bin/zram_start >/dev/null <<'EOT'
@@ -651,12 +646,12 @@ EOT
         whiptail --backtitle "$BACKTITLE" --msgbox --title "ZRAM" "To enable ZRAM please reboot" 0 78
 }
 
-setup_cloudflare_warp(){
+setup_cloudflare_warp() {
         yay -S --noconfirm --needed cloudflare-warp-bin warpgui-bin
         sudo systemctl enable --now warp-svc.service
 }
 
-initialise(){
+initialise() {
         whiptail --backtitle "$BACKTITLE" --msgbox --title "Welcome!" "Welcome to Arch Linux\n\nWe will now initialise the system" 0 78
 
         # optimise yay when building packages
@@ -711,8 +706,7 @@ initialise(){
         # put root dev into snapper-rollback.conf
         echo "dev=${rootdev}" | sudo tee -a /etc/snapper-rollback.conf
 
-        if [[ "$USE_GRUB" -eq 1 ]]
-        then
+        if [[ "$USE_GRUB" -eq 1 ]]; then
                 yay -S snap-pac-grub --noconfirm
 
                 # config for booting a snapshot in read only
@@ -723,7 +717,7 @@ initialise(){
                 HOOKS_RAID="(systemd autodetect keyboard microcode sd-vconsole modconf kms block mdadm_udev filesystems grub-btrfs-overlayfs)"
                 HOOKS_CRYPT="(systemd autodetect microcode keyboard sd-vconsole modconf kms block sd-encrypt lvm2 filesystems grub-btrfs-overlayfs)"
                 HOOKS_RAID_CRYPT="(systemd autodetect microcode keyboard sd-vconsole modconf kms block mdadm_udev sd-encrypt lvm2 filesystems grub-btrfs-overlayfs)"
-                
+
                 if [[ "$USE_CRYPT" -eq 1 ]]; then
                         if [[ "$USE_RAID" -eq 1 ]]; then
                                 HOOKS="$HOOKS_RAID_CRYPT"
@@ -744,7 +738,7 @@ initialise(){
         sudo mkinitcpio -P
 
         # create a snapshot
-        for i in `seq 1 50`; do sudo snapper delete $i; done;
+        for i in $(seq 1 50); do sudo snapper delete $i; done
         sudo snapper -c root create --description "### FRESH INSTALL - Base ###" #ID 1
 
         sudo mkdir /.bootbackup
@@ -768,19 +762,18 @@ Description = Backing up /boot...
 When = PostTransaction
 Exec = /usr/bin/boot-backup
 EOT
-        # Run the boot backup for first time so we have a copy of a working kernel 
-        sudo /usr/bin/boot-backup      
+        # Run the boot backup for first time so we have a copy of a working kernel
+        sudo /usr/bin/boot-backup
 }
 
-checkconnection(){
-        if [[ $(ping -q -w1 -c1 google.com &>/dev/null && echo online || echo offline) == "offline" ]]; 
-        then
+checkconnection() {
+        if [[ $(ping -q -w1 -c1 google.com &>/dev/null && echo online || echo offline) == "offline" ]]; then
                 whiptail --backtitle "$BACKTITLE" --msgbox --title "No Network Connection" "You need to be connected to the Internet.\n\nInstallation stopped." --fb 0 78
                 exit
         fi
 }
 
-self_update(){
+self_update() {
         curl -sL $BASE_URL/version -o /tmp/version
         value=$(</tmp/version)
         if (("$VERSION" < "$value")); then

@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Arch Linux Install Script 
+# Arch Linux Install Script
 # -------------------------
 # author    : prstephens
-#             https://github.com/prstephens           
+#             https://github.com/prstephens
 # project   : https://github.com/prstephens/archinstallscript
 # license   : LGPL-3.0 (http://opensource.org/licenses/lgpl-3.0.html)
 # reference : https://wiki.archlinux.org/index.php/Installation_guide
@@ -34,7 +34,7 @@ AUTO=0 # switch to make a non interactive install (for testing)
 #
 #   ================================
 
-mainmenu(){
+mainmenu() {
         if [ "${1}" = "" ]; then
                 nextitem="."
         else
@@ -50,42 +50,41 @@ mainmenu(){
         options+=("" "")
         options+=("FINISH" "Finish and reboot")
 
-        sel=$(whiptail --backtitle "${BACKTITLE}" --title "Main Menu" --menu "" --fb --cancel-button "Exit" --default-item "${nextitem}" 0 78 0\
-                "${options[@]}" \
+        sel=$(whiptail --backtitle "${BACKTITLE}" --title "Main Menu" --menu "" --fb --cancel-button "Exit" --default-item "${nextitem}" 0 78 0 "${options[@]}" \
                 3>&1 1>&2 2>&3)
         if [ "$?" = "0" ]; then
                 case ${sel} in
-                        "WIPE DEVICE")
-                                preparedisk
-                                nextitem="PARTITION DISK"
+                "WIPE DEVICE")
+                        preparedisk
+                        nextitem="PARTITION DISK"
                         ;;
-                        "PARTITION DISK")
-                                diskpartcfdisk
-                                nextitem="ENCRYPTION"
+                "PARTITION DISK")
+                        diskpartcfdisk
+                        nextitem="ENCRYPTION"
                         ;;
-                        "ENCRYPTION")
-                                enablelvm
-                                nextitem="MOUNT"
+                "ENCRYPTION")
+                        enablelvm
+                        nextitem="MOUNT"
                         ;;
-                        "MOUNT")
-                                choosepartitions
-                                nextitem="SETUP USER"
+                "MOUNT")
+                        choosepartitions
+                        nextitem="SETUP USER"
                         ;;
-                        "SETUP USER")
-                                getuserinfo
-                                nextitem="INSTALL"
+                "SETUP USER")
+                        getuserinfo
+                        nextitem="INSTALL"
                         ;;
-                        "INSTALL")
-                                performinstall
-                                configuration
-                                setupuser
-                                installbootloader
-                                finish
-                                nextitem="FINISH"
+                "INSTALL")
+                        performinstall
+                        configuration
+                        setupuser
+                        installbootloader
+                        finish
+                        nextitem="FINISH"
                         ;;
-                        "FINISH")
-                                rebootpc
-                                nextitem="FINISH"
+                "FINISH")
+                        rebootpc
+                        nextitem="FINISH"
                         ;;
                 esac
                 mainmenu "${nextitem}"
@@ -94,54 +93,52 @@ mainmenu(){
         fi
 }
 
-yesno(){
+yesno() {
         title=$1
-        msg=$2 
+        msg=$2
         whiptail --backtitle "${BACKTITLE}" --title "${title}" --fb --yesno "${msg}" --defaultno 0 78
 }
 
-preparedisk(){
-        wipedevice=$( selectdisk "Choose device to be wiped" )
+preparedisk() {
+        wipedevice=$(selectdisk "Choose device to be wiped")
 
-        if (yesno "### WARNING ###" "Are you sure you want to secure wipe ${wipedevice}? \n\nTHIS CANNOT BE UNDONE. ALL DATA WILL BE PERMANENTLY LOST!") then
+        if (yesno "### WARNING ###" "Are you sure you want to secure wipe ${wipedevice}? \n\nTHIS CANNOT BE UNDONE. ALL DATA WILL BE PERMANENTLY LOST!"); then
                 figlet -t -f pagga wiping device $wipedevice...
                 cryptsetup open --type plain -d /dev/urandom ${wipedevice} to_be_wiped
                 dd if=/dev/zero of=/dev/mapper/to_be_wiped status=progress || :
                 cryptsetup close to_be_wiped
-	fi 
-}
-
-diskpartcfdisk(){
-	device=$( selectdisk "Edit Partitions (cfdisk)" )
-        if [ "$?" = "0" ]; then
-            clear
-            cfdisk ${device}
         fi
 }
 
-selectdisk(){
+diskpartcfdisk() {
+        device=$(selectdisk "Edit Partitions (cfdisk)")
+        if [ "$?" = "0" ]; then
+                clear
+                cfdisk ${device}
+        fi
+}
+
+selectdisk() {
         items=$(lsblk -d -p -n -l -o NAME,SIZE -e 7,11)
         options=()
         IFS_ORIG=$IFS
         IFS=$'\n'
-        for item in ${items}
-        do  
+        for item in ${items}; do
                 options+=("${item}" "")
         done
         IFS=$IFS_ORIG
         result=$(whiptail --backtitle "${BACKTITLE}" --title "${1}" --menu "" --fb 0 78 0 "${options[@]}" 3>&1 1>&2 2>&3)
-        if [ "$?" != "0" ]
-        then
+        if [ "$?" != "0" ]; then
                 return 1
         fi
         echo ${result%%\ *}
-        return 0    
+        return 0
 }
 
-enablelvm(){
+enablelvm() {
         USE_CRYPT=1
         chooseencryptpartition
-        
+
         figlet -t -f pagga creating encrypted drive $realrootdev...
 
         dd if=/dev/zero of=header.img bs=16M count=1
@@ -161,35 +158,7 @@ enablelvm(){
         lvcreate -l 100%FREE vg1 -n root
 }
 
-chooseencryptpartition(){
-	itemsinfo=$(lsblk -o NAME,SIZE,FSTYPE)
-        items=$(lsblk -p -n -l -o NAME -e 7,11)
-        deviceitems=$(lsblk -d -n -l -o NAME -e 7,11)
-        options=()
-        optionstoremove=()
-        IFS_ORIG=$IFS
-        IFS=$'\n'
-        for item in ${deviceitems}
-        do  
-                optionstoremove+=("/dev/${item}")
-        done
-        for item in ${items}
-        do  
-                if [[ ! " ${optionstoremove[@]} " =~ " ${item} " ]]; then
-                        options+=("${item}" "")
-                fi
-        done
-
-	realrootdev=$(whiptail --backtitle "${BACKTITLE}" --title "Select Root partition to encrypt" --menu "${itemsinfo}" --fb --default-item "${rootdev}" 0 78 0 \
-		"${options[@]}" \
-		3>&1 1>&2 2>&3)
-	if [ ! "$?" = "0" ]; then
-		return 1
-	fi
-	
-}
-
-choosepartitions(){
+chooseencryptpartition() {
         itemsinfo=$(lsblk -o NAME,SIZE,FSTYPE)
         items=$(lsblk -p -n -l -o NAME -e 7,11)
         deviceitems=$(lsblk -d -n -l -o NAME -e 7,11)
@@ -197,40 +166,64 @@ choosepartitions(){
         optionstoremove=()
         IFS_ORIG=$IFS
         IFS=$'\n'
-        for item in ${deviceitems}
-        do  
+        for item in ${deviceitems}; do
                 optionstoremove+=("/dev/${item}")
         done
-        for item in ${items}
-        do  
+        for item in ${items}; do
                 if [[ ! " ${optionstoremove[@]} " =~ " ${item} " ]]; then
                         options+=("${item}" "")
                 fi
         done
-      
-	bootdev=$(whiptail --backtitle "${BACKTITLE}" --title "Select Boot partition" --menu "${itemsinfo}" --fb --default-item "${bootdev}" 0 78 0 \
-		"none" "-" \
-		"${options[@]}" \
-		3>&1 1>&2 2>&3)
-	if [ ! "$?" = "0" ]; then
-		return 1
-	else
-		if [ "${bootdev}" = "none" ]; then
-			bootdev=
-		fi
-	fi
 
-	swapdev=$(whiptail --backtitle "${BACKTITLE}" --title "Select Swap partition" --menu "${itemsinfo}" --fb --default-item "${swapdev}" 0 78 0 \
-		"none" "-" \
-		"${options[@]}" \
-		3>&1 1>&2 2>&3)
-	if [ ! "$?" = "0" ]; then
-		return 1
-	else
-		if [ "${swapdev}" = "none" ]; then
-			swapdev=
-		fi
-	fi
+        realrootdev=$(whiptail --backtitle "${BACKTITLE}" --title "Select Root partition to encrypt" --menu "${itemsinfo}" --fb --default-item "${rootdev}" 0 78 0 \
+                "${options[@]}" \
+                3>&1 1>&2 2>&3)
+        if [ ! "$?" = "0" ]; then
+                return 1
+        fi
+
+}
+
+choosepartitions() {
+        itemsinfo=$(lsblk -o NAME,SIZE,FSTYPE)
+        items=$(lsblk -p -n -l -o NAME -e 7,11)
+        deviceitems=$(lsblk -d -n -l -o NAME -e 7,11)
+        options=()
+        optionstoremove=()
+        IFS_ORIG=$IFS
+        IFS=$'\n'
+        for item in ${deviceitems}; do
+                optionstoremove+=("/dev/${item}")
+        done
+        for item in ${items}; do
+                if [[ ! " ${optionstoremove[@]} " =~ " ${item} " ]]; then
+                        options+=("${item}" "")
+                fi
+        done
+
+        bootdev=$(whiptail --backtitle "${BACKTITLE}" --title "Select Boot partition" --menu "${itemsinfo}" --fb --default-item "${bootdev}" 0 78 0 \
+                "none" "-" \
+                "${options[@]}" \
+                3>&1 1>&2 2>&3)
+        if [ ! "$?" = "0" ]; then
+                return 1
+        else
+                if [ "${bootdev}" = "none" ]; then
+                        bootdev=
+                fi
+        fi
+
+        swapdev=$(whiptail --backtitle "${BACKTITLE}" --title "Select Swap partition" --menu "${itemsinfo}" --fb --default-item "${swapdev}" 0 78 0 \
+                "none" "-" \
+                "${options[@]}" \
+                3>&1 1>&2 2>&3)
+        if [ ! "$?" = "0" ]; then
+                return 1
+        else
+                if [ "${swapdev}" = "none" ]; then
+                        swapdev=
+                fi
+        fi
 
         rootdev=$(whiptail --backtitle "${BACKTITLE}" --title "Select Root partition" --menu "${itemsinfo}" --fb --default-item "${rootdev}" 0 78 0 \
                 "${options[@]}" \
@@ -238,18 +231,18 @@ choosepartitions(){
         if [ ! "$?" = "0" ]; then
                 return 1
         fi
-        
+
         msg=""
         msg=${msg}"Boot          : "${bootdev}"\n"
         msg=${msg}"Swap          : "${swapdev}"\n"
         msg=${msg}"Root          : "${rootdev}"\n"
 
-        if !(yesno "Are these values correct?" "${msg}") then
+        if ! yesno "Are these values correct?" "${msg}"; then
                 choosepartitions
-        fi      
+        fi
 }
 
-getuserinfo(){
+getuserinfo() {
         hostname=$(whiptail --backtitle "$BACKTITLE" --inputbox "Enter hostname:" --fb 0 50 3>&1 1>&2 2>&3)
         user=$(whiptail --backtitle "$BACKTITLE" --inputbox "Enter admin username:" --fb 0 50 3>&1 1>&2 2>&3)
 
@@ -259,36 +252,36 @@ getuserinfo(){
 
         while [[ "$password" != "$password2" ]]; do
 
-            password=$(whiptail --backtitle "$BACKTITLE" --passwordbox "${passphrase_invalid_message}Please enter the admin password:" --fb 10 50 3>&1 1>&2 2>&3)
-            password2=$(whiptail --backtitle "$BACKTITLE" --passwordbox "Please repeat the admin password:" --fb 10 50 3>&1 1>&2 2>&3)
-            passphrase_invalid_message="Passwords do not match! "
+                password=$(whiptail --backtitle "$BACKTITLE" --passwordbox "${passphrase_invalid_message}Please enter the admin password:" --fb 10 50 3>&1 1>&2 2>&3)
+                password2=$(whiptail --backtitle "$BACKTITLE" --passwordbox "Please repeat the admin password:" --fb 10 50 3>&1 1>&2 2>&3)
+                passphrase_invalid_message="Passwords do not match! "
 
         done
-        
+
         msg=${msg}"Hostname      : "${hostname}"\n"
         msg=${msg}"User          : "${user}"\n\n"
 }
 
-checks(){
-        if (yesno "RAID" "Is a RAID Array being used?") then
+checks() {
+        if yesno "RAID" "Is a RAID Array being used?"; then
                 USE_RAID=1
                 msg=${msg}"Use RAID?     : "${USE_RAID}"\n\n"
-	fi
+        fi
 
-        if !(yesno "Are these values correct?" "${msg}") then
-		mainmenu "MOUNT"
-	fi
+        if ! yesno "Are these values correct?" "${msg}"; then
+                mainmenu "MOUNT"
+        fi
 
-        if (yesno "### WARNING ###" "Do you want to format ${bootdev}? \n\nTHIS COULD ERASE EXISITING OPERATING SYSTEM BOOTLOADERS") then
-		mkfs.fat -F 32 ${bootdev}
-	fi
+        if yesno "### WARNING ###" "Do you want to format ${bootdev}? \n\nTHIS COULD ERASE EXISITING OPERATING SYSTEM BOOTLOADERS"; then
+                mkfs.fat -F 32 ${bootdev}
+        fi
 }
 
-performinstall(){
-        if [[ ! "$AUTO" -eq 1 ]] then
+performinstall() {
+        if [[ ! "$AUTO" -eq 1 ]]; then
                 checks
         fi
-        
+
         figlet -t -f pagga installing...
 
         timedatectl set-ntp true
@@ -296,10 +289,8 @@ performinstall(){
         # Setup the partitions
         wipefs -a $rootdev
         mkfs.btrfs $rootdev
-      
 
-        if [ ! "${swapdev}" = "" ]
-        then
+        if [ ! "${swapdev}" = "" ]; then
                 mkswap $swapdev
                 swapon $swapdev
         fi
@@ -315,7 +306,7 @@ performinstall(){
         umount /mnt
 
         mount -o noatime,commit=120,compress=zstd,space_cache=v2,subvol=@ $rootdev /mnt
-        
+
         # You need to manually create folders to mount the other subvolumes at
         mkdir -p /mnt/{boot,home,var/log,.snapshots}
 
@@ -331,27 +322,24 @@ performinstall(){
         # if laptop, install tlp for better power management
         # see here: https://www.dmtf.org/sites/default/files/standards/documents/DSP0134_3.6.0.pdf
         chassis=$(cat /sys/class/dmi/id/chassis_type)
-        if exists_in_list "8,9,10" "," ${chassis}
-        then
+        if exists_in_list "8,9,10" "," ${chassis}; then
                 TLP=1
-                echo $'\ntlp' >> /tmp/packages 
+                echo $'\ntlp' >>/tmp/packages
         fi
 
-        if [[ "$USE_CRYPT" -eq 1 || "$AUTO" -eq 1 ]]
-        then
+        if [[ "$USE_CRYPT" -eq 1 || "$AUTO" -eq 1 ]]; then
                 bootloader="Systemd"
                 mount $bootdev /mnt/boot
         else
                 bootloader=$(whiptail --backtitle "$BACKTITLE" --title "Select a bootloader to install" --radiolist "Choose" 20 30 5 \
-                "Systemd" "" Systemd \
-                "GRUB" "" GRUB \
-                3>&1 1>&2 2>&3) 
+                        "Systemd" "" Systemd \
+                        "GRUB" "" GRUB \
+                        3>&1 1>&2 2>&3)
         fi
 
-        if [[ "$bootloader" == "GRUB" ]]
-        then
+        if [[ "$bootloader" == "GRUB" ]]; then
                 USE_GRUB=1
-                echo $'\ngrub\nos-prober\ngrub-btrfs' >> /tmp/packages
+                echo $'\ngrub\nos-prober\ngrub-btrfs' >>/tmp/packages
 
                 mkdir /mnt/boot/efi
                 mount $bootdev /mnt/boot/efi
@@ -359,34 +347,31 @@ performinstall(){
                 mount $bootdev /mnt/boot
         fi
 
-        if [[ "$USE_RAID" -eq 1 ]]
-        then
-                echo $'\nmdadm' >> /tmp/packages
+        if [[ "$USE_RAID" -eq 1 ]]; then
+                echo $'\nmdadm' >>/tmp/packages
         fi
 
-        if [[ "$USE_CRYPT" -eq 1 ]]
-        then
-                echo $'\nlvm2' >> /tmp/packages
+        if [[ "$USE_CRYPT" -eq 1 ]]; then
+                echo $'\nlvm2' >>/tmp/packages
         fi
 
-        pacstrap /mnt $(< /tmp/packages)
-        
-        genfstab -U /mnt >> /mnt/etc/fstab
+        pacstrap /mnt $(</tmp/packages)
+
+        genfstab -U /mnt >>/mnt/etc/fstab
 }
 
 exists_in_list() {
-    LIST=$1
-    DELIMITER=$2
-    VALUE=$3
-    [[ "$LIST" =~ ($DELIMITER|^)$VALUE($DELIMITER|$) ]]
+        LIST=$1
+        DELIMITER=$2
+        VALUE=$3
+        [[ "$LIST" =~ ($DELIMITER|^)$VALUE($DELIMITER|$) ]]
 }
 
-
-configuration(){
+configuration() {
         figlet -t -f pagga configuring...
 
         # Set Cloudfare as our DNS
-        cat <<EOT > /mnt/etc/resolv.conf
+        cat <<EOT >/mnt/etc/resolv.conf
 options timeout:1
 options single-request
 
@@ -397,21 +382,21 @@ EOT
 
         chattr +i /mnt/etc/resolv.conf
 
-        cat <<EOT >> /mnt/etc/NetworkManager/NetworkManager.conf
+        cat <<EOT >>/mnt/etc/NetworkManager/NetworkManager.conf
 [main]
 dns=none
 systemd-resolved=false
 EOT
 
-        cat <<EOT >> /mnt/etc/hosts
+        cat <<EOT >>/mnt/etc/hosts
 127.0.0.1	localhost
 ::1		localhost
 192.168.1.192   rainbowdash.localdomain rainbowdash
 192.168.1.66    libreelec.localdomain libreelec
 EOT
 
-        echo "127.0.1.1 ${hostname}.localdomain  ${hostname}" >> /mnt/etc/hosts
-        
+        echo "127.0.1.1 ${hostname}.localdomain  ${hostname}" >>/mnt/etc/hosts
+
         # make a copy of the host file to be used later in the AdAway service
         arch-chroot /mnt cp /etc/hosts /etc/hosts.base
 
@@ -427,21 +412,21 @@ EOT
         # Set locale to en_US.UTF-8 UTF-8
         arch-chroot /mnt sed -i '/en_GB.UTF-8 UTF-8/s/^#//g' /etc/locale.gen
         arch-chroot /mnt locale-gen
-        echo "LANG=en_GB.UTF-8" >> /mnt/etc/locale.conf
+        echo "LANG=en_GB.UTF-8" >>/mnt/etc/locale.conf
 
         # Set the console keymap
-        echo "KEYMAP=uk" >> /mnt/etc/vconsole.conf
+        echo "KEYMAP=uk" >>/mnt/etc/vconsole.conf
 
         # Set hostname
-        echo "${hostname}" > /mnt/etc/hostname
+        echo "${hostname}" >/mnt/etc/hostname
 
         # Set keyboard FN keys to act normal!
-        echo "options hid_apple fnmode=2" > /mnt/etc/modprobe.d/hid_apple.conf
-        
-        # nano syntax highlighting
-        echo "include /usr/share/nano/*.nanorc" >> /mnt/etc/nanorc
+        echo "options hid_apple fnmode=2" >/mnt/etc/modprobe.d/hid_apple.conf
 
-        cat <<EOT > /etc/profile.d/shell-timeout.sh
+        # nano syntax highlighting
+        echo "include /usr/share/nano/*.nanorc" >>/mnt/etc/nanorc
+
+        cat <<EOT >/etc/profile.d/shell-timeout.sh
 TMOUT="\$(( 60*30 ))";
 [ -z "\$DISPLAY" ] && export TMOUT;
 case \$( /usr/bin/tty ) in
@@ -451,10 +436,10 @@ EOT
         # performance and secuirty tweaks
         arch-chroot /mnt curl -sL $BASE_URL/configs/system/99-performance.conf -o /etc/sysctl.d/99-performance.conf
 
-        echo "tcp_bbr" > /mnt/etc/modules-load.d/bbr.conf
+        echo "tcp_bbr" >/mnt/etc/modules-load.d/bbr.conf
 
         # Create the pacman mirrorlist updater service
-        cat <<EOT > /mnt/etc/systemd/system/reflector.service
+        cat <<EOT >/mnt/etc/systemd/system/reflector.service
 [Unit]
 Description=Pacman mirrorlist update
 Wants=network-online.target
@@ -466,7 +451,7 @@ ExecStart=/usr/bin/reflector -c GB -l 25 --age 12 -p https --sort rate --save /e
 WantedBy=multi-user.target
 EOT
 
-        cat <<EOT > /mnt/etc/modprobe.d/blacklist.conf
+        cat <<EOT >/mnt/etc/modprobe.d/blacklist.conf
 blacklist iTCO_wdt
 blacklist pcspkr
 blacklist joydev
@@ -478,11 +463,11 @@ blacklist nvidiafb
 blacklist nouveau
 EOT
         # for 11th cpu or lower
-        cat <<EOT > /mnt/etc/modprobe.d/i915.conf
+        cat <<EOT >/mnt/etc/modprobe.d/i915.conf
 options i915 enable_guc=2
 EOT
 
-        cat << EOT > /mnt/etc/udev/rules.d/60-ioschedulers.rules
+        cat <<EOT >/mnt/etc/udev/rules.d/60-ioschedulers.rules
 # set scheduler for NVMe
 ACTION=="add|change", KERNEL=="nvme[0-9]*", ATTR{queue/scheduler}="none"
 # set scheduler for SSD and eMMC
@@ -507,7 +492,7 @@ EOT
         HOOKS_RAID_CRYPT="(systemd autodetect microcode keyboard sd-vconsole modconf kms block mdadm_udev sd-encrypt lvm2 filesystems)"
 
         if [[ "$USE_RAID" -eq 1 ]]; then
-                mdadm --detail --scan >> /mnt/etc/mdadm.conf
+                mdadm --detail --scan >>/mnt/etc/mdadm.conf
                 sed -i 's/^BINARIES=.*$/BINARIES=(mdmon)/' /mnt/etc/mkinitcpio.conf
         fi
 
@@ -535,7 +520,7 @@ EOT
         arch-chroot /mnt curl -sL $BASE_URL/fonts/acorn/console/bedstead-10.psf.gz -o /usr/share/kbd/consolefonts/bedstead-10.psf.gz
         arch-chroot /mnt curl -sL $BASE_URL/fonts/acorn/console/bedstead-20.psf.gz -o /usr/share/kbd/consolefonts/bedstead-20.psf.gz
         arch-chroot /mnt curl -sL $BASE_URL/fonts/acorn/console/acorn.psf.gz -o /usr/share/kbd/consolefonts/acorn.psf.gz
-        echo "FONT=bedstead-20" >> /mnt/etc/vconsole.conf
+        echo "FONT=bedstead-20" >>/mnt/etc/vconsole.conf
 
         # Enable services
         echo "Enabling services..."
@@ -546,13 +531,11 @@ EOT
         arch-chroot /mnt systemctl enable fstrim.timer
         arch-chroot /mnt systemctl enable sshd
 
-        if [[ "$TLP" -eq 1 ]]
-        then
+        if [[ "$TLP" -eq 1 ]]; then
                 arch-chroot /mnt systemctl enable tlp
         fi
 
-        if [[ "$USE_CRYPT" -eq 1 ]]
-        then
+        if [[ "$USE_CRYPT" -eq 1 ]]; then
                 arch-chroot /mnt systemctl enable lvm2-monitor
         else
                 arch-chroot /mnt systemctl mask lvm2-monitor
@@ -561,9 +544,8 @@ EOT
         arch-chroot /mnt systemctl mask systemd-random-seed
 }
 
-installbootloader(){
-        if [[ "$USE_GRUB" -eq 1 ]]
-        then
+installbootloader() {
+        if [[ "$USE_GRUB" -eq 1 ]]; then
                 installbootloader-grub
         else
                 installbootloader-systemd
@@ -573,20 +555,20 @@ installbootloader(){
         arch-chroot /mnt mkinitcpio -P
 }
 
-installbootloader-grub(){
+installbootloader-grub() {
         figlet -t -f pagga installing grub...
-  
+
         arch-chroot /mnt sed -i "s|^GRUB_CMDLINE_LINUX=.*$|GRUB_CMDLINE_LINUX=\"root=UUID=$ROOTUUID rw rootflags=subvol=@ resume=$swapdev\"|" /etc/default/grub
-        
+
         # faster grub boot time - displays no menu. be warned
-#         cat <<EOT >> /mnt/etc/default/grub
-# GRUB_FORCE_HIDDEN_MENU=true
-# GRUB_TIMEOUT=0
-# GRUB_TIMEOUT_STYLE=hidden
-# GRUB_HIDDEN_TIMEOUT=0
-# GRUB_HIDDEN_TIMEOUT_QUIET=true
-# GRUB_RECORDFAIL_TIMEOUT=0
-# EOT
+        #         cat <<EOT >> /mnt/etc/default/grub
+        # GRUB_FORCE_HIDDEN_MENU=true
+        # GRUB_TIMEOUT=0
+        # GRUB_TIMEOUT_STYLE=hidden
+        # GRUB_HIDDEN_TIMEOUT=0
+        # GRUB_HIDDEN_TIMEOUT_QUIET=true
+        # GRUB_RECORDFAIL_TIMEOUT=0
+        # EOT
         arch-chroot /mnt sed -i 's/^GRUB_GFXMODE=.*$/GRUB_GFXMODE=1920x1080x32/' /etc/default/grub
         arch-chroot /mnt sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT=.*$/GRUB_CMDLINE_LINUX_DEFAULT="quiet loglevel=3 systemd.show_status=auto rd.udev.log_level=3 nowatchdog mitigations=off"/' /etc/default/grub
         arch-chroot /mnt sed -i 's/^#GRUB_DISABLE_OS_PROBER=.*$/GRUB_DISABLE_OS_PROBER="false"/' /etc/default/grub
@@ -595,13 +577,12 @@ installbootloader-grub(){
         arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
 }
 
-installbootloader-systemd(){
+installbootloader-systemd() {
         figlet -t -f pagga installing bootctl...
 
         arch-chroot /mnt bootctl install
-        
-        if [[ "$USE_CRYPT" -eq 1 ]]
-        then
+
+        if [[ "$USE_CRYPT" -eq 1 ]]; then
                 mv header.img /mnt/boot
 
                 # create a luks key so we dont have to enter a passphase on boot
@@ -614,10 +595,10 @@ installbootloader-systemd(){
 
                 options="rd.luks.name=$CRYPTHEADERUUID=cryptlvm rd.luks.options=$CRYPTHEADERUUID=header=/header.img:UUID=$BOOTUUID rd.luks.key=/crypto_keyfile.bin rd.luks.data=$CRYPTHEADERUUID=$realrootdev root=/dev/vg1/root rw rootflags=subvol=@ resume=$swapdev quiet loglevel=3 systemd.show_status=auto rd.udev.log_level=3 nowatchdog mitigations=off"
         else
-                options="root=UUID=$ROOTUUID rw rootflags=subvol=@ resume=$swapdev quiet loglevel=3 systemd.show_status=auto rd.udev.log_level=3 nowatchdog mitigations=off" 
+                options="root=UUID=$ROOTUUID rw rootflags=subvol=@ resume=$swapdev quiet loglevel=3 systemd.show_status=auto rd.udev.log_level=3 nowatchdog mitigations=off"
         fi
 
-        cat <<EOT >> /mnt/boot/loader/entries/arch.conf
+        cat <<EOT >>/mnt/boot/loader/entries/arch.conf
 title   Arch Linux
 linux   /vmlinuz-linux-zen
 initrd  /initramfs-linux-zen.img
@@ -625,15 +606,15 @@ options $options
 EOT
 }
 
-setupuser(){
+setupuser() {
         figlet -t -f pagga creating user...
 
         arch-chroot /mnt useradd -m -G wheel $user
         arch-chroot /mnt sed -i 's/# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
-        echo "Defaults insults" >> /mnt/etc/sudoers
-        echo "${user} ALL=(ALL) NOPASSWD: /usr/bin/mount" >> /mnt/etc/sudoers
-        echo "${user} ALL=(ALL) NOPASSWD: /usr/bin/umount" >> /mnt/etc/sudoers
-        echo "${user} ALL=(ALL) NOPASSWD: /usr/bin/sed" >> /mnt/etc/sudoers
+        echo "Defaults insults" >>/mnt/etc/sudoers
+        echo "${user} ALL=(ALL) NOPASSWD: /usr/bin/mount" >>/mnt/etc/sudoers
+        echo "${user} ALL=(ALL) NOPASSWD: /usr/bin/umount" >>/mnt/etc/sudoers
+        echo "${user} ALL=(ALL) NOPASSWD: /usr/bin/sed" >>/mnt/etc/sudoers
 
         # Set root password
         echo "Setting user and root password..."
@@ -651,10 +632,10 @@ setupuser(){
         # awesome tty login
         arch-chroot /mnt curl -sL $BASE_URL/configs/system/issue -o /etc/issue
 
-        # set custom pacman.conf 
+        # set custom pacman.conf
         arch-chroot /mnt mv /etc/pacman.conf /etc/pacman.conf.bak
         arch-chroot /mnt curl -sL $BASE_URL/configs/system/pacman.conf -o /etc/pacman.conf
-        
+
         # Copy post-install file to /home/$user
         echo "Copy post-install file to /home/${user}..."
         arch-chroot /mnt curl -sL $BASE_URL/post-install -o /home/$user/post-install
@@ -666,8 +647,8 @@ setupuser(){
         arch-chroot /mnt chmod a+x /home/$user/post-install
 
         # Add shell-option to ~/.inputrc to enable case-insensitive tab completion
-        if [ ! -a /mnt/home/$user/.inputrc ]; then echo '$include /etc/inputrc' > /mnt/home/$user/.inputrc; fi
-        echo 'set completion-ignore-case On' >> /mnt/home/$user/.inputrc
+        if [ ! -a /mnt/home/$user/.inputrc ]; then echo '$include /etc/inputrc' >/mnt/home/$user/.inputrc; fi
+        echo 'set completion-ignore-case On' >>/mnt/home/$user/.inputrc
 
         # remove last login message on console login
         arch-chroot /mnt touch /home/$user/.hushlogin
@@ -676,12 +657,12 @@ setupuser(){
         arch-chroot /mnt chown -R $user:$user /home/$user/
 }
 
-finish(){
+finish() {
         whiptail --backtitle "$BACKTITLE" --msgbox --title "Congratulations" "Install Complete\n\nReturn to main menu and select 'Finsh and Reboot'" --fb 0 78
 }
 
-rebootpc(){
-        if (yesno "Reboot?") then
+rebootpc() {
+        if (yesno "Reboot?"); then
                 clear
                 umount -a
                 reboot
@@ -692,29 +673,28 @@ rebootpc(){
 #
 #   ====================================================
 
-checkconnection(){
-        if [[ $(ping -q -w1 -c1 google.com &>/dev/null && echo online || echo offline) == "offline" ]]; 
-            then
+checkconnection() {
+        if [[ $(ping -q -w1 -c1 google.com &>/dev/null && echo online || echo offline) == "offline" ]]; then
                 whiptail --backtitle "$BACKTITLE" --msgbox --title "No Network Connection" "You need to be connected to the Internet.\n\nInstallation stopped." --fb 0 78
                 exit
         fi
 }
 
-dependencies(){
+dependencies() {
         pacman -Sy --noconfirm archlinux-keyring figlet
         curl -sL $BASE_URL/fonts/figlet/pagga.tlf -o pagga.tlf
 }
 
-updatemirrors(){
+updatemirrors() {
         MIRROR_COUNTRY=$(echo $MIRROR_COUNTRY | tr '[:lower:]' '[:upper:]')
         reflector --verbose -c $MIRROR_COUNTRY -l 25 --age 12 -p https --sort rate --save /etc/pacman.d/mirrorlist
 }
 
-getpackagelist(){
+getpackagelist() {
         curl -sL $BASE_URL/packages -o /tmp/packages
 }
 
-initialise(){
+initialise() {
         dependencies
 
         figlet -t -f pagga initialising...
@@ -727,7 +707,7 @@ initialise(){
         sed -i '/Color/a ILoveCandy' /etc/pacman.conf
 }
 
-self_update(){
+self_update() {
         curl -sL $BASE_URL/version -o /tmp/version
         value=$(</tmp/version)
         if (("$VERSION" < "$value")); then
@@ -738,8 +718,7 @@ self_update(){
         fi
 }
 
-slient_install()
-{
+slient_install() {
         bootdev=/dev/vda1
         swapdev=/dev/vda2
         rootdev=/dev/vda3
@@ -754,16 +733,15 @@ slient_install()
         installbootloader
 }
 
-help()
-{
-   echo
-   echo "Syntax: install [-c|h|m COUNTRY_CODE|s]"
-   echo "options:"
-   echo "h     Print this Help."
-   echo "c     Try and clean current install state"
-   echo "m     Change the mirror country eg. GB or US"
-   echo "s     Run a silent install with set defaults (for testing)"
-   echo
+help() {
+        echo
+        echo "Syntax: install [-c|h|m COUNTRY_CODE|s]"
+        echo "options:"
+        echo "h     Print this Help."
+        echo "c     Try and clean current install state"
+        echo "m     Change the mirror country eg. GB or US"
+        echo "s     Run a silent install with set defaults (for testing)"
+        echo
 }
 
 #   ============ MAIN ==============
@@ -774,32 +752,32 @@ help()
 #   ================================
 while getopts ":chm:s" option; do
         case $option in
-                c) # clean
-                        swapoff -a
-                        rm /tmp/packages
-                        [[ -d /mnt/boot ]] && umount -A /mnt/boot
-                        [[ -d /mnt ]] && umount -A /mnt
-                        lsblk
-                        exit
-                        ;;
-                h) # display Help
-                        help
-                        exit
-                        ;;
-                m) # mirror to use
-                        MIRROR_COUNTRY=$OPTARG
-                        ;;
-                s) # non interactive install (for testing)
-                        AUTO=1
-                        ;;
-                \?) 
-                        echo "Error: Invalid option"
-                        exit
-                        ;;
-                :) 
-                        echo "Option -$OPTARG requires an argument"
-                        exit
-                        ;;
+        c) # clean
+                swapoff -a
+                rm /tmp/packages
+                [[ -d /mnt/boot ]] && umount -A /mnt/boot
+                [[ -d /mnt ]] && umount -A /mnt
+                lsblk
+                exit
+                ;;
+        h) # display Help
+                help
+                exit
+                ;;
+        m) # mirror to use
+                MIRROR_COUNTRY=$OPTARG
+                ;;
+        s) # non interactive install (for testing)
+                AUTO=1
+                ;;
+        \?)
+                echo "Error: Invalid option"
+                exit
+                ;;
+        :)
+                echo "Option -$OPTARG requires an argument"
+                exit
+                ;;
         esac
 done
 
@@ -808,7 +786,7 @@ self_update
 
 [[ ! -f /tmp/packages ]] && initialise
 
-if [[ "$AUTO" -eq 1 ]] then
+if [[ "$AUTO" -eq 1 ]]; then
         slient_install
 else
         mainmenu
