@@ -85,13 +85,13 @@ mainmenu(){
 }
 
 install_base_packages(){
-        sudo pacman -S --noconfirm xscreensaver firefox sassc seahorse gparted code meld pavucontrol
-        yay -S snapper-gui-git rar btrfs-assistant
+        sudo pacman -S --noconfirm --needed xscreensaver firefox sassc seahorse gparted code meld pavucontrol
+        yay -S --needed snapper-gui-git rar btrfs-assistant
 }
 
 install_fonts(){
         echo "Installing fonts..."
-        yay -S apple-fonts ttf-cascadia-code-nerd ttf-meslo-nerd-font-powerlevel10k ttf-croscore ttf-google-sans
+        yay -S --noconfirm --needed apple-fonts ttf-cascadia-code-nerd ttf-meslo-nerd-font-powerlevel10k ttf-croscore ttf-google-sans
 
         [[ ! -d $HOME/.local/share/fonts ]] && mkdir -p $HOME/.local/share/fonts
         curl -sL $BASE_URL/fonts/HelveticaNeueLt.ttf -o $HOME/.local/share/fonts/HelveticaNeueLt.ttf
@@ -138,15 +138,15 @@ install_gnome(){
 
         install_base_packages
 
-        sudo pacman -S --noconfirm gnome gnome-tweaks file-roller gnome-terminal
-        yay -S --noconfirm extension-manager
+        sudo pacman -S --noconfirm --needed gnome gnome-tweaks file-roller gnome-terminal
+        yay -S --noconfirm --needed extension-manager
         
         install_fonts
 
         apply_xcreensaver
 
         # add arch updater extension
-        yay -S --noconfirm gnome-shell-extension-arch-update
+        yay -S --noconfirm --needed gnome-shell-extension-arch-update
         gsettings set org.gnome.shell.extensions.arch-update check-cmd "/bin/sh -c \"(/usr/bin/checkupdates; /usr/bin/yay -Qqu --color never | sed 's/Get .*//') | sort -u -t' ' -k1,1\""
         gsettings set org.gnome.shell.extensions.arch-update update-cmd 'gnome-terminal -- bash -c "yay; echo Done - Press enter to exit; read"'
         gsettings set org.gnome.shell.extensions.arch-update use-buildin-icons true
@@ -197,7 +197,7 @@ EOT
 }
 
 install_ufw(){
-        sudo pacman -S --noconfirm ufw gufw
+        sudo pacman -S --noconfirm --needed ufw gufw
         sudo systemctl enable ufw.service
 
         sudo ufw default deny
@@ -233,7 +233,7 @@ install_plymouth(){
 
         if ! pacman -Qs plymouth > /dev/null
         then
-                sudo pacman -S --noconfirm plymouth
+                sudo pacman -S --noconfirm --needed plymouth
 
                 if [[ "$USE_GRUB" -eq 1 ]]
                 then
@@ -433,7 +433,7 @@ install_whitesur(){
 
 install_plasma(){
         install_base_packages
-        sudo pacman -S --noconfirm plasma-meta kde-system-meta kvantum sddm 
+        sudo pacman -S --noconfirm --needed plasma-meta kde-system-meta kvantum sddm 
         sudo systemctl enable sddm.service
         apply_xcreensaver
         install_fonts
@@ -442,11 +442,11 @@ install_plasma(){
 
 install_xfce(){
         install_base_packages
-        yay -S xfce4 xdg-user-dirs xfce4-panel-profiles xfce4-whiskermenu-plugin xfce4-pulseaudio-plugin thunar-archive-plugin gvfs ark gdm
+        yay -S --noconfirm --needed xfce4 xdg-user-dirs xfce4-panel-profiles xfce4-whiskermenu-plugin xfce4-pulseaudio-plugin thunar-archive-plugin gvfs ark gdm
 
         if [[ "$TLP" -eq 1 ]]
         then
-                yay -S xfce4-power-manager
+                yay -S --noconfirm --needed xfce4-power-manager
         fi
         
         apply_xcreensaver
@@ -458,7 +458,7 @@ install_xfce(){
 }
 
 install_xp(){
-        yay -S xfce-winxp-tc-git
+        yay -S --noconfirm --needed xfce-winxp-tc-git
         git clone https://github.com/prstephens/Windows-XP.git $HOME/.icons/Windows-XP
         git clone https://github.com/prstephens/xp-wallpapers.git /tmp/xp-wallpapers
         sudo cp -R /tmp/xp-wallpapers /usr/share/backgrounds/
@@ -494,7 +494,7 @@ apply_xp_theme(){
 }
 
 install_profile-sync-daemon(){
-        sudo pacman -S --noconfirm profile-sync-daemon
+        sudo pacman -S --noconfirm --needed profile-sync-daemon
         psd
         sed -i 's/^#BROWSERS=.*$/BROWSERS=(google-chrome firefox)/' $HOME/.config/psd/psd.conf
         sed -i 's/^#USE_OVERLAYFS=.*$/USE_OVERLAYFS="yes"/' $HOME/.config/psd/psd.conf
@@ -503,7 +503,7 @@ install_profile-sync-daemon(){
 }
 
 install_anything-sync-daemon(){
-        sudo pacman -S --noconfirm anything-sync-daemon
+        sudo pacman -S --noconfirm --needed anything-sync-daemon
         sudo sed -i "s/^WHATTOSYNC=.*$/WHATTOSYNC=('$HOME/.cache')/" /etc/asd.conf
         sudo sed -i 's/^#USE_OVERLAYFS=.*$/USE_OVERLAYFS="yes"/' /etc/asd.conf
         sudo sed -i 's/^#VOLATILE=.*$/VOLATILE=("\/dev\/shm")/' /etc/asd.conf
@@ -514,14 +514,14 @@ install_apps(){
         clear
 
         echo "Installing Chrome, OnlyOffice, Gimp..."
-        yay -S spotify-launcher google-chrome onlyoffice-bin gimp vlc kodi dropbox handbrake geary ventoy-bin etcher-bin
+        yay -S --noconfirm --needed spotify-launcher google-chrome onlyoffice-bin gimp vlc kodi dropbox handbrake geary ventoy-bin etcher-bin
 }
 
 install_qemu(){
         clear
 
         echo "Installing QEMU/KVM"
-        sudo pacman -S libvirt virt-manager edk2-ovmf qemu iptables-nft dnsmasq dmidecode swtpm
+        sudo pacman -S --noconfirm --needed libvirt virt-manager edk2-ovmf qemu iptables-nft dnsmasq dmidecode swtpm
 
         # Enable Virtualization Technology for Directed I/O in grub config as boot param
         # default_hugepagesz=1G hugepagesz=1G                   - pre-allocates RAM for VM using 1GB Hugepages
@@ -652,7 +652,7 @@ EOT
 }
 
 setup_cloudflare_warp(){
-        yay -S --noconfirm cloudflare-warp-bin warpgui-bin
+        yay -S --noconfirm --needed cloudflare-warp-bin warpgui-bin
         sudo systemctl enable --now warp-svc.service
 }
 
