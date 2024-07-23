@@ -86,7 +86,7 @@ mainmenu() {
 
 install_base_packages() {
         sudo pacman -S --noconfirm --needed xscreensaver firefox sassc seahorse gparted code meld pavucontrol
-        yay -S --needed snapper-gui-git rar btrfs-assistant
+        yay -S --noconfirm --needed snapper-gui-git rar btrfs-assistant
 }
 
 install_fonts() {
@@ -163,6 +163,8 @@ install_gnome() {
         # Turn on some extensions
         gnome-extensions enable user-theme@gnome-shell-extensions.gcampax.github.com
         gnome-extensions enable arch-update@RaphaelRochet
+
+        gsettings set org.gnome.mutter center-new-windows true
 
         # Remove some trash from Gnome
         sudo pacman -Rs --noconfirm epiphany gnome-music totem gnome-connections gnome-text-editor gnome-tour gnome-console gnome-user-docs yelp gnome-maps gnome-software
