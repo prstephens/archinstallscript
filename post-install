@@ -401,10 +401,10 @@ install_whitesur() {
         dconf load /org/gnome/shell/extensions/dynamic-calendar-and-clocks-icons/ </tmp/mac-dynamic-calendar-settings
         gnome-extensions enable dynamic-calendar-and-clocks-icons@fcusr.github.com
 
-        gsettings set org.gnome.desktop.interface gtk-theme WhiteSur-$theme
+        gsettings set org.gnome.desktop.interface gtk-theme WhiteSur-$theme-${theme^}
         gsettings set org.gnome.desktop.interface cursor-theme WhiteSur-cursors
-        gsettings set org.gnome.shell.extensions.user-theme name WhiteSur-$theme
-        gsettings set org.gnome.desktop.interface icon-theme WhiteSur-light
+        gsettings set org.gnome.shell.extensions.user-theme name WhiteSur-$theme-${theme^}
+        gsettings set org.gnome.desktop.interface icon-theme WhiteSur-$theme
 
         gsettings set org.gnome.desktop.interface font-name "SF Pro Rounded Regular 11"
         gsettings set org.gnome.desktop.interface document-font-name "SF Pro Rounded Regular 11"
