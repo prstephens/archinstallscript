@@ -27,6 +27,7 @@ TLP=0
 USE_GRUB=0
 MIRROR_COUNTRY=GB
 AUTO=0 # switch to make a non interactive install (for testing)
+MAC=0
 
 #   ========== FUNCTIONS ===========
 #
@@ -332,6 +333,7 @@ performinstall() {
 
         # Check if the product name contains "macbook" (case-insensitive)
         if echo "$product_name" | grep -iq "macbook"; then
+                MAC=1
                 echo $'\broadcom-wl-dkms' >>/tmp/packages
         fi
 
@@ -400,8 +402,6 @@ EOT
         cat <<EOT >>/mnt/etc/hosts
 127.0.0.1	localhost
 ::1		localhost
-192.168.1.192   rainbowdash.localdomain rainbowdash
-192.168.1.66    libreelec.localdomain libreelec
 EOT
 
         echo "127.0.1.1 ${hostname}.localdomain  ${hostname}" >>/mnt/etc/hosts
@@ -471,6 +471,7 @@ blacklist xpad
 blacklist nvidiafb
 blacklist nouveau
 EOT
+
         # for 11th cpu or lower
         cat <<EOT >/mnt/etc/modprobe.d/i915.conf
 options i915 enable_guc=2
