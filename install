@@ -327,6 +327,14 @@ performinstall() {
                 echo $'\ntlp' >>/tmp/packages
         fi
 
+        # Read the product name from sysfs
+        product_name=$(cat /sys/devices/virtual/dmi/id/product_name)
+
+        # Check if the product name contains "macbook" (case-insensitive)
+        if echo "$product_name" | grep -iq "macbook"; then
+                echo $'\broadcom-wl-dkms' >>/tmp/packages
+        fi
+
         if [[ "$USE_CRYPT" -eq 1 || "$AUTO" -eq 1 ]]; then
                 bootloader="Systemd"
                 mount $bootdev /mnt/boot
@@ -355,6 +363,7 @@ performinstall() {
                 echo $'\nlvm2' >>/tmp/packages
         fi
 
+        # do the install!
         pacstrap /mnt $(</tmp/packages)
 
         genfstab -U /mnt >>/mnt/etc/fstab

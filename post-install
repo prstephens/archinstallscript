@@ -412,17 +412,6 @@ install_whitesur() {
         gsettings set org.gnome.desktop.wm.preferences titlebar-font "SF Pro Rounded Regular 11"
 
         gsettings set org.gnome.desktop.wm.preferences button-layout "close,minimize,maximize:"
-
-        # Gnome Extensions
-        # ==================================================================================
-        #
-        # clipboard indicator
-        # Compiz alike magic lamp effect
-        # Desktop Icons NG (DING)
-        # Espresso
-        # Hibernate status button
-        # Search Light
-        # Tray icons reloaded
 }
 
 install_plasma() {
@@ -731,6 +720,14 @@ initialise() {
                 sed -i "s|^HOOKS=.*$|HOOKS=${HOOKS}|" /mnt/etc/mkinitcpio.conf
         else
                 yay -S snap-pac systemd-boot-pacman-hook --noconfirm
+        fi
+
+        # Read the product name from sysfs
+        product_name=$(cat /sys/devices/virtual/dmi/id/product_name)
+
+        # Check if the product name contains "macbook" (case-insensitive)
+        if echo "$product_name" | grep -iq "macbook"; then
+                yay -S facetimehd-dkms mbpfan
         fi
 
         sudo mkinitcpio -P
