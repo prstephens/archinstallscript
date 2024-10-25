@@ -742,6 +742,9 @@ EOT
                 sudo systemctl enable --now suspend-fix.service
                 sudo systemctl enable --now macfanctld.service
                 sudo systemctl enable --now mbpfan.service
+
+                # copy down the macbook colour profile
+                curl -sL $BASE_URL/configs/MacbookAir_Color_LCD.icc -o $HOME/.local/share/icc/MacbookAir_Color_LCD.icc
         fi
 
         sudo mkinitcpio -P
