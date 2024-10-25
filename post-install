@@ -740,7 +740,7 @@ ExecStart=/bin/sh -c "echo XHC1 > /proc/acpi/wakeup && echo LID0 > /proc/acpi/wa
 WantedBy=multi-user.target
 EOT
                 systemctl enable --now suspend-fix.service
-                sudo systemctl enable --now smacfanctld.service
+                sudo systemctl enable --now macfanctld.service
                 sudo systemctl enable --now mbpfan.service
         fi
 
