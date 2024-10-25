@@ -335,6 +335,8 @@ performinstall() {
         if echo "$product_name" | grep -iq "macbook"; then
                 MAC=1
                 echo $'\broadcom-wl-dkms' >>/tmp/packages
+                echo "coretemp" >>/mnt/etc/modules-load.d/apple.conf
+                echo "applesmc" >>/mnt/etc/modules-load.d/apple.conf
         fi
 
         if [[ "$USE_CRYPT" -eq 1 || "$AUTO" -eq 1 ]]; then
@@ -536,7 +538,7 @@ EOT
         echo "Enabling services..."
         arch-chroot /mnt systemctl enable NetworkManager.service
         arch-chroot /mnt systemctl enable bluetooth.service
-        arch-chroot /mnt systemctl enable cups.service
+        arch-chroot /mnt systemctl enable cups.socket
         arch-chroot /mnt systemctl enable reflector.timer
         arch-chroot /mnt systemctl enable fstrim.timer
         arch-chroot /mnt systemctl enable sshd

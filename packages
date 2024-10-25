@@ -35,6 +35,7 @@ fd
 bluez
 bluez-utils
 pulseaudio
+pulseaudio-bluetooth
 pulsemixer
 wget
 cups

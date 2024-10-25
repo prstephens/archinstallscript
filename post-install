@@ -336,17 +336,6 @@ install_gnome_mac() {
         gnome-extensions enable favourites-in-appgrid@harshadgavali.gitlab.org
         gnome-extensions enable AlphabeticalAppGrid@stuarthayhurst
 
-        # gnome-terminal padding add to ~/.config/gtk-3.0/gtk.css
-        cat <<EOT >>$HOME/.config/gtk-3.0/gtk.css
-
-VteTerminal,
-TerminalScreen,
-vte-terminal {
-    padding: 20px 20px 20px 20px;
-    -VteTerminal-inner-border: 10px 10px 10px 10px;
-}
-EOT
-}
 
 install_whitesur() {
         gsettings set org.gnome.desktop.interface clock-show-weekday true
@@ -412,6 +401,18 @@ install_whitesur() {
         gsettings set org.gnome.desktop.wm.preferences titlebar-font "SF Pro Rounded Regular 11"
 
         gsettings set org.gnome.desktop.wm.preferences button-layout "close,minimize,maximize:"
+
+        # gnome-terminal padding add to ~/.config/gtk-3.0/gtk.css
+        cat <<EOT >>$HOME/.config/gtk-3.0/gtk.css
+
+VteTerminal,
+TerminalScreen,
+vte-terminal {
+    padding: 20px 20px 20px 20px;
+    -VteTerminal-inner-border: 10px 10px 10px 10px;
+}
+EOT
+
 }
 
 install_plasma() {
@@ -727,7 +728,20 @@ initialise() {
 
         # Check if the product name contains "macbook" (case-insensitive)
         if echo "$product_name" | grep -iq "macbook"; then
-                yay -S facetimehd-dkms mbpfan
+                yay -S facetimehd-dkms facetimehd-data mbpfan macfanctld
+                
+                cat <<EOT | sudo tee -a /etc/systemd/system/suspend-fix.service
+[Unit]
+Description=Fix for the suspend issue
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c "echo XHC1 > /proc/acpi/wakeup && echo LID0 > /proc/acpi/wakeup"
+[Install]
+WantedBy=multi-user.target
+EOT
+                systemctl enable --now suspend-fix.service
+                sudo systemctl enable --now smacfanctld.service
+                sudo systemctl enable --now mbpfan.service
         fi
 
         sudo mkinitcpio -P
