@@ -190,8 +190,8 @@ EOT
         # PresentationIdentity=Google Drive
 
         # Change wallpaper in Gnome overview
-	sed -i.bak "s|#overviewGroup {.*|#overviewGroup {\n  background-image: url(\"/home/$USER/.local/share/backgrounds/sequoia-dark.png\");\n  background-size: cover;\n}|"  ~/.themes/WhiteSur-Dark/gnome-shell/gnome-shell.css
-        # ~/.themes/WhiteSur-Dark/gnome-shell/gnome-shell.css
+        sed -i "/#overviewGroup {/,/}/c #overviewGroup {\n  background-image: url(\"/home/$USER/.local/share/backgrounds/sequoia-dark.png\");\n  background-size: cover;\n}"  ~/.themes/WhiteSur-light-Light/gnome-shell/gnome-shell.css
+	# ~/.themes/WhiteSur-Dark/gnome-shell/gnome-shell.css
         # #overviewGroup {
         #         background-image: url("/home/paul/Downloads/croped-colorful-abstract-background-wallpaper.jpg");
         #         background-size: cover;
