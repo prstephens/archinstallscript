@@ -188,14 +188,6 @@ EOT
         # Change Google Drive name in Nautilus sidebar
         # ~/.config/goa-1.0/accounts.conf
         # PresentationIdentity=Google Drive
-
-        # Change wallpaper in Gnome overview
-        sed -i "/#overviewGroup {/,/}/c #overviewGroup {\n  background-image: url(\"/home/$USER/.local/share/backgrounds/sequoia-dark.png\");\n  background-size: cover;\n}"  ~/.themes/WhiteSur-light-Light/gnome-shell/gnome-shell.css
-	# ~/.themes/WhiteSur-Dark/gnome-shell/gnome-shell.css
-        # #overviewGroup {
-        #         background-image: url("/home/paul/Downloads/croped-colorful-abstract-background-wallpaper.jpg");
-        #         background-size: cover;
-        # }
 }
 
 install_ufw() {
@@ -414,6 +406,13 @@ vte-terminal {
 }
 EOT
 
+        # Change wallpaper in Gnome overview
+        sed -i "/#overviewGroup {/,/}/c #overviewGroup {\n  background-image: url(\"/home/$USER/.local/share/backgrounds/sequoia-dark.png\");\n  background-size: cover;\n}"  ~/.themes/WhiteSur-light-Light/gnome-shell/gnome-shell.css
+	# ~/.themes/WhiteSur-Dark/gnome-shell/gnome-shell.css
+        # #overviewGroup {
+        #         background-image: url("LOCATION OF FILE");
+        #         background-size: cover;
+        # }
 }
 
 install_plasma() {

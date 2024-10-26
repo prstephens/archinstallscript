@@ -325,7 +325,7 @@ performinstall() {
         chassis=$(cat /sys/class/dmi/id/chassis_type)
         if exists_in_list "8,9,10" "," ${chassis}; then
                 TLP=1
-                echo $'\ntlp' >>/tmp/packages
+                echo $'\ntlp\npowertop' >>/tmp/packages
         fi
 
         # Read the product name from sysfs
@@ -334,9 +334,8 @@ performinstall() {
         # Check if the product name contains "macbook" (case-insensitive)
         if echo "$product_name" | grep -iq "macbook"; then
                 MAC=1
-                echo $'\broadcom-wl-dkms' >>/tmp/packages
-                echo "coretemp" >>/mnt/etc/modules-load.d/apple.conf
-                echo "applesmc" >>/mnt/etc/modules-load.d/apple.conf
+                echo $'\nbroadcom-wl-dkms' >>/tmp/packages
+                
         fi
 
         if [[ "$USE_CRYPT" -eq 1 || "$AUTO" -eq 1 ]]; then
@@ -551,6 +550,12 @@ EOT
                 arch-chroot /mnt systemctl enable lvm2-monitor
         else
                 arch-chroot /mnt systemctl mask lvm2-monitor
+        fi
+
+        if [[ "$MAC" -eq 1 ]]; then
+                echo "coretemp" >>/mnt/etc/modules-load.d/apple.conf
+                echo "applesmc" >>/mnt/etc/modules-load.d/apple.conf
+                sed -i '/blacklist mac_hid/d; /blacklist uvcvideo/d' /mnt/etc/modprobe.d/blacklist.conf
         fi
 
         arch-chroot /mnt systemctl mask systemd-random-seed
