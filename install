@@ -325,7 +325,7 @@ performinstall() {
         chassis=$(cat /sys/class/dmi/id/chassis_type)
         if exists_in_list "8,9,10" "," ${chassis}; then
                 TLP=1
-                echo $'\ntlp\npowertop' >>/tmp/packages
+                echo $'\ntlp\ntlp-rdw\npowertop' >>/tmp/packages
         fi
 
         # Read the product name from sysfs
@@ -335,7 +335,6 @@ performinstall() {
         if echo "$product_name" | grep -iq "macbook"; then
                 MAC=1
                 echo $'\nbroadcom-wl-dkms' >>/tmp/packages
-                
         fi
 
         if [[ "$USE_CRYPT" -eq 1 || "$AUTO" -eq 1 ]]; then
@@ -543,7 +542,9 @@ EOT
         arch-chroot /mnt systemctl enable sshd
 
         if [[ "$TLP" -eq 1 ]]; then
-                arch-chroot /mnt systemctl enable tlp
+                arch-chroot /mnt systemctl enable tlp.service
+                arch-chroot /mnt systemctl enable NetworkManager-dispatcher.service
+                arch-chroot /mnt systemctl mask systemd-rfkill.service systemd-rfkill.socket
         fi
 
         if [[ "$USE_CRYPT" -eq 1 ]]; then
@@ -661,6 +662,7 @@ setupuser() {
         arch-chroot /mnt sed -i "s|^USE_RAID=.*$|USE_RAID=${USE_RAID}|" /home/$user/post-install
         arch-chroot /mnt sed -i "s|^USE_GRUB=.*$|USE_GRUB=${USE_GRUB}|" /home/$user/post-install
         arch-chroot /mnt sed -i "s|^TLP=.*$|TLP=${TLP}|" /home/$user/post-install
+        arch-chroot /mnt sed -i "s|^MAC=.*$|MAC=${MAC}|" /home/$user/post-install
         arch-chroot /mnt chmod a+x /home/$user/post-install
 
         # Add shell-option to ~/.inputrc to enable case-insensitive tab completion

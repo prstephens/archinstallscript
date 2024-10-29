@@ -17,8 +17,9 @@ USE_CRYPT=0       # changed on the fly during install
 USE_RAID=0        # changed on the fly during install
 USE_GRUB=0        # changed on the fly during install
 TLP=0             # changed on the fly during install
+MAC=0             # changed on the fly during install
 
-theme="Light"
+theme="light"
 
 set -o pipefail
 #set -x #toggle for debug. Will print all commands.
@@ -152,8 +153,15 @@ install_gnome() {
         gsettings set org.gnome.shell.extensions.arch-update use-buildin-icons true
         gsettings set org.gnome.shell.extensions.arch-update strip-versions true
         gsettings set org.gnome.shell disable-extension-version-validation "true"
-        gsettings set org.gnome.desktop.input-sources sources "[('xkb', 'gb')]"
 
+        # set the keyboard layout
+        if [[ "$MAC" -eq 1 ]]; then
+                gsettings set org.gnome.desktop.input-sources sources "[('xkb', 'gb+mac')]"
+        else
+                gsettings set org.gnome.desktop.input-sources sources "[('xkb', 'gb')]"
+        fi
+
+        # if we are a laptop, add the hibernate option in the power menu
         if [[ "$TLP" -eq 1 ]]; then
                 git clone https://github.com/arelange/gnome-shell-extension-hibernate-status.git /tmp/gnome-shell-extension-hibernate-status
                 cp -r /tmp/gnome-shell-extension-hibernate-status $HOME/.local/share/gnome-shell/extensions/hibernate-status\@dromi
@@ -328,6 +336,15 @@ install_gnome_mac() {
         gnome-extensions enable just-perfection-desktop@just-perfection
         gnome-extensions enable favourites-in-appgrid@harshadgavali.gitlab.org
         gnome-extensions enable AlphabeticalAppGrid@stuarthayhurst
+
+        # set the macbook colour profile
+        if [[ "$MAC" -eq 1 ]]; then
+                ICC_PROFILE="$HOME/.local/share/icc/MacbookAir_Color_LCD.icc"
+                PROFILE_ID=$(colormgr import-profile "$ICC_PROFILE")
+                DEVICE_ID=$(colormgr get-devices-by-kind display | head -n 1)
+                colormgr device-add-profile "$DEVICE_ID" "$PROFILE_ID"
+                colormgr device-make-profile-default "$DEVICE_ID" "$PROFILE_ID"
+        fi
 }
 
 install_whitesur() {
@@ -726,8 +743,8 @@ initialise() {
         # Read the product name from sysfs
         product_name=$(cat /sys/devices/virtual/dmi/id/product_name)
 
-        # Check if the product name contains "macbook" (case-insensitive)
-        if echo "$product_name" | grep -iq "macbook"; then
+        # Check if we are a macbook
+        if [[ "$MAC" -eq 1 ]]; then
                 yay -S facetimehd-dkms facetimehd-data mbpfan macfanctld
                 
                 cat <<EOT | sudo tee -a /etc/systemd/system/suspend-fix.service
