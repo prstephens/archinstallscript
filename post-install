@@ -339,9 +339,9 @@ install_gnome_mac() {
 
         # set the macbook colour profile
         if [[ "$MAC" -eq 1 ]]; then
-                ICC_PROFILE="$HOME/.local/share/icc/MacbookAir_Color_LCD.icc"
+                ICC_PROFILE="/tmp/MacbookAir_Color_LCD.icc"
                 PROFILE_ID=$(colormgr import-profile "$ICC_PROFILE")
-                DEVICE_ID=$(colormgr get-devices-by-kind display | head -n 1)
+                DEVICE_ID=$(colormgr get-devices-by-kind display | sed 's/Object Path:\s*//g' | head -n 1)
                 colormgr device-add-profile "$DEVICE_ID" "$PROFILE_ID"
                 colormgr device-make-profile-default "$DEVICE_ID" "$PROFILE_ID"
         fi
@@ -761,7 +761,7 @@ EOT
                 sudo systemctl enable --now mbpfan.service
 
                 # copy down the macbook colour profile
-                curl -sL $BASE_URL/configs/MacbookAir_Color_LCD.icc -o $HOME/.local/share/icc/MacbookAir_Color_LCD.icc
+                curl -sL $BASE_URL/configs/MacbookAir_Color_LCD.icc -o /tmp/MacbookAir_Color_LCD.icc
         fi
 
         sudo mkinitcpio -P
