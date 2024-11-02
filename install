@@ -429,9 +429,6 @@ EOT
         # Set hostname
         echo "${hostname}" >/mnt/etc/hostname
 
-        # Set keyboard FN keys to act normal!
-        echo "options hid_apple fnmode=2" >/mnt/etc/modprobe.d/hid_apple.conf
-
         # nano syntax highlighting
         echo "include /usr/share/nano/*.nanorc" >>/mnt/etc/nanorc
 
@@ -557,6 +554,8 @@ EOT
                 echo "coretemp" >>/mnt/etc/modules-load.d/apple.conf
                 echo "applesmc" >>/mnt/etc/modules-load.d/apple.conf
                 sed -i '/blacklist mac_hid/d; /blacklist uvcvideo/d' /mnt/etc/modprobe.d/blacklist.conf
+                # Set macbook keyboard fn keys to use media keys by default 
+                echo "options hid_apple fnmode=1" >/mnt/etc/modprobe.d/hid_apple.conf
         fi
 
         arch-chroot /mnt systemctl mask systemd-random-seed
