@@ -504,7 +504,7 @@ install_profile-sync-daemon() {
 
 install_anything-sync-daemon() {
         sudo pacman -S --noconfirm --needed anything-sync-daemon
-        sudo sed -i "s/^WHATTOSYNC=.*$/WHATTOSYNC=('$HOME/.cache')/" /etc/asd.conf
+        sudo sed -i "s|^WHATTOSYNC=.*$|WHATTOSYNC=('$HOME/.cache')|" /etc/asd.conf
         sudo sed -i 's/^#USE_OVERLAYFS=.*$/USE_OVERLAYFS="yes"/' /etc/asd.conf
         sudo sed -i 's/^#VOLATILE=.*$/VOLATILE=("\/dev\/shm")/' /etc/asd.conf
         sudo systemctl enable --now asd
