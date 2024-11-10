@@ -178,7 +178,7 @@ install_gnome() {
         sudo pacman -Rs --noconfirm epiphany gnome-music totem gnome-connections gnome-text-editor gnome-tour gnome-console gnome-user-docs yelp gnome-maps gnome-software
 
         # pin some nice favourites to the dash
-        gsettings set org.gnome.shell favorite-apps "['org.gnome.Nautilus.desktop', 'org.gnome.Terminal.desktop', 'google-chrome.desktop', 'firefox.desktop', 'org.gnome.Geary.desktop', 'whatsapp.desktop', 'libreoffice-writer.desktop', 'libreoffice-calc.desktop', 'org.gnome.Calendar.desktop', 'org.gnome.Contacts.desktop', 'org.gnome.Todo.desktop', 'org.gnome.Notes.desktop', 'org.gnome.Calculator.desktop', 'org.gnome.Photos.desktop', 'code-oss.desktop', 'spotify-launcher.desktop', 'vlc.desktop', 'gimp.desktop', 'org.gnome.tweaks.desktop', 'org.gnome.Software.desktop', 'com.mattjakeman.ExtensionManager.desktop', 'org.gnome.Settings.desktop']"
+        gsettings set org.gnome.shell favorite-apps "['org.gnome.Nautilus.desktop', 'google-chrome.desktop', 'firefox.desktop', 'org.gnome.Geary.desktop', 'whatsapp.desktop', 'libreoffice-writer.desktop', 'libreoffice-calc.desktop', 'org.gnome.Photos.desktop', 'org.gnome.Calendar.desktop', 'org.gnome.Contacts.desktop', 'org.gnome.Todo.desktop', 'org.gnome.Notes.desktop', 'org.gnome.Terminal.desktop', 'code-oss.desktop', 'spotify-launcher.desktop', 'vlc.desktop', 'gimp.desktop', 'org.gnome.tweaks.desktop', 'org.gnome.Software.desktop', 'com.mattjakeman.ExtensionManager.desktop', 'org.gnome.Settings.desktop']"
 
         cat <<EOT >>$HOME/.bash_profile
 if [ "$XDG_SESSION_TYPE" = "wayland" ]; then
