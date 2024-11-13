@@ -520,6 +520,7 @@ install_apps() {
         sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/WhiteSur/apps/scalable/spotify.svg|" /usr/share/applications/spotify-launcher.desktop
         sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/WhiteSur/apps/scalable/ms-word.svg|" /usr/share/applications/libreoffice-writer.desktop
         sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/WhiteSur/apps/scalable/ms-excel.svg|" /usr/share/applications/libreoffice-calc.desktop
+        sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/WhiteSur/apps/scalable/ms-powerpoint.svg|" /usr/share/applications/libreoffice-impress.desktop
         sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/WhiteSur/apps/scalable/notes.svg|" /usr/share/applications/org.gnome.Todo.desktop
         sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/WhiteSur/apps/scalable/gnome-settings-default-applications.svg|" /usr/share/applications/com.mattjakeman.ExtensionManager.desktop        
 }
