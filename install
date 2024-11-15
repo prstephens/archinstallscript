@@ -696,7 +696,7 @@ wifi_connect() {
         list_networks() {
                 iwctl station wlan0 scan >/dev/null 2>&1
                 sleep 2                                                   # Allow time for scanning
-                iwctl station wlan0 get-networks | awk '/SSID/{print $2}' # Extract SSIDs
+                iwctl station wlan0 get-networks | awk '(NR > 5) {print $1}' # Extract SSIDs
         }
 
         # Scan for networks
@@ -733,13 +733,7 @@ wifi_connect() {
         fi
 
         # Attempt to connect to the selected network
-        (
-                echo "station wlan0 connect \"$SSID\""
-                sleep 2 # Allow time for passphrase input
-                echo "$PASSPHRASE"
-                sleep 2 # Allow time for connection
-                echo "quit"
-        ) | iwctl
+        iwctl --passphrase $PASSPHRASE station wlan0 connect "$SSID"
 
         # Verify connection
         if iwctl station wlan0 show | grep -q "connected"; then
