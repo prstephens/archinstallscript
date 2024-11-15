@@ -554,7 +554,7 @@ EOT
                 echo "coretemp" >>/mnt/etc/modules-load.d/apple.conf
                 echo "applesmc" >>/mnt/etc/modules-load.d/apple.conf
                 sed -i '/blacklist mac_hid/d; /blacklist uvcvideo/d' /mnt/etc/modprobe.d/blacklist.conf
-                # Set macbook keyboard fn keys to use media keys by default 
+                # Set macbook keyboard fn keys to use media keys by default
                 echo "options hid_apple fnmode=1" >/mnt/etc/modprobe.d/hid_apple.conf
         fi
 
@@ -691,10 +691,78 @@ rebootpc() {
 #
 #   ====================================================
 
+wifi_connect() {
+        # Function to list available networks
+        list_networks() {
+                iwctl station wlan0 scan >/dev/null 2>&1
+                sleep 2                                                   # Allow time for scanning
+                iwctl station wlan0 get-networks | awk '/SSID/{print $2}' # Extract SSIDs
+        }
+
+        # Scan for networks
+        NETWORKS=$(list_networks)
+
+        if [ -z "$NETWORKS" ]; then
+                whiptail --msgbox "No networks found. Please try again." 10 60
+                return 1
+        fi
+
+        # Prepare a menu of networks for whiptail
+        MENU=()
+        IFS=$'\n'
+        for NETWORK in $NETWORKS; do
+                MENU+=("$NETWORK" "Available")
+        done
+
+        # Display the menu and get user selection
+        SSID=$(whiptail --title "Select Wi-Fi Network" --menu "Available Networks:" 20 60 10 "${MENU[@]}" 3>&1 1>&2 2>&3)
+
+        # Check if a network was selected
+        if [ -z "$SSID" ]; then
+                whiptail --msgbox "No network selected. Exiting." 10 60
+                return 1
+        fi
+
+        # Prompt for passphrase
+        PASSPHRASE=$(whiptail --passwordbox "Enter passphrase for $SSID:" 10 60 3>&1 1>&2 2>&3)
+
+        # Ensure passphrase is not empty
+        if [ -z "$PASSPHRASE" ]; then
+                whiptail --msgbox "Passphrase cannot be empty. Exiting." 10 60
+                return 1
+        fi
+
+        # Attempt to connect to the selected network
+        (
+                echo "station wlan0 connect \"$SSID\""
+                sleep 2 # Allow time for passphrase input
+                echo "$PASSPHRASE"
+                sleep 2 # Allow time for connection
+                echo "quit"
+        ) | iwctl
+
+        # Verify connection
+        if iwctl station wlan0 show | grep -q "connected"; then
+                whiptail --msgbox "Successfully connected to $SSID!" 10 60
+        else
+                whiptail --msgbox "Failed to connect to $SSID. Please check your credentials." 10 60
+                return 1
+        fi
+}
+
 checkconnection() {
         if [[ $(ping -q -w1 -c1 google.com &>/dev/null && echo online || echo offline) == "offline" ]]; then
                 whiptail --backtitle "$BACKTITLE" --msgbox --title "No Network Connection" "You need to be connected to the Internet.\n\nInstallation stopped." --fb 0 78
-                exit
+                wifi_connect
+
+                RESULT=$?  # Capture the return value of the function
+
+                if [ $RESULT -eq 0 ]; then
+                        echo "Wi-Fi connection successful!"
+                else
+                        echo "Wi-Fi connection failed!"
+                        exit
+                fi
         fi
 }
 
