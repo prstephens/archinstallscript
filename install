@@ -752,6 +752,8 @@ wifi_connect() {
         done
 
         whiptail --msgbox "Successfully connected to $SSID!" 10 60
+
+        systemctl restart dhcpcd.service
 }
 
 checkconnection() {
