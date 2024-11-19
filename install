@@ -99,8 +99,8 @@ mainmenu() {
 
 yesno() {
         title=$1
-        msg=$2
-        whiptail --backtitle "${BACKTITLE}" --title "${title}" --fb --yesno "${msg}" --defaultno 0 78
+        message=$2
+        whiptail --backtitle "${BACKTITLE}" --title "${title}" --fb --yesno "${message}" --defaultno 0 78
 }
 
 preparedisk() {
