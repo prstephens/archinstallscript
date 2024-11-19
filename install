@@ -751,9 +751,36 @@ wifi_connect() {
                 fi
         done
 
-        whiptail --msgbox "Successfully connected to $SSID!" 10 60
+        systemctl restart dhcpcd
 
-        systemctl restart dhcpcd.service
+        # reset counter for IP assignment
+        COUNTER=0
+        echo "Waiting for IP address on $INTERFACE..."
+
+        while true; do
+                # Check for an assigned IP address
+                IP=$(ip -4 addr show wlan0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
+
+                if [[ -n $IP ]]; then
+                        echo "Successfully obtained IP address: $IP"
+                        break
+                fi
+
+                # Increment the retry counter
+                COUNTER=$((COUNTER + 1))
+
+                # Exit if maximum retries are reached
+                if [[ $COUNTER -ge $MAX_RETRIES ]]; then
+                        echo "Failed to obtain an IP address after $MAX_RETRIES checks."
+                        exit 1
+                fi
+
+                # Wait before retrying
+                echo "Retrying in $DELAY seconds... ($COUNTER/$MAX_RETRIES)"
+                sleep $DELAY
+        done
+
+        whiptail --msgbox "Successfully connected to $SSID!" 10 60
 }
 
 checkconnection() {
