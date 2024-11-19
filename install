@@ -36,25 +36,27 @@ MAC=0
 #   ================================
 
 mainmenu() {
-        if [ "${1}" = "" ]; then
-                nextitem="."
-        else
-                nextitem=${1}
-        fi
-        options=()
-        options+=("WIPE DEVICE" "(Optional) Securely wipe disk or partition before installation")
-        options+=("PARTITION DISK" "Partition disk using cfdisk to create EFI, swap and root partitions")
-        options+=("ENCRYPTION" "(Optional) Use full disk enryption with detached LUKS header")
-        options+=("MOUNT" "Select the partitions to mount")
-        options+=("SETUP USER" "Setup a user and root password")
-        options+=("INSTALL" "Perform Arch Linux base Installation")
-        options+=("" "")
-        options+=("FINISH" "Finish and reboot")
+        local nextitem="${1:-.}" # Default to "." if no argument is provided
+        local options=(
+                "WIPE DEVICE" "(Optional) Securely wipe disk or partition before installation"
+                "PARTITION DISK" "Partition disk using cfdisk to create EFI, swap, and root partitions"
+                "ENCRYPTION" "(Optional) Use full disk encryption with detached LUKS header"
+                "MOUNT" "Select the partitions to mount"
+                "SETUP USER" "Setup a user and root password"
+                "INSTALL" "Perform Arch Linux base Installation"
+                "" ""
+                "FINISH" "Finish and reboot"
+        )
 
-        sel=$(whiptail --backtitle "${BACKTITLE}" --title "Main Menu" --menu "" --fb --cancel-button "Exit" --default-item "${nextitem}" 0 78 0 "${options[@]}" \
+        # Display the menu using whiptail
+        local sel
+        sel=$(whiptail --backtitle "${BACKTITLE}" --title "Main Menu" --menu "" \
+                --fb --cancel-button "Exit" --default-item "${nextitem}" 0 78 0 "${options[@]}" \
                 3>&1 1>&2 2>&3)
-        if [ "$?" = "0" ]; then
-                case ${sel} in
+
+        # Check the result of whiptail and act accordingly
+        if [ $? -eq 0 ]; then
+                case "${sel}" in
                 "WIPE DEVICE")
                         preparedisk
                         nextitem="PARTITION DISK"
@@ -88,6 +90,7 @@ mainmenu() {
                         nextitem="FINISH"
                         ;;
                 esac
+                # Recursively call the main menu with the updated nextitem
                 mainmenu "${nextitem}"
         else
                 clear
@@ -101,38 +104,51 @@ yesno() {
 }
 
 preparedisk() {
+        local wipedevice
         wipedevice=$(selectdisk "Choose device to be wiped")
 
-        if (yesno "### WARNING ###" "Are you sure you want to secure wipe ${wipedevice}? \n\nTHIS CANNOT BE UNDONE. ALL DATA WILL BE PERMANENTLY LOST!"); then
-                figlet -t -f pagga wiping device $wipedevice...
-                cryptsetup open --type plain -d /dev/urandom ${wipedevice} to_be_wiped
-                dd if=/dev/zero of=/dev/mapper/to_be_wiped status=progress || :
-                cryptsetup close to_be_wiped
+        if yesno "### WARNING ###" "Are you sure you want to secure wipe ${wipedevice}?\n\nTHIS CANNOT BE UNDONE. ALL DATA WILL BE PERMANENTLY LOST!"; then
+                figlet -t -f pagga "Wiping device ${wipedevice}..."
+
+                # Open the device with cryptsetup
+                if cryptsetup open --type plain -d /dev/urandom "${wipedevice}" to_be_wiped; then
+                        # Securely wipe the device
+                        dd if=/dev/zero of=/dev/mapper/to_be_wiped status=progress || :
+                        cryptsetup close to_be_wiped
+                else
+                        echo "Failed to open ${wipedevice} for wiping" >&2
+                fi
         fi
 }
 
 diskpartcfdisk() {
+        local device
         device=$(selectdisk "Edit Partitions (cfdisk)")
-        if [ "$?" = "0" ]; then
+        if [ $? -eq 0 ] && [ -n "${device}" ]; then
                 clear
-                cfdisk ${device}
+                cfdisk "${device}"
         fi
 }
 
 selectdisk() {
+        # Fetch disk list excluding loop and RAM devices
+        local items
         items=$(lsblk -d -p -n -l -o NAME,SIZE -e 7,11)
-        options=()
-        IFS_ORIG=$IFS
-        IFS=$'\n'
-        for item in ${items}; do
+        local options=()
+
+        # Populate menu options
+        while IFS= read -r item; do
                 options+=("${item}" "")
-        done
-        IFS=$IFS_ORIG
-        result=$(whiptail --backtitle "${BACKTITLE}" --title "${1}" --menu "" --fb 0 78 0 "${options[@]}" 3>&1 1>&2 2>&3)
-        if [ "$?" != "0" ]; then
+        done <<<"${items}"
+
+        # Display selection menu
+        local result
+        result=$(whiptail --backtitle "${BACKTITLE}" --title "$1" --menu "" --fb 0 78 0 "${options[@]}" 3>&1 1>&2 2>&3)
+        if [ $? -ne 0 ]; then
                 return 1
         fi
-        echo ${result%%\ *}
+
+        echo "${result%% *}" # Return selected disk
         return 0
 }
 
@@ -692,112 +708,87 @@ rebootpc() {
 #   ====================================================
 
 wifi_connect() {
-        # Function to list available networks
+        # Helper function to scan and list networks
         list_networks() {
                 iwctl station wlan0 scan >/dev/null 2>&1
-                sleep 2                                                   # Allow time for scanning
+                sleep 2
                 iwctl station wlan0 get-networks | awk '(NR > 5) {print $1}' # Extract SSIDs
+        }
+
+        # Helper function to wait with retries
+        wait_with_retries() {
+                local condition="$1"
+                local max_retries="$2"
+                local delay="$3"
+                local retries=0
+
+                while ! eval "$condition"; do
+                        echo "Attempt $((retries + 1)) of $max_retries..."
+                        sleep "$delay"
+                        ((retries++))
+
+                        if ((retries >= max_retries)); then
+                                return 1
+                        fi
+                done
+                return 0
         }
 
         # Scan for networks
         NETWORKS=$(list_networks)
-
-        if [ -z "$NETWORKS" ]; then
+        if [[ -z $NETWORKS ]]; then
                 whiptail --backtitle "$BACKTITLE" --msgbox "No networks found. Please try again." 10 60
                 return 1
         fi
 
-        # Prepare a menu of networks for whiptail
+        # Prepare menu options
         MENU=()
-        IFS=$'\n'
-        for NETWORK in $NETWORKS; do
+        while IFS= read -r NETWORK; do
                 MENU+=("$NETWORK" "Available")
-        done
+        done <<<"$NETWORKS"
 
-        # Display the menu and get user selection
+        # Display network selection menu
         SSID=$(whiptail --backtitle "$BACKTITLE" --title "Select Wi-Fi Network" --menu "Available Networks:" 20 60 10 "${MENU[@]}" 3>&1 1>&2 2>&3)
-
-        # Check if a network was selected
-        if [ -z "$SSID" ]; then
+        if [[ -z $SSID ]]; then
                 whiptail --backtitle "$BACKTITLE" --msgbox "No network selected. Exiting." 10 60
                 return 1
         fi
 
         # Prompt for passphrase
         PASSPHRASE=$(whiptail --backtitle "$BACKTITLE" --passwordbox "Enter passphrase for $SSID:" 10 60 3>&1 1>&2 2>&3)
-
-        # Ensure passphrase is not empty
-        if [ -z "$PASSPHRASE" ]; then
+        if [[ -z $PASSPHRASE ]]; then
                 whiptail --backtitle "$BACKTITLE" --msgbox "Passphrase cannot be empty. Exiting." 10 60
                 return 1
         fi
 
-        MAX_RETRIES=10  # Number of retries
-        DELAY=1         # Seconds between retries
-        COUNTER=0       # Initialize retry counter
-
         # Attempt to connect
         iwctl --passphrase "$PASSPHRASE" station wlan0 connect "$SSID"
+        if ! wait_with_retries "iwctl station wlan0 show | grep -q 'connected'" 10 2; then
+                whiptail --msgbox "Failed to connect to $SSID after 10 attempts.\n\nPlease check your credentials." 10 60
+                return 1
+        fi
 
-        # Wait for the connection to establish, with a timeout
-        while ! iwctl station wlan0 show | grep -q "connected"; do
-                echo "Waiting for connection... Attempt $((COUNTER+1)) of $MAX_RETRIES"
-                sleep $DELAY
-                COUNTER=$((COUNTER + 1))
-
-                if [ $COUNTER -ge $MAX_RETRIES ]; then
-                        whiptail --msgbox "Failed to connect to $SSID after $MAX_RETRIES attempts.\n\nPlease check your credentials." 10 60
-                        return 1
-                fi
-        done
-
+        # Restart DHCP client and wait for IP address
         systemctl restart dhcpcd
+        if ! wait_with_retries "[[ -n \$(ip -4 addr show wlan0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}') ]]" 10 2; then
+                whiptail --msgbox "Failed to obtain an IP address. Please check your network configuration." 10 60
+                return 1
+        fi
 
-        # reset counter for IP assignment
-        COUNTER=0
-        echo "Waiting for IP address on $INTERFACE..."
-
-        while true; do
-                # Check for an assigned IP address
-                IP=$(ip -4 addr show wlan0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
-
-                if [[ -n $IP ]]; then
-                        echo "Successfully obtained IP address: $IP"
-                        break
-                fi
-
-                # Increment the retry counter
-                COUNTER=$((COUNTER + 1))
-
-                # Exit if maximum retries are reached
-                if [[ $COUNTER -ge $MAX_RETRIES ]]; then
-                        echo "Failed to obtain an IP address after $MAX_RETRIES checks."
-                        exit 1
-                fi
-
-                # Wait before retrying
-                echo "Retrying in $DELAY seconds... ($COUNTER/$MAX_RETRIES)"
-                sleep $DELAY
-        done
-
+        # Notify success
         whiptail --msgbox "Successfully connected to $SSID!" 10 60
+
+        return 0
 }
 
-checkconnection() {
-        if [[ $(ping -q -w1 -c1 google.com &>/dev/null && echo online || echo offline) == "offline" ]]; then
-                whiptail --backtitle "$BACKTITLE" --msgbox --title "No Network Connection" "You need to be connected to the Internet.\n\nClick OK to begin Wi-Fi setup" --fb 0 78
-                
+check_connection() {
+        if ! ping -q -w1 -c1 google.com &>/dev/null; then
+                whiptail --backtitle "$BACKTITLE" --msgbox --title "No Network Connection" \
+                        "You need to be connected to the Internet.\n\nClick OK to begin Wi-Fi setup" 10 60
                 wifi_connect
-
-                RESULT=$?  # Capture the return value of the function
-
-                if [ $RESULT -eq 0 ]; then
-                        echo "Wi-Fi connection successful!"
-                else
-                        echo "Wi-Fi connection failed!"
-                        exit
-                fi
+                return $?
         fi
+        return 0
 }
 
 dependencies() {
@@ -828,13 +819,14 @@ initialise() {
 }
 
 self_update() {
-        curl -sL $BASE_URL/version -o /tmp/version
-        value=$(</tmp/version)
-        if (("$VERSION" < "$value")); then
-                curl -sL $BASE_URL/install -o install
+        curl -sL "$BASE_URL/version" -o /tmp/version
+        local new_version
+        new_version=$(</tmp/version)
+
+        if ((VERSION < new_version)); then
+                curl -sL "$BASE_URL/install" -o install
                 chmod +x install
-                exec install
-                exit 1
+                exec ./install
         fi
 }
 
@@ -853,15 +845,17 @@ slient_install() {
         installbootloader
 }
 
-help() {
-        echo
-        echo "Syntax: install [-c|h|m COUNTRY_CODE|s]"
-        echo "options:"
-        echo "h     Print this Help."
-        echo "c     Try and clean current install state"
-        echo "m     Change the mirror country eg. GB or US"
-        echo "s     Run a silent install with set defaults (for testing)"
-        echo
+display_help() {
+        cat <<EOF
+
+Syntax: install [-c|h|m COUNTRY_CODE|s]
+Options:
+  -h   Print this Help.
+  -c   Clean current install state.
+  -m   Change the mirror country (e.g., GB, US).
+  -s   Run a silent install with predefined defaults (for testing).
+
+EOF
 }
 
 #   ============ MAIN ==============
@@ -875,13 +869,12 @@ while getopts ":chm:s" option; do
         c) # clean
                 swapoff -a
                 rm /tmp/packages
-                [[ -d /mnt/boot ]] && umount -A /mnt/boot
-                [[ -d /mnt ]] && umount -A /mnt
+                umount -A /mnt/boot /mnt &>/dev/null || true
                 lsblk
                 exit
                 ;;
         h) # display Help
-                help
+                display_help
                 exit
                 ;;
         m) # mirror to use
@@ -892,16 +885,21 @@ while getopts ":chm:s" option; do
                 ;;
         \?)
                 echo "Error: Invalid option"
+                display_help
                 exit
                 ;;
         :)
                 echo "Option -$OPTARG requires an argument"
+                display_help
                 exit
                 ;;
         esac
 done
 
-checkconnection
+checkconnection || {
+        echo "Connection failed. Exiting."
+        exit 1
+}
 self_update
 
 [[ ! -f /tmp/packages ]] && initialise
