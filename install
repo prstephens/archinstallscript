@@ -694,11 +694,16 @@ rebootpc() {
 #   ====================================================
 
 wifi_connect() {
-        # Helper function to scan and list networks
-        list_networks() {
-                iwctl station wlan0 scan >/dev/null 2>&1
-                sleep 2
-                iwctl station wlan0 get-networks | awk '(NR > 5) {print $1}' # Extract SSIDs
+        local SSID=""
+        local PASSPHRASE=""
+
+        # Helper function to update progress
+        update_progress() {
+                local percent=$1
+                local message=$2
+                echo "$percent"
+                echo "# $message"
+                sleep 1
         }
 
         # Helper function to wait with retries
@@ -720,23 +725,15 @@ wifi_connect() {
                 return 0
         }
 
-        # Helper function to update progress
-        update_progress() {
-                local percent=$1
-                local message=$2
-                echo "$percent"
-                echo "# $message"
-                sleep 1
-        }
-
         # Initialize progress dialog
         {
                 update_progress 0 "Initializing Wi-Fi connection..."
 
                 # Scan for networks
                 update_progress 10 "Scanning for Wi-Fi networks..."
-                NETWORKS=$(list_networks)
+                NETWORKS=$(iwctl station wlan0 scan >/dev/null 2>&1 && sleep 2 && iwctl station wlan0 get-networks | awk '(NR > 5) {print $1}')
                 if [[ -z $NETWORKS ]]; then
+                        tput clear # Reset the terminal before showing a dialog
                         whiptail --backtitle "$BACKTITLE" --msgbox "No networks found. Please try again." 10 60
                         return 1
                 fi
@@ -750,16 +747,20 @@ wifi_connect() {
 
                 # Display network selection menu
                 update_progress 50 "Displaying network selection menu..."
+                tput clear # Reset the terminal before showing a dialog
                 SSID=$(whiptail --backtitle "$BACKTITLE" --title "Select Wi-Fi Network" --menu "Available Networks:" 20 60 10 "${MENU[@]}" 3>&1 1>&2 2>&3)
                 if [[ -z $SSID ]]; then
+                        tput clear
                         whiptail --backtitle "$BACKTITLE" --msgbox "No network selected. Exiting." 10 60
                         return 1
                 fi
 
                 # Prompt for passphrase
                 update_progress 60 "Prompting for Wi-Fi passphrase..."
+                tput clear
                 PASSPHRASE=$(whiptail --backtitle "$BACKTITLE" --passwordbox "Enter passphrase for $SSID:" 10 60 3>&1 1>&2 2>&3)
                 if [[ -z $PASSPHRASE ]]; then
+                        tput clear
                         whiptail --backtitle "$BACKTITLE" --msgbox "Passphrase cannot be empty. Exiting." 10 60
                         return 1
                 fi
@@ -768,6 +769,7 @@ wifi_connect() {
                 update_progress 70 "Attempting to connect to $SSID..."
                 iwctl --passphrase "$PASSPHRASE" station wlan0 connect "$SSID"
                 if ! wait_with_retries "iwctl station wlan0 show | grep -q 'connected'" 10 2; then
+                        tput clear
                         whiptail --msgbox "Failed to connect to $SSID after 10 attempts.\n\nPlease check your credentials." 10 60
                         return 1
                 fi
@@ -776,12 +778,16 @@ wifi_connect() {
                 update_progress 90 "Restarting DHCP client..."
                 systemctl restart dhcpcd
                 if ! wait_with_retries "[[ -n \$(ip -4 addr show wlan0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}') ]]" 10 2; then
+                        tput clear
                         whiptail --msgbox "Failed to obtain an IP address. Please check your network configuration." 10 60
                         return 1
                 fi
 
                 update_progress 100 "Successfully connected to $SSID!"
         } | whiptail --gauge "Connecting to Wi-Fi..." 10 60 0
+
+        # Ensure terminal is reset after gauge
+        tput clear
 
         # Notify success
         whiptail --msgbox "Successfully connected to $SSID!" 10 60
@@ -900,7 +906,7 @@ while getopts ":chm:s" option; do
         esac
 done
 
-checkconnection || {
+check_connection || {
         echo "Connection failed. Exiting."
         exit 1
 }
