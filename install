@@ -755,6 +755,8 @@ wifi_connect() {
                         return 1
                 fi
 
+                echo "$SSID" >/tmp/selected_ssid
+
                 # Prompt for passphrase
                 update_progress 60 "Prompting for Wi-Fi passphrase..."
                 tput clear
@@ -767,7 +769,7 @@ wifi_connect() {
 
                 # Attempt to connect
                 update_progress 70 "Attempting to connect to $SSID..."
-                iwctl --passphrase "$PASSPHRASE" station wlan0 connect "$SSID"
+                iwctl --passphrase "$PASSPHRASE" station wlan0 connect "$SSID" >/dev/null 2>&1
                 if ! wait_with_retries "iwctl station wlan0 show | grep -q 'connected'" 10 2; then
                         tput clear
                         whiptail --msgbox "Failed to connect to $SSID after 10 attempts.\n\nPlease check your credentials." 10 60
@@ -776,7 +778,7 @@ wifi_connect() {
 
                 # Restart DHCP client
                 update_progress 90 "Restarting DHCP client..."
-                systemctl restart dhcpcd
+                systemctl restart dhcpcd >/dev/null 2>&1
                 if ! wait_with_retries "[[ -n \$(ip -4 addr show wlan0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}') ]]" 10 2; then
                         tput clear
                         whiptail --msgbox "Failed to obtain an IP address. Please check your network configuration." 10 60
@@ -789,8 +791,13 @@ wifi_connect() {
         # Ensure terminal is reset after gauge
         tput clear
 
+        SSID=$(< /tmp/selected_ssid)
+
         # Notify success
         whiptail --msgbox "Successfully connected to $SSID!" 10 60
+
+        timedatectl >/dev/null 2>&1
+
         return 0
 }
 
