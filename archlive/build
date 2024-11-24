@@ -1,0 +1,7 @@
+#!/bin/bash
+
+sudo rm -rdf work
+sudo rm -rdf out
+cp ~/dev/archinstallscript/install airootfs/root/
+export XZ_OPT="--threads=0"
+sudo mkarchiso -v . 
