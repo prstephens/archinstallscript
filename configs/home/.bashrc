@@ -161,6 +161,11 @@ turbo()
     for file in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do echo "performance" | sudo tee -a $file; done
 }
 
+balanced()
+{
+    for file in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do echo "schedutil" | sudo tee -a $file; done
+}
+
 omm(){
     shopt -s nullglob
     for g in `find /sys/kernel/iommu_groups/* -maxdepth 0 -type d | sort -V`; do
