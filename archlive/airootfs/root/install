@@ -705,7 +705,7 @@ wifi_connect() {
                 local retries=0
 
                 while ! eval "$condition"; do
-                        echo "Attempt $((retries + 1)) of $max_retries..."
+                        #echo "Attempt $((retries + 1)) of $max_retries..."
                         sleep "$delay"
                         ((retries++))
 
@@ -717,7 +717,6 @@ wifi_connect() {
         }
 
         # Scan for networks
-        whiptail --backtitle "$BACKTITLE" --msgbox "Initializing Wi-Fi connection..." 10 60
         whiptail --backtitle "$BACKTITLE" --msgbox "Scanning for Wi-Fi networks..." 10 60
         NETWORKS=$(iwctl station wlan0 scan >/dev/null 2>&1 && sleep 2 && iwctl station wlan0 get-networks | awk '(NR > 5) {print $1}')
         if [[ -z $NETWORKS ]]; then
@@ -748,33 +747,52 @@ wifi_connect() {
                 return 1
         fi
 
-        # Attempt to connect
-        whiptail --backtitle "$BACKTITLE" --msgbox "Attempting to connect to $SSID..." 10 60
-        iwctl --passphrase "$PASSPHRASE" station wlan0 connect "$SSID" >/dev/null 2>&1
-        if ! wait_with_retries "iwctl station wlan0 show | grep -q 'connected'" 10 2; then
-                tput clear
-                whiptail --msgbox "Failed to connect to $SSID after 10 attempts.\n\nPlease check your credentials." 10 60
-                return 1
-        fi
 
-        # Restart DHCP client
-        whiptail --backtitle "$BACKTITLE" --msgbox "Restarting DHCP client..." 10 60
-        systemctl restart dhcpcd >/dev/null 2>&1
-        if ! wait_with_retries "[[ -n \$(ip -4 addr show wlan0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}') ]]" 10 2; then
-                tput clear
-                whiptail --msgbox "Failed to obtain an IP address. Please check your network configuration." 10 60
-                return 1
-        fi
+        # Initialize gauge progress at 0%
+        (
+                echo 0
+                sleep 0.5
 
-        whiptail --backtitle "$BACKTITLE" --msgbox "Successfully connected to $SSID!" 10 60
+                # Step 1: Attempting to connect
+                echo "10"
+                echo "Attempting to connect to $SSID..."
+                sleep 1
+                iwctl --passphrase "$PASSPHRASE" station wlan0 connect "$SSID" >/dev/null 2>&1
+                if ! wait_with_retries "iwctl station wlan0 show | grep -q 'connected'" 10 2; then
+                        echo "100"
+                        echo "Failed to connect to $SSID."
+                        sleep 1
+                        tput clear
+                        whiptail --msgbox "Failed to connect to $SSID after 10 attempts.\n\nPlease check your credentials." 10 60
+                        exit 1
+                fi
+
+                # Step 2: Verify IP address
+                echo "50"
+                echo "Checking for IP address..."
+                sleep 1
+                if ! wait_with_retries "[[ -n \$(ip -4 addr show wlan0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}') ]]" 10 2; then
+                        echo "100"
+                        echo "Failed to obtain an IP address."
+                        sleep 1
+                        tput clear
+                        whiptail --msgbox "Failed to obtain an IP address. Please check your network configuration." 10 60
+                        exit 1
+                fi
+
+                # Step 3: Connection successful
+                echo "100"
+                echo "Successfully connected to $SSID!"
+                sleep 1
+
+        ) | whiptail --title "Connecting to WiFi" --gauge "Please wait while we connect to $SSID..." 10 60 0
 
         # Ensure terminal is reset after messages
         tput clear
 
-        # Notify success
-        whiptail --msgbox "Successfully connected to $SSID!" 10 60
-
         timedatectl >/dev/null 2>&1
+
+        whiptail --backtitle "$BACKTITLE" --msgbox "Successfully connected to $SSID!" 10 60
 
         return 0
 }
