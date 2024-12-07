@@ -2,6 +2,8 @@
 
 sudo rm -rdf work
 sudo rm -rdf out
-cp ~/dev/archinstallscript/install airootfs/root/
+sudo rm airootfs/root/install
+cp ~/dev/archinstallscript/install airootfs/root/install
+sync
 export XZ_OPT="--threads=0"
 sudo mkarchiso -v . 
