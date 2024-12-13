@@ -510,19 +510,22 @@ install_anything-sync-daemon() {
         sudo systemctl enable --now asd
 }
 
+update_icons(){
+        sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/WhiteSur/apps/scalable/spotify.svg|" /usr/share/applications/spotify-launcher.desktop
+        sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/WhiteSur/apps/scalable/ms-word.svg|" /usr/share/applications/libreoffice-writer.desktop
+        sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/WhiteSur/apps/scalable/ms-excel.svg|" /usr/share/applications/libreoffice-calc.desktop
+        sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/WhiteSur/apps/scalable/ms-powerpoint.svg|" /usr/share/applications/libreoffice-impress.desktop
+        sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/WhiteSur/apps/scalable/notes.svg|" /usr/share/applications/org.gnome.Todo.desktop
+        sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/WhiteSur/apps/scalable/gnome-settings-default-applications.svg|" /usr/share/applications/com.mattjakeman.ExtensionManager.desktop
+}
+
 install_apps() {
         clear
 
         echo "Installing apps..."
         yay -S --noconfirm --needed spotify-launcher google-chrome libreoffice-still gimp vlc geary etcher-bin gnome-photos gnome-notes endeavour
 
-        #fix some icons
-        sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/WhiteSur/apps/scalable/spotify.svg|" /usr/share/applications/spotify-launcher.desktop
-        sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/WhiteSur/apps/scalable/ms-word.svg|" /usr/share/applications/libreoffice-writer.desktop
-        sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/WhiteSur/apps/scalable/ms-excel.svg|" /usr/share/applications/libreoffice-calc.desktop
-        sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/WhiteSur/apps/scalable/ms-powerpoint.svg|" /usr/share/applications/libreoffice-impress.desktop
-        sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/WhiteSur/apps/scalable/notes.svg|" /usr/share/applications/org.gnome.Todo.desktop
-        sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/WhiteSur/apps/scalable/gnome-settings-default-applications.svg|" /usr/share/applications/com.mattjakeman.ExtensionManager.desktop        
+        update_icons
 }
 
 install_qemu() {
