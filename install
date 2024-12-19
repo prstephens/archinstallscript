@@ -755,7 +755,7 @@ wifi_connect() {
                 echo "10"
                 echo "Attempting to connect to $SSID..."
                 sleep 1
-                iwctl --passphrase "$PASSPHRASE" station wlan0 connect "$SSID" >/dev/null 2>&1
+                iwctl --passphrase "$PASSPHRASE" station wlan0 connect "$SSID" >/dev/null
                 if ! wait_with_retries "iwctl station wlan0 show | grep -q 'connected'" 10 2; then
                         echo "100"
                         echo "Failed to connect to $SSID."
@@ -780,7 +780,7 @@ wifi_connect() {
 
                 echo "75"
                 echo "Syncing time and date..."
-                timedatectl >/dev/null 2>&1
+                timedatectl >/dev/null
                 sleep 3
 
                 # Step 3: Connection successful
