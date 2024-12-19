@@ -443,7 +443,7 @@ install_plasma() {
 
 install_xfce() {
         install_base_packages
-        yay -S --noconfirm --needed xfce4 xdg-user-dirs xfce4-panel-profiles xfce4-whiskermenu-plugin xfce4-pulseaudio-plugin thunar-archive-plugin gvfs ark gdm
+        yay -S --noconfirm --needed xorg xfce4 xdg-user-dirs xfce4-panel-profiles xfce4-whiskermenu-plugin xfce4-pulseaudio-plugin thunar-archive-plugin gvfs ark gdm
 
         if [[ "$TLP" -eq 1 ]]; then
                 yay -S --noconfirm --needed xfce4-power-manager
