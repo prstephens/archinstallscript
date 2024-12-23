@@ -400,17 +400,7 @@ install_whitesur() {
         dconf load /org/gnome/shell/extensions/dynamic-calendar-and-clocks-icons/ </tmp/mac-dynamic-calendar-settings
         gnome-extensions enable dynamic-calendar-and-clocks-icons@fcusr.github.com
 
-        gsettings set org.gnome.desktop.interface gtk-theme WhiteSur-$theme-${theme^}
-        gsettings set org.gnome.desktop.interface cursor-theme WhiteSur-cursors
-        gsettings set org.gnome.shell.extensions.user-theme name WhiteSur-$theme-${theme^}
-        gsettings set org.gnome.desktop.interface icon-theme WhiteSur-$theme
-
-        gsettings set org.gnome.desktop.interface font-name "SF Pro Rounded Regular 11"
-        gsettings set org.gnome.desktop.interface document-font-name "SF Pro Rounded Regular 11"
-        gsettings set org.gnome.desktop.interface monospace-font-name "Source Code Pro 9"
-        gsettings set org.gnome.desktop.wm.preferences titlebar-font "SF Pro Rounded Regular 11"
-
-        gsettings set org.gnome.desktop.wm.preferences button-layout "close,minimize,maximize:"
+        apply_whitesur
 
         # gnome-terminal padding add to ~/.config/gtk-3.0/gtk.css
         cat <<EOT >>$HOME/.config/gtk-3.0/gtk.css
@@ -430,6 +420,20 @@ EOT
         #         background-image: url("LOCATION OF FILE");
         #         background-size: cover;
         # }
+}
+
+apply_whitesur(){
+        gsettings set org.gnome.desktop.interface gtk-theme WhiteSur-$theme-${theme^}
+        gsettings set org.gnome.desktop.interface cursor-theme WhiteSur-cursors
+        gsettings set org.gnome.shell.extensions.user-theme name WhiteSur-$theme-${theme^}
+        gsettings set org.gnome.desktop.interface icon-theme WhiteSur-$theme
+
+        gsettings set org.gnome.desktop.interface font-name "SF Pro Rounded Regular 11"
+        gsettings set org.gnome.desktop.interface document-font-name "SF Pro Rounded Regular 11"
+        gsettings set org.gnome.desktop.interface monospace-font-name "Source Code Pro 9"
+        gsettings set org.gnome.desktop.wm.preferences titlebar-font "SF Pro Rounded Regular 11"
+
+        gsettings set org.gnome.desktop.wm.preferences button-layout "close,minimize,maximize:"
 }
 
 install_plasma() {
