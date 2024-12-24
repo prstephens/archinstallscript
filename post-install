@@ -258,6 +258,10 @@ apply_plymouth_xp() {
         sudo plymouth-set-default-theme -R bootvid
 }
 
+apply_plymouth_chicago(){
+        sudo plymouth-set-default-theme -R Chicago95
+}
+
 install_gnome_mac() {
         # Remove 'Utilities' folder in app grid so all apps are in view
         gsettings set org.gnome.desktop.app-folders folder-children "['YaST']"
@@ -586,6 +590,9 @@ EOT
 install_chicago95() {
         git clone https://github.com/grassmunk/Chicago95.git /tmp/chicargo95
         cd /tmp/chicargo95
+        sudo cp -r Plymouth/Chicago95 /usr/share/plymouth/themes/
+        apply_plymouth_chicago
+
         ./installer.py
 }
 
