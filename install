@@ -535,7 +535,7 @@ EOT
         arch-chroot /mnt curl -sL $BASE_URL/fonts/acorn/console/bedstead-10.psf.gz -o /usr/share/kbd/consolefonts/bedstead-10.psf.gz
         arch-chroot /mnt curl -sL $BASE_URL/fonts/acorn/console/bedstead-20.psf.gz -o /usr/share/kbd/consolefonts/bedstead-20.psf.gz
         arch-chroot /mnt curl -sL $BASE_URL/fonts/acorn/console/acorn.psf.gz -o /usr/share/kbd/consolefonts/acorn.psf.gz
-        echo "FONT=bedstead-20" >>/mnt/etc/vconsole.conf
+        echo "FONT=bedstead-10" >>/mnt/etc/vconsole.conf
 
         # Enable services
         echo "Enabling services..."
