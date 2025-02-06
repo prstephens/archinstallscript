@@ -33,6 +33,7 @@ mainmenu() {
         options+=("PLASMA" "Install KDE Plasma")
         options+=("CHICAGO95" "Install Windows 95 theme with XFCE")
         options+=("WINDOWS XP" "Install XFCE with the iconic Windows XP theme")
+        options+=("HYDE" "Install Hyprland and configs which will blow your mind!")
         options+=("APPLICATIONS" "Install some useful Applications")
         options+=("ADAWAY" "Setup a service to update hosts files and block ads")
         options+=("WARP" "Setup Cloudfare WARP (Poor man VPN)")
@@ -62,6 +63,9 @@ mainmenu() {
                         install_xfce
                         install_xp
                         apply_xp_theme
+                        ;;
+                "HYDE")
+                        install_hyde
                         ;;
                 "APPLICATIONS")
                         install_apps
@@ -163,7 +167,7 @@ install_gnome() {
 
         # if we are a laptop, add the hibernate option in the power menu
         if [[ "$TLP" -eq 1 ]]; then
-                git clone https://github.com/arelange/gnome-shell-extension-hibernate-status.git /tmp/gnome-shell-extension-hibernate-status
+                git clone --depth 1 https://github.com/arelange/gnome-shell-extension-hibernate-status.git /tmp/gnome-shell-extension-hibernate-status
                 cp -r /tmp/gnome-shell-extension-hibernate-status $HOME/.local/share/gnome-shell/extensions/hibernate-status\@dromi
                 gnome-extensions enable hibernate-status@dromi
         fi
@@ -219,7 +223,7 @@ apply_xcreensaver() {
 
 install_dash_to_dock() {
         # add dash to dock extension - use ubuntu-dock branch. better compatibility with blur my shell
-        git clone https://github.com/micheleg/dash-to-dock.git -b ubuntu-dock /tmp/ubuntu-dock
+        git clone --depth 1 https://github.com/micheleg/dash-to-dock.git -b ubuntu-dock /tmp/ubuntu-dock
         cd /tmp/ubuntu-dock
 
         # Change the icon spacing to 0 so the dock isnt so stretched
@@ -249,7 +253,7 @@ install_plymouth() {
 }
 
 apply_plymouth_mac() {
-        git clone https://github.com/fathyar/mac-plymouth.git /tmp/mac-plymouth
+        git clone --depth 1 https://github.com/fathyar/mac-plymouth.git /tmp/mac-plymouth
         sudo cp -r /tmp/mac-plymouth/mac/ /usr/share/plymouth/themes/
         sudo plymouth-set-default-theme -R mac
 }
@@ -273,36 +277,36 @@ install_gnome_mac() {
         install_dash_to_dock
 
         # blur my shell
-        git clone https://github.com/aunetx/blur-my-shell /tmp/blur-my-shell
+        git clone --depth 1 https://github.com/aunetx/blur-my-shell /tmp/blur-my-shell
         cd /tmp/blur-my-shell
         make install
 
         # panel corners
-        git clone https://github.com/aunetx/panel-corners.git /tmp/panel-corners
+        git clone --depth 1 https://github.com/aunetx/panel-corners.git /tmp/panel-corners
         cd /tmp/panel-corners
         make install
 
         # logo menu
-        git clone https://github.com/Aryan20/Logomenu.git /tmp/logo-menu
+        git clone --depth 1 https://github.com/Aryan20/Logomenu.git /tmp/logo-menu
         cd /tmp/logo-menu
         make install
 
         # Unite
-        git clone https://github.com/hardpixel/unite-shell.git /tmp/unite
+        git clone --depth 1 https://github.com/hardpixel/unite-shell.git /tmp/unite
         cp -r /tmp/unite/unite\@hardpixel.eu ~/.local/share/gnome-shell/extensions
 
         # Just Perfection
-        git clone https://gitlab.gnome.org/jrahmatzadeh/just-perfection.git /tmp/just-perfection
+        git clone --depth 1 https://gitlab.gnome.org/jrahmatzadeh/just-perfection.git /tmp/just-perfection
         cd /tmp/just-perfection
         ./scripts/build.sh -i
 
         # Favourites in app grid
-        git clone https://gitlab.gnome.org/harshadgavali/favourites-in-appgrid.git /tmp/favourites-in-appgrid
+        git clone --depth 1 https://gitlab.gnome.org/harshadgavali/favourites-in-appgrid.git /tmp/favourites-in-appgrid
         cd /tmp/favourites-in-appgrid
         make
 
         # Alphabetical App Grid
-        git clone https://github.com/stuarthayhurst/alphabetical-grid-extension.git /tmp/alphabetical-grid-extension
+        git clone --depth 1 https://github.com/stuarthayhurst/alphabetical-grid-extension.git /tmp/alphabetical-grid-extension
         cd /tmp/alphabetical-grid-extension
         make build
         make install
@@ -376,7 +380,7 @@ install_whitesur() {
                 "dark" "" dark \
                 3>&1 1>&2 2>&3)
 
-        git clone https://github.com/prstephens/WhiteSur-gtk-theme.git /tmp/WhiteSur-gtk-theme
+        git clone --depth 1 https://github.com/prstephens/WhiteSur-gtk-theme.git /tmp/WhiteSur-gtk-theme
         cd /tmp/WhiteSur-gtk-theme
 
         ./install.sh -n WhiteSur-$theme -m -o normal -N glassy -c $theme -l -c $theme --round
@@ -387,18 +391,18 @@ install_whitesur() {
         ./tweaks.sh -F
         sudo flatpak override --filesystem=xdg-config/gtk-4.0
 
-        git clone https://github.com/prstephens/WhiteSur-icon-theme.git /tmp/WhiteSur-icon-theme
+        git clone --depth 1 https://github.com/prstephens/WhiteSur-icon-theme.git /tmp/WhiteSur-icon-theme
         /tmp/WhiteSur-icon-theme/install.sh -b
         # change some icons to a better mac version
         cp -R /tmp/WhiteSur-icon-theme/original/*.svg $HOME/.local/share/icons/WhiteSur/apps/scalable/
 
-        git clone https://github.com/prstephens/WhiteSur-cursors.git /tmp/WhiteSur-cursors
+        git clone --depth 1 https://github.com/prstephens/WhiteSur-cursors.git /tmp/WhiteSur-cursors
         cd /tmp/WhiteSur-cursors
         ./install.sh
 
         # MacOS calendar icon fix
         [[ ! -d $HOME/.local/share/gnome-shell/extensions ]] && mkdir -p $HOME/.local/share/gnome-shell/extensions
-        git clone https://github.com/prstephens/mac-dynamic-calendar.git /tmp/mac-dynamic-calendar
+        git clone --depth 1 https://github.com/prstephens/mac-dynamic-calendar.git /tmp/mac-dynamic-calendar
         cp -R /tmp/mac-dynamic-calendar/dynamic-calendar-and-clocks-icons\@fcusr.github.com $HOME/.local/share/gnome-shell/extensions
         curl -sL $BASE_URL/configs/extensions/mac-dynamic-calendar-settings -o /tmp/mac-dynamic-calendar-settings
         dconf load /org/gnome/shell/extensions/dynamic-calendar-and-clocks-icons/ </tmp/mac-dynamic-calendar-settings
@@ -467,9 +471,17 @@ install_xfce() {
 
 install_xp() {
         yay -S --noconfirm --needed xfce-winxp-tc-git
-        git clone https://github.com/prstephens/Windows-XP.git $HOME/.icons/Windows-XP
-        git clone https://github.com/prstephens/xp-wallpapers.git /tmp/xp-wallpapers
+        git clone --depth 1 https://github.com/prstephens/Windows-XP.git $HOME/.icons/Windows-XP
+        git clone --depth 1 https://github.com/prstephens/xp-wallpapers.git /tmp/xp-wallpapers
         sudo cp -R /tmp/xp-wallpapers /usr/share/backgrounds/
+}
+
+install_hyde() {
+        
+        git clone --depth 1 https://github.com/prstephens/HyDE.git $HOME/HyDE
+        cd $HOME/HyDE/Scripts
+        ./install.sh -n
+        ./install.sh
 }
 
 apply_xp_theme() {
@@ -588,7 +600,7 @@ EOT
 }
 
 install_chicago95() {
-        git clone https://github.com/grassmunk/Chicago95.git /tmp/chicargo95
+        git clone --depth 1 https://github.com/grassmunk/Chicago95.git /tmp/chicargo95
         cd /tmp/chicargo95
         sudo cp -r Plymouth/Chicago95 /usr/share/plymouth/themes/
         apply_plymouth_chicago
@@ -698,7 +710,7 @@ initialise() {
         sudo sed -i 's/^COMPRESSLZ4.*/COMPRESSLZ4=(lz4 -q --best)/' /etc/makepkg.conf
 
         # install yay
-        git clone https://aur.archlinux.org/yay-bin.git $HOME/yay
+        git clone --depth 1 https://aur.archlinux.org/yay-bin.git $HOME/yay
         cd $HOME/yay
         makepkg -si
         cd
