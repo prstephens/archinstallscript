@@ -300,11 +300,6 @@ install_gnome_mac() {
         cd /tmp/just-perfection
         ./scripts/build.sh -i
 
-        # Favourites in app grid
-        git clone --depth 1 https://gitlab.gnome.org/harshadgavali/favourites-in-appgrid.git /tmp/favourites-in-appgrid
-        cd /tmp/favourites-in-appgrid
-        make
-
         # Alphabetical App Grid
         git clone --depth 1 https://github.com/stuarthayhurst/alphabetical-grid-extension.git /tmp/alphabetical-grid-extension
         cd /tmp/alphabetical-grid-extension
