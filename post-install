@@ -735,7 +735,7 @@ initialise() {
         sudo systemctl enable --now snapper-cleanup.timer
         sudo systemctl enable --now btrfs-scrub@-.timer
 
-        yay -S snapper-rollback snp --noconfirm
+        yay -S snapper-rollback snp downgrade --noconfirm
 
         # put root dev into snapper-rollback.conf
         echo "dev=${rootdev}" | sudo tee -a /etc/snapper-rollback.conf
