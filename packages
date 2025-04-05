@@ -45,7 +45,7 @@ rsync
 archlinux-keyring
 pacman-contrib
 openssh
-ncdu
+gdu
 htop
 i7z
 fzf
