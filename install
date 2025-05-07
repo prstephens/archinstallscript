@@ -450,7 +450,11 @@ case \$( /usr/bin/tty ) in
 esac
 EOT
         # performance and secuirty tweaks
-        arch-chroot /mnt curl -sL $BASE_URL/configs/system/99-performance.conf -o /etc/sysctl.d/99-performance.conf
+        if [[ "$TLP" -eq 1 ]]; then
+                arch-chroot /mnt curl -sL $BASE_URL/configs/system/sysctl/99-performance-laptop.conf -o /etc/sysctl.d/99-performance.conf
+        else
+                arch-chroot /mnt curl -sL $BASE_URL/configs/system/sysctl/99-performance-desktop.conf -o /etc/sysctl.d/99-performance.conf
+        fi
 
         echo "tcp_bbr" >/mnt/etc/modules-load.d/bbr.conf
 
