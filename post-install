@@ -367,8 +367,8 @@ install_whitesur() {
         curl -sL $BASE_URL/wallpaper/macos/sonoma-light.jpg -o $HOME/.local/share/backgrounds/sonoma-light.jpg
         curl -sL $BASE_URL/wallpaper/macos/sonoma-dark.jpg -o $HOME/.local/share/backgrounds/sonoma-dark.jpg
 
-        curl -sL $BASE_URL/wallpaper/macos/sequoia-light.png -o $HOME/.local/share/backgrounds/sequoia-light.png
-        curl -sL $BASE_URL/wallpaper/macos/sequoia-dark.png -o $HOME/.local/share/backgrounds/sequoia-dark.png
+        curl -sL $BASE_URL/wallpaper/macos/sequoia-light.png -o $HOME/.local/share/backgrounds/sequoia-light.jpg
+        curl -sL $BASE_URL/wallpaper/macos/sequoia-dark.png -o $HOME/.local/share/backgrounds/sequoia-dark.jpg
 
         theme=$(whiptail --backtitle "$BACKTITLE" --title "Select theme variation" --radiolist "Choose" 20 30 5 \
                 "light" "" light \
@@ -378,9 +378,9 @@ install_whitesur() {
         git clone --depth 1 https://github.com/prstephens/WhiteSur-gtk-theme.git /tmp/WhiteSur-gtk-theme
         cd /tmp/WhiteSur-gtk-theme
 
-        ./install.sh -n WhiteSur-$theme -m -o normal -N glassy -c $theme -l -c $theme --round
-        sudo ./tweaks.sh -c $theme -g -b $HOME/.local/share/backgrounds/sequoia-${theme}.png
-        gsettings set org.gnome.desktop.background picture-uri file:////$HOME/.local/share/backgrounds/sequoia-${theme}.png
+        ./install.sh -n WhiteSur-$theme -m -o normal -c $theme -l -c $theme --round
+        sudo ./tweaks.sh -c $theme -g -b $HOME/.local/share/backgrounds/sequoia-${theme}.jpg
+        gsettings set org.gnome.desktop.background picture-uri file:////$HOME/.local/share/backgrounds/sequoia-${theme}.jpg
         ./tweaks.sh -d -c $theme
         ./tweaks.sh -f monterey
         ./tweaks.sh -F
@@ -417,7 +417,7 @@ vte-terminal {
 EOT
 
         # Change wallpaper in Gnome overview
-        sed -i "/#overviewGroup {/,/}/c #overviewGroup {\n  background-image: url(\"/home/$USER/.local/share/backgrounds/sequoia-dark.png\");\n  background-size: cover;\n}"  ~/.themes/WhiteSur-light-Light/gnome-shell/gnome-shell.css
+        sed -i "/#overviewGroup {/,/}/c #overviewGroup {\n  background-image: url(\"/home/$USER/.local/share/backgrounds/sequoia-dark.jpg\");\n  background-size: cover;\n}"  ~/.themes/WhiteSur-light-Light/gnome-shell/gnome-shell.css
 	# ~/.themes/WhiteSur-Dark/gnome-shell/gnome-shell.css
         # #overviewGroup {
         #         background-image: url("LOCATION OF FILE");
