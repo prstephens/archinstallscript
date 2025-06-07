@@ -367,8 +367,8 @@ install_whitesur() {
         curl -sL $BASE_URL/wallpaper/macos/sonoma-light.jpg -o $HOME/.local/share/backgrounds/sonoma-light.jpg
         curl -sL $BASE_URL/wallpaper/macos/sonoma-dark.jpg -o $HOME/.local/share/backgrounds/sonoma-dark.jpg
 
-        curl -sL $BASE_URL/wallpaper/macos/sequoia-light.png -o $HOME/.local/share/backgrounds/sequoia-light.jpg
-        curl -sL $BASE_URL/wallpaper/macos/sequoia-dark.png -o $HOME/.local/share/backgrounds/sequoia-dark.jpg
+        curl -sL $BASE_URL/wallpaper/macos/sequoia-light.jpg -o $HOME/.local/share/backgrounds/sequoia-light.jpg
+        curl -sL $BASE_URL/wallpaper/macos/sequoia-dark.jpg -o $HOME/.local/share/backgrounds/sequoia-dark.jpg
 
         theme=$(whiptail --backtitle "$BACKTITLE" --title "Select theme variation" --radiolist "Choose" 20 30 5 \
                 "light" "" light \
