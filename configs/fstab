@@ -12,5 +12,6 @@ UUID=65ed8d3a-aea8-4cc5-8359-3c89bf944e4c	/home/paul/data     	ext4      	rw,rel
 UUID=c2cefa7d-91cf-4317-9569-63569aea9735	none      	swap      	defaults  	0 0
 
 #NAS shares
-192.168.1.192:/media/USBHDD/Movies          /media/movies	nfs	defaults,nofail	0 0
-192.168.1.192:/media/USBHDD/TV\040Shows     /media/tvshows  nfs	defaults,nofail	0 0
+192.168.1.192:/media/USBHDD/Movies          /media/movies       nfs     defaults,nofail,x-gvfs-icon=default-folder-video    0 0
+192.168.1.192:/media/USBHDD/TV\040Shows     /media/tvshows      nfs     defaults,nofail,x-gvfs-icon=default-folder-video    0 0
+192.168.1.192:/media/USBHDD/arch-backup     /media/arch-backup  nfs     defaults,nofail,x-gvfs-icon=default-folder-temp     0 0 

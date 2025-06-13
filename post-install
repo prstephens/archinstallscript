@@ -441,7 +441,7 @@ apply_whitesur(){
 
 install_plasma() {
         install_base_packages
-        sudo pacman -S --noconfirm --needed plasma-meta kde-system-meta kvantum sddm
+        sudo pacman -S --noconfirm --needed plasma-meta kde-system-meta kvantum sddm konsole
         sudo systemctl enable sddm.service
         apply_xcreensaver
         install_fonts
