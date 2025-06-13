@@ -79,7 +79,6 @@ mainmenu() {
                         ;;
                 "INSTALL")
                         performinstall
-                        create_tmpfs
                         configuration
                         setupuser
                         installbootloader
@@ -288,23 +287,6 @@ checks() {
 
         if yesno "### WARNING ###" "Do you want to format ${bootdev}? \n\nTHIS COULD ERASE EXISITING OPERATING SYSTEM BOOTLOADERS"; then
                 mkfs.fat -F 32 ${bootdev}
-        fi
-}
-
-create_tmpfs(){
-        # Minimum RAM in kilobytes (4 GB = 4 * 1024 * 1024)
-        MIN_RAM_KB=$((4 * 1024 * 1024))
-
-        # Get total RAM from /proc/meminfo
-        total_ram_kb=$(grep MemTotal /proc/meminfo | awk '{print $2}')
-
-        if [[ "$total_ram_kb" -ge "$MIN_RAM_KB" ]]; then
-                echo "System has sufficient RAM: $((total_ram_kb / 1024)) MB"
-                echo "Adding tmpfs mount to /etc/fstab..."
-                echo "tmpfs /tmp tmpfs defaults,nosuid,nodev,mode=1777 0 0" >>/mnt/etc/fstab 
-                echo "Done. tmpfs will be mounted on /tmp at next boot."
-        else
-                echo "System RAM is below threshold ($((total_ram_kb / 1024)) MB < $((MIN_RAM_KB / 1024)) MB). Not modifying /etc/fstab."
         fi
 }
 
@@ -878,7 +860,6 @@ slient_install() {
 
         mkfs.fat -F 32 ${bootdev}
         performinstall
-        create_tmpfs
         configuration
         setupuser
         installbootloader
