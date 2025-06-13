@@ -381,6 +381,29 @@ performinstall() {
         pacstrap /mnt $(</tmp/packages)
 
         genfstab -U /mnt >>/mnt/etc/fstab
+
+        # Minimum RAM in kilobytes (4 GB = 4 * 1024 * 1024)
+        MIN_RAM_KB=$((4 * 1024 * 1024))
+
+        # Get total RAM from /proc/meminfo
+        total_ram_kb=$(grep MemTotal /proc/meminfo | awk '{print $2}')
+
+        # Check if /etc/fstab already has a tmpfs mount for /tmp
+        has_tmpfs_mount=$(grep -E "^\s*tmpfs\s+/tmp\s+tmpfs" /mnt/etc/fstab)
+
+        if [[ "$total_ram_kb" -ge "$MIN_RAM_KB" ]]; then
+                echo "System has sufficient RAM: $((total_ram_kb / 1024)) MB"
+
+                if [[ -z "$has_tmpfs_mount" ]]; then
+                        echo "Adding tmpfs mount to /etc/fstab..."
+                        echo "tmpfs /tmp tmpfs defaults,nosuid,nodev,mode=1777 0 0" >>/mnt/etc/fstab 
+                        echo "Done. tmpfs will be mounted on /tmp at next boot."
+                else
+                        echo "tmpfs mount for /tmp already exists in /etc/fstab."
+                fi
+        else
+                echo "System RAM is below threshold ($((total_ram_kb / 1024)) MB < $((MIN_RAM_KB / 1024)) MB). Not modifying /etc/fstab."
+        fi
 }
 
 exists_in_list() {
