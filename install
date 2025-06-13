@@ -381,7 +381,10 @@ performinstall() {
         pacstrap /mnt $(</tmp/packages)
 
         genfstab -U /mnt >>/mnt/etc/fstab
+        create_tmpfs
+}
 
+create_tmpfs(){
         # Minimum RAM in kilobytes (4 GB = 4 * 1024 * 1024)
         MIN_RAM_KB=$((4 * 1024 * 1024))
 
