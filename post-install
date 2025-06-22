@@ -370,6 +370,9 @@ install_whitesur() {
         curl -sL $BASE_URL/wallpaper/macos/sequoia-light.jpg -o $HOME/.local/share/backgrounds/sequoia-light.jpg
         curl -sL $BASE_URL/wallpaper/macos/sequoia-dark.jpg -o $HOME/.local/share/backgrounds/sequoia-dark.jpg
 
+        curl -sL $BASE_URL/wallpaper/macos/tahoe-light.png -o $HOME/.local/share/backgrounds/tahoe-light.png
+        curl -sL $BASE_URL/wallpaper/macos/tahoe-dark.png -o $HOME/.local/share/backgrounds/tahoe-dark.png
+
         theme=$(whiptail --backtitle "$BACKTITLE" --title "Select theme variation" --radiolist "Choose" 20 30 5 \
                 "light" "" light \
                 "dark" "" dark \
@@ -380,7 +383,7 @@ install_whitesur() {
 
         ./install.sh -n WhiteSur-$theme -m -o normal -c $theme -l -c $theme --round
         sudo ./tweaks.sh -c $theme -g -b $HOME/.local/share/backgrounds/sequoia-${theme}.jpg
-        gsettings set org.gnome.desktop.background picture-uri file:////$HOME/.local/share/backgrounds/sequoia-${theme}.jpg
+        gsettings set org.gnome.desktop.background picture-uri file:////$HOME/.local/share/backgrounds/tahoe-${theme}.png
         ./tweaks.sh -d -c $theme
         ./tweaks.sh -f monterey
         ./tweaks.sh -F
@@ -417,7 +420,7 @@ vte-terminal {
 EOT
 
         # Change wallpaper in Gnome overview
-        sed -i "/#overviewGroup {/,/}/c #overviewGroup {\n  background-image: url(\"/home/$USER/.local/share/backgrounds/sequoia-dark.jpg\");\n  background-size: cover;\n}"  ~/.themes/WhiteSur-light-Light/gnome-shell/gnome-shell.css
+        sed -i "/#overviewGroup {/,/}/c #overviewGroup {\n  background-image: url(\"/home/$USER/.local/share/backgrounds/tahoe-dark.jpg\");\n  background-size: cover;\n}"  ~/.themes/WhiteSur-light-Light/gnome-shell/gnome-shell.css
 	# ~/.themes/WhiteSur-Dark/gnome-shell/gnome-shell.css
         # #overviewGroup {
         #         background-image: url("LOCATION OF FILE");
