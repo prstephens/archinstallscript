@@ -765,9 +765,6 @@ initialise() {
                 yay -S snap-pac systemd-boot-pacman-hook --noconfirm
         fi
 
-        # Read the product name from sysfs
-        product_name=$(cat /sys/devices/virtual/dmi/id/product_name)
-
         # Check if we are a macbook
         if [[ "$MAC" -eq 1 ]]; then
                 yay -S facetimehd-dkms facetimehd-data mbpfan macfanctld
