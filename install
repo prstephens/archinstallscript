@@ -318,16 +318,16 @@ performinstall() {
         btrfs su cr /mnt/@snapshots
         umount /mnt
 
-        mount -o noatime,commit=120,compress=zstd,space_cache=v2,subvol=@ $rootdev /mnt
+        mount -o noatime,commit=60,compress=zstd,space_cache=v2,subvol=@ $rootdev /mnt
 
         # You need to manually create folders to mount the other subvolumes at
         mkdir -p /mnt/{boot,home,var/log,var/cache,/tmp,.snapshots}
 
-        mount -o noatime,commit=120,compress=zstd,space_cache=v2,discard=async,subvol=@home $rootdev /mnt/home
-        mount -o noatime,commit=120,compress=zstd,space_cache=v2,discard=async,subvol=@var_log $rootdev /mnt/var/log
-        mount -o noatime,commit=120,compress=zstd,space_cache=v2,discard=async,subvol=@var_cache $rootdev /mnt/var/cache
-        mount -o noatime,commit=120,compress=zstd,space_cache=v2,discard=async,subvol=@tmp $rootdev /mnt/tmp
-        mount -o noatime,commit=120,compress=zstd,space_cache=v2,discard=async,subvol=@snapshots $rootdev /mnt/.snapshots
+        mount -o noatime,commit=60,compress=zstd,space_cache=v2,discard=async,subvol=@home $rootdev /mnt/home
+        mount -o noatime,commit=60,compress=zstd,space_cache=v2,discard=async,subvol=@var_log $rootdev /mnt/var/log
+        mount -o noatime,commit=60,compress=zstd,space_cache=v2,discard=async,subvol=@var_cache $rootdev /mnt/var/cache
+        mount -o noatime,commit=60,compress=zstd,space_cache=v2,discard=async,subvol=@tmp $rootdev /mnt/tmp
+        mount -o noatime,commit=60,compress=zstd,space_cache=v2,discard=async,subvol=@snapshots $rootdev /mnt/.snapshots
 
         ROOTUUID=$(blkid -s UUID -o value $rootdev)
 
