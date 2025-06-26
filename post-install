@@ -375,7 +375,7 @@ install_whitesur() {
         cd /tmp/WhiteSur-gtk-theme
 
         ./install.sh -l -c $theme --round
-        sudo ./tweaks.sh -c $theme -g -b $HOME/.local/share/backgrounds/sequoia-${theme}.jpg
+        sudo ./tweaks.sh -c $theme -g -b $HOME/.local/share/backgrounds/tahoe-${theme}.png
         gsettings set org.gnome.desktop.background picture-uri file:////$HOME/.local/share/backgrounds/tahoe-${theme}.png
         ./tweaks.sh -d -c $theme
         ./tweaks.sh -f monterey
@@ -413,7 +413,7 @@ vte-terminal {
 EOT
 
         # Change wallpaper in Gnome overview
-        sed -i "/#overviewGroup {/,/}/c #overviewGroup {\n  background-image: url(\"/home/$USER/.local/share/backgrounds/tahoe-dark.jpg\");\n  background-size: cover;\n}"  ~/.themes/WhiteSur-light-Light/gnome-shell/gnome-shell.css
+        sed -i "/#overviewGroup {/,/}/c #overviewGroup {\n  background-image: url(\"/home/$USER/.local/share/backgrounds/tahoe-dark.jpg\");\n  background-size: cover;\n}"  ~/.themes/WhiteSur-Light/gnome-shell/gnome-shell.css
 	# ~/.themes/WhiteSur-Dark/gnome-shell/gnome-shell.css
         # #overviewGroup {
         #         background-image: url("LOCATION OF FILE");
@@ -422,9 +422,9 @@ EOT
 }
 
 apply_whitesur(){
-        gsettings set org.gnome.desktop.interface gtk-theme WhiteSur-$theme-${theme^}
+        gsettings set org.gnome.desktop.interface gtk-theme WhiteSur-${theme^}
         gsettings set org.gnome.desktop.interface cursor-theme WhiteSur-cursors
-        gsettings set org.gnome.shell.extensions.user-theme name WhiteSur-$theme-${theme^}
+        gsettings set org.gnome.shell.extensions.user-theme name WhiteSur-${theme^}
         gsettings set org.gnome.desktop.interface icon-theme WhiteSur-$theme
 
         gsettings set org.gnome.desktop.interface font-name "SF Pro Rounded Regular 11"
