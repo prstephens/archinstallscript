@@ -179,10 +179,10 @@ install_gnome() {
         gsettings set org.gnome.mutter center-new-windows true
 
         # Remove some trash from Gnome
-        sudo pacman -Rs --noconfirm epiphany gnome-music totem gnome-connections gnome-text-editor gnome-tour gnome-console gnome-user-docs yelp gnome-maps gnome-software
+        sudo pacman -Rs --noconfirm epiphany gnome-music totem gnome-connections gnome-text-editor gnome-tour gnome-console gnome-user-docs yelp gnome-maps
 
         # pin some nice favourites to the dash
-        gsettings set org.gnome.shell favorite-apps "['org.gnome.Nautilus.desktop', 'google-chrome.desktop', 'firefox.desktop', 'org.gnome.Geary.desktop', 'whatsapp.desktop', 'libreoffice-writer.desktop', 'libreoffice-calc.desktop', 'org.gnome.Photos.desktop', 'org.gnome.Calendar.desktop', 'org.gnome.Contacts.desktop', 'org.gnome.Todo.desktop', 'org.gnome.Notes.desktop', 'org.gnome.Terminal.desktop', 'code-oss.desktop', 'spotify-launcher.desktop', 'vlc.desktop', 'gimp.desktop', 'org.gnome.tweaks.desktop', 'org.gnome.Software.desktop', 'com.mattjakeman.ExtensionManager.desktop', 'org.gnome.Settings.desktop']"
+        gsettings set org.gnome.shell favorite-apps "['org.gnome.Nautilus.desktop', 'google-chrome.desktop', 'whatsapp.desktop', 'org.gnome.Geary.desktop', 'maps.desktop', 'org.gnome.Photos.desktop', 'org.gnome.Calendar.desktop', 'org.gnome.Contacts.desktop', 'org.gnome.Todo.desktop', 'org.gnome.Notes.desktop', 'spotify-launcher.desktop', 'libreoffice-writer.desktop', 'libreoffice-calc.desktop', 'org.gnome.Terminal.desktop', 'code-oss.desktop', 'org.gnome.Software.desktop', 'com.mattjakeman.ExtensionManager.desktop', 'org.gnome.Settings.desktop']"
 
         cat <<EOT >>$HOME/.bash_profile
 if [ "$XDG_SESSION_TYPE" = "wayland" ]; then
@@ -520,11 +520,11 @@ install_anything-sync-daemon() {
 
 update_icons(){
         sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/MacTahoe/apps/scalable/gnome-music.svg|" /usr/share/applications/spotify-launcher.desktop
-        sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/MacTahoe/apps/scalable/ms-word.svg|" /usr/share/applications/libreoffice-writer.desktop
-        sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/MacTahoe/apps/scalable/ms-excel.svg|" /usr/share/applications/libreoffice-calc.desktop
-        sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/MacTahoe/apps/scalable/ms-powerpoint.svg|" /usr/share/applications/libreoffice-impress.desktop
-        sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/MacTahoe/apps/scalable/notes.svg|" /usr/share/applications/org.gnome.Todo.desktop
-        sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/MacTahoe/apps/scalable/gnome-settings-default-applications.svg|" /usr/share/applications/com.mattjakeman.ExtensionManager.desktop
+        sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/MacTahoe/apps/scalable/safari.svg|" /usr/share/applications/google-chrome.desktop
+        #sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/MacTahoe/apps/scalable/ms-word.svg|" /usr/share/applications/libreoffice-writer.desktop
+        #sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/MacTahoe/apps/scalable/ms-excel.svg|" /usr/share/applications/libreoffice-calc.desktop
+        #sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/MacTahoe/apps/scalable/ms-powerpoint.svg|" /usr/share/applications/libreoffice-impress.desktop
+        sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/MacTahoe/apps/scalable/org.gnome.Software.Generic.svg|" /usr/share/applications/com.mattjakeman.ExtensionManager.desktop
 }
 
 install_apps() {

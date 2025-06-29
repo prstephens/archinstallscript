@@ -1,0 +1,8 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Maps
+Comment=Maps
+Icon=maps
+Exec=google-chrome-stable maps.google.com
+Terminal=false
