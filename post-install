@@ -359,9 +359,11 @@ install_tahoe() {
 
         curl -sL $BASE_URL/wallpaper/macos/sonoma-light.jpg -o $HOME/.local/share/backgrounds/sonoma-light.jpg
         curl -sL $BASE_URL/wallpaper/macos/sonoma-dark.jpg -o $HOME/.local/share/backgrounds/sonoma-dark.jpg
+        curl -sL $BASE_URL/wallpaper/macos/sonoma-horizon.png -o $HOME/.local/share/backgrounds/sonoma-horizon.png
 
         curl -sL $BASE_URL/wallpaper/macos/sequoia-light.jpg -o $HOME/.local/share/backgrounds/sequoia-light.jpg
         curl -sL $BASE_URL/wallpaper/macos/sequoia-dark.jpg -o $HOME/.local/share/backgrounds/sequoia-dark.jpg
+        curl -sL $BASE_URL/wallpaper/macos/sequoia-sunrise.png -o $HOME/.local/share/backgrounds/sequoia-sunrise.png
 
         curl -sL $BASE_URL/wallpaper/macos/tahoe-light.png -o $HOME/.local/share/backgrounds/tahoe-light.png
         curl -sL $BASE_URL/wallpaper/macos/tahoe-dark.png -o $HOME/.local/share/backgrounds/tahoe-dark.png
@@ -410,7 +412,7 @@ vte-terminal {
 EOT
 
         # Change wallpaper in Gnome overview
-        sed -i "/#overviewGroup {/,/}/c #overviewGroup {\n  background-image: url(\"/home/$USER/.local/share/backgrounds/tahoe-dark.jpg\");\n  background-size: cover;\n}"  ~/.themes/WhiteSur-Light/gnome-shell/gnome-shell.css
+        sed -i "/#overviewGroup {/,/}/c #overviewGroup {\n  background-image: url(\"/home/$USER/.local/share/backgrounds/tahoe-dark.png\");\n  background-size: cover;\n}"  ~/.themes/MacTahoe-Light/gnome-shell/gnome-shell.css
 	# ~/.themes/WhiteSur-Dark/gnome-shell/gnome-shell.css
         # #overviewGroup {
         #         background-image: url("LOCATION OF FILE");
