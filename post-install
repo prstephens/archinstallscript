@@ -181,9 +181,7 @@ install_gnome() {
         # Remove some trash from Gnome
         sudo pacman -Rs --noconfirm epiphany gnome-music totem gnome-connections gnome-text-editor gnome-tour gnome-console gnome-user-docs yelp gnome-maps
 
-        # pin some nice favourites to the dash
-        gsettings set org.gnome.shell favorite-apps "['org.gnome.Nautilus.desktop', 'google-chrome.desktop', 'whatsapp.desktop', 'org.gnome.Geary.desktop', 'maps.desktop', 'org.gnome.Photos.desktop', 'org.gnome.Calendar.desktop', 'org.gnome.Contacts.desktop', 'org.gnome.Todo.desktop', 'org.gnome.Notes.desktop', 'spotify-launcher.desktop', 'libreoffice-writer.desktop', 'libreoffice-calc.desktop', 'libreoffice-impress.desktop', 'org.gnome.Software.desktop', 'org.gnome.Settings.desktop']"
-
+        
         cat <<EOT >>$HOME/.bash_profile
 if [ "$XDG_SESSION_TYPE" = "wayland" ]; then
     export MOZ_ENABLE_WAYLAND=1
@@ -270,11 +268,18 @@ install_gnome_mac() {
         # Remove 'Utilities' folder in app grid so all apps are in view
         gsettings set org.gnome.desktop.app-folders folder-children "['YaST']"
 
+        # pin some nice favourites to the dash
+        gsettings set org.gnome.shell favorite-apps "['org.gnome.Nautilus.desktop', 'google-chrome.desktop', 'whatsapp.desktop', 'org.gnome.Geary.desktop', 'maps.desktop', 'org.gnome.Photos.desktop', 'org.gnome.Calendar.desktop', 'org.gnome.Contacts.desktop', 'org.gnome.Todo.desktop', 'org.gnome.Notes.desktop', 'spotify-launcher.desktop', 'libreoffice-writer.desktop', 'libreoffice-calc.desktop', 'libreoffice-impress.desktop', 'org.gnome.Software.desktop', 'org.gnome.Settings.desktop']"
+
         # install the Mac theme set
         install_tahoe
 
         # install dash to dock extension
         install_dash_to_dock
+
+        # copy some custom "apps"
+        curl -sL $BASE_URL/scripts/maps.desktop -o  $HOME/.local/share/applications/maps.desktop
+        curl -sL $BASE_URL/scripts/whatsapp.desktop -o  $HOME/.local/share/applications/whatsapp.desktop
 
         # blur my shell
         git clone --depth 1 https://github.com/aunetx/blur-my-shell /tmp/blur-my-shell
@@ -376,9 +381,10 @@ install_tahoe() {
         git clone --depth 1 https://github.com/prstephens/MacTahoe-gtk-theme.git /tmp/MacTahoe-gtk-theme
         cd /tmp/MacTahoe-gtk-theme
 
-        ./install.sh
-        sudo ./tweaks.sh -c $theme -g -b $HOME/.local/share/backgrounds/tahoe-${theme}.png
+        ./install.sh -l -c $theme
+
         gsettings set org.gnome.desktop.background picture-uri file:////$HOME/.local/share/backgrounds/tahoe-${theme}.png
+        
         ./tweaks.sh -f monterey
         ./tweaks.sh -F
         sudo flatpak override --filesystem=xdg-config/gtk-4.0
