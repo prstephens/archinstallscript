@@ -226,6 +226,7 @@ install_dash_to_dock() {
 
         # Change the icon spacing to 0 so the dock isnt so stretched
         sed -i 's/$dock_icons_distance: 4px;/$dock_icons_distance: 0px;/' _stylesheet.scss
+        sed -i 's/background-color: rgba(255, 0, 0, 1);/background-color: rgba(254, 96, 88, 1);/' _stylesheet.scss
         make
         make install
 
