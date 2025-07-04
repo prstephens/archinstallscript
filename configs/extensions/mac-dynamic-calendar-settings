@@ -1,4 +1,10 @@
 [/]
-show-weekday=True
-show-month=False
+calendar=true
+clocks=false
+show-background=false
+show-month=false
+show-seconds=false
+show-temperature=false
+show-weekday=true
 theme='Tahoe'
+weather=false
