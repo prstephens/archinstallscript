@@ -80,7 +80,7 @@ pipeline='pipeline_default'
 [window-list]
 brightness=0.59999999999999998
 sigma=30
-~/data/dev/archinstallscript  (master) > dconf dump /org/gnome/shell/extensions/blur-my-shell/
+
 [/]
 appfolder-dialog-opacity=0.12
 blur-appfolders=false
