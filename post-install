@@ -229,7 +229,7 @@ install_dash_to_dock() {
         make
         make install
 
-        curl -sL $BASE_URL/configs/extensions/dash-to-dock-settings-$theme -o /tmp/dash-to-dock-settings
+        curl -sL $BASE_URL/configs/extensions/dash-to-dock-settings -o /tmp/dash-to-dock-settings
         dconf load /org/gnome/shell/extensions/dash-to-dock/ </tmp/dash-to-dock-settings
 }
 
@@ -265,6 +265,14 @@ apply_plymouth_chicago(){
 }
 
 install_gnome_mac() {
+        install_apps
+        update_icons
+
+        # copy some custom "apps"
+        if [ ! -d $HOME/.local/share/applications/ ]; then mkdir $HOME/.local/share/applications; fi
+        curl -sL $BASE_URL/scripts/maps.desktop -o  $HOME/.local/share/applications/maps.desktop
+        curl -sL $BASE_URL/scripts/whatsapp.desktop -o  $HOME/.local/share/applications/whatsapp.desktop
+
         # Remove 'Utilities' folder in app grid so all apps are in view
         gsettings set org.gnome.desktop.app-folders folder-children "['YaST']"
 
@@ -276,10 +284,6 @@ install_gnome_mac() {
 
         # install dash to dock extension
         install_dash_to_dock
-
-        # copy some custom "apps"
-        curl -sL $BASE_URL/scripts/maps.desktop -o  $HOME/.local/share/applications/maps.desktop
-        curl -sL $BASE_URL/scripts/whatsapp.desktop -o  $HOME/.local/share/applications/whatsapp.desktop
 
         # blur my shell
         git clone --depth 1 https://github.com/aunetx/blur-my-shell /tmp/blur-my-shell

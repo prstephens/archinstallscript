@@ -9,40 +9,47 @@ blur-window-list=false
 dash-opacity=0.12
 dash-to-dock-blur=true
 dash-to-dock-override-background=false
-hacks-level=2
+hacks-level=1
 hidetopbar=true
 panel-blur=true
 panel-brightness=1.0
 panel-customize=true
 panel-sigma=100
 panel-static-blur=true
-pipelines={'pipeline_default': {'name': <'Default'>, 'effects': <[<{'type': <'native_static_gaussian_blur'>, 'id': <'effect_000000000000'>, 'params': <{'radius': <30>, 'brightness': <1>, 'unscaled_radius': <30>}>}>]>}, 'pipeline_default_rounded': {'name': <'Default rounded'>, 'effects': <[<{'type': <'native_static_gaussian_blur'>, 'id': <'effect_000000000001'>, 'params': <{'radius': <30>, 'brightness': <1>, 'unscaled_radius': <100>}>}>, <{'type': <'corner'>, 'id': <'effect_000000000002'>, 'params': <{'radius': <24>}>}>]>}}
+pipelines={'pipeline_default': {'name': <'Default'>, 'effects': <[<{'type': <'native_static_gaussian_blur'>, 'id': <'effect_000000000000'>, 'params': <{'radius': <30>, 'brightness': <1>, 'unscaled_radius': <12>}>}>, <{'type': <'noise'>, 'id': <'effect_34848364406507'>, 'params': <{'lightness': <1>}>}>]>}, 'pipeline_default_rounded': {'name': <'Default rounded'>, 'effects': <[<{'type': <'native_static_gaussian_blur'>, 'id': <'effect_000000000001'>, 'params': <{'radius': <30>, 'brightness': <1>, 'unscaled_radius': <5>}>}>, <{'type': <'corner'>, 'id': <'effect_000000000002'>, 'params': <{'radius': <24>}>}>]>}, 'pipeline_03403757252847': {'name': <'dock'>, 'effects': <[<{'type': <'native_static_gaussian_blur'>, 'id': <'effect_05248223580370'>, 'params': <{'unscaled_radius': <12>, 'brightness': <1>}>}>, <{'type': <'corner'>, 'id': <'effect_30279888805671'>, 'params': <{'radius': <26>}>}>]>}, 'pipeline_34607705151522': {'name': <''>, 'effects': <@av []>}}
 settings-version=2
 
 [appfolder]
 blur=true
 brightness=0.59999999999999998
 sigma=30
+style-dialogs=2
 
 [applications]
-blacklist=['Google-chrome', 'firefox', 'gjs', 'google-chrome', 'virt-manager']
+blacklist=['Google-chrome', 'firefox', 'gjs', 'google-chrome', 'virt-manager', 'vlc']
 blur=true
-blur-on-overview=true
+blur-on-overview=false
 brightness=1.0
 dynamic-opacity=false
 enable-all=true
-opacity=245
-sigma=8
+opacity=240
+sigma=12
+
+[coverflow-alt-tab]
+pipeline='pipeline_default'
 
 [dash-to-dock]
 blur=true
 brightness=1.0
 override-background=false
-pipeline='pipeline_default_rounded'
-sigma=5
-static-blur=true
+pipeline='pipeline_03403757252847'
+sigma=4
+static-blur=false
 style-dash-to-dock=0
 unblur-in-overview=false
+
+[dash-to-panel]
+blur-original-panel=true
 
 [hidetopbar]
 compatibility=false
@@ -51,19 +58,104 @@ compatibility=false
 pipeline='pipeline_default'
 
 [overview]
-blur=true
+blur=false
 pipeline='pipeline_default'
-style-components=1
+style-components=2
 
 [panel]
+blur=false
+brightness=1.0
+force-light-text=true
+override-background=true
+override-background-dynamically=false
+pipeline='pipeline_default'
+sigma=0
+static-blur=false
+style-panel=0
+unblur-in-overview=true
+
+[screenshot]
+pipeline='pipeline_default'
+
+[window-list]
+brightness=0.59999999999999998
+sigma=30
+~/data/dev/archinstallscript  (master) > dconf dump /org/gnome/shell/extensions/blur-my-shell/
+[/]
+appfolder-dialog-opacity=0.12
+blur-appfolders=false
+blur-applications=false
+blur-dash=false
+blur-overview=true
+blur-panel=true
+blur-window-list=false
+dash-opacity=0.12
+dash-to-dock-blur=true
+dash-to-dock-override-background=false
+hacks-level=1
+hidetopbar=true
+panel-blur=true
+panel-brightness=1.0
+panel-customize=true
+panel-sigma=100
+panel-static-blur=true
+pipelines={'pipeline_default': {'name': <'Default'>, 'effects': <[<{'type': <'native_static_gaussian_blur'>, 'id': <'effect_000000000000'>, 'params': <{'radius': <30>, 'brightness': <1>, 'unscaled_radius': <12>}>}>, <{'type': <'noise'>, 'id': <'effect_34848364406507'>, 'params': <{'lightness': <1>}>}>]>}, 'pipeline_default_rounded': {'name': <'Default rounded'>, 'effects': <[<{'type': <'native_static_gaussian_blur'>, 'id': <'effect_000000000001'>, 'params': <{'radius': <30>, 'brightness': <1>, 'unscaled_radius': <5>}>}>, <{'type': <'corner'>, 'id': <'effect_000000000002'>, 'params': <{'radius': <24>}>}>]>}, 'pipeline_03403757252847': {'name': <'dock'>, 'effects': <[<{'type': <'native_static_gaussian_blur'>, 'id': <'effect_05248223580370'>, 'params': <{'unscaled_radius': <12>, 'brightness': <1>}>}>, <{'type': <'corner'>, 'id': <'effect_30279888805671'>, 'params': <{'radius': <26>}>}>]>}, 'pipeline_34607705151522': {'name': <''>, 'effects': <@av []>}}
+settings-version=2
+
+[appfolder]
+blur=true
+brightness=0.59999999999999998
+sigma=30
+style-dialogs=2
+
+[applications]
+blacklist=['Google-chrome', 'firefox', 'gjs', 'google-chrome', 'virt-manager', 'vlc']
+blur=true
+blur-on-overview=false
+brightness=1.0
+dynamic-opacity=false
+enable-all=true
+opacity=240
+sigma=12
+
+[coverflow-alt-tab]
+pipeline='pipeline_default'
+
+[dash-to-dock]
 blur=true
 brightness=1.0
 override-background=false
+pipeline='pipeline_03403757252847'
+sigma=4
+static-blur=false
+style-dash-to-dock=0
+unblur-in-overview=false
+
+[dash-to-panel]
+blur-original-panel=true
+
+[hidetopbar]
+compatibility=false
+
+[lockscreen]
+pipeline='pipeline_default'
+
+[overview]
+blur=false
+pipeline='pipeline_default'
+style-components=2
+
+[panel]
+blur=false
+brightness=1.0
+force-light-text=true
+override-background=false
 override-background-dynamically=false
 pipeline='pipeline_default'
-sigma=10
-static-blur=true
-style-panel=2
+sigma=0
+static-blur=false
+style-panel=0
+unblur-in-overview=true
 
 [screenshot]
 pipeline='pipeline_default'
