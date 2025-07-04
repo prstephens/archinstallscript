@@ -1,3 +1,4 @@
 [/]
-show-weekday=false
-theme='Mac'
+show-weekday=True
+show-month=False
+theme='Tahoe'
