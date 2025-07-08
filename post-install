@@ -151,7 +151,7 @@ install_gnome() {
         apply_xcreensaver
 
         # add arch updater extension
-        yay -S --noconfirm --needed gnome-shell-extension-arch-update gnome-shell-extension-forge
+        yay -S --noconfirm --needed gnome-shell-extension-arch-update
         gsettings set org.gnome.shell.extensions.arch-update check-cmd "/bin/sh -c \"(/usr/bin/checkupdates; /usr/bin/yay -Qqu --color never | sed 's/Get .*//') | sort -u -t' ' -k1,1\""
         gsettings set org.gnome.shell.extensions.arch-update update-cmd 'gnome-terminal -- bash -c "yay; echo Done - Press enter to exit; read"'
         gsettings set org.gnome.shell.extensions.arch-update use-buildin-icons true
@@ -221,12 +221,9 @@ apply_xcreensaver() {
 
 install_dash_to_dock() {
         # add dash to dock extension
-        git clone --depth 1 https://github.com/micheleg/dash-to-dock.git /tmp/dash-to-dock
+        git clone --depth 1 https://github.com/prstephens/dash-to-dock.git /tmp/dash-to-dock
         cd /tmp/dash-to-dock
 
-        # Change the icon spacing to 0 so the dock isnt so stretched
-        sed -i 's/$dock_icons_distance: 4px;/$dock_icons_distance: 0px;/' _stylesheet.scss
-        sed -i 's/background-color: rgba(255, 0, 0, 1);/background-color: rgba(254, 96, 88, 1);/' _stylesheet.scss
         make
         make install
 
@@ -340,7 +337,6 @@ install_gnome_mac() {
         gnome-extensions enable panel-corners@aunetx
         gnome-extensions enable logomenu@aryan_k
         gnome-extensions enable just-perfection-desktop@just-perfection
-        gnome-extensions enable favourites-in-appgrid@harshadgavali.gitlab.org
         gnome-extensions enable AlphabeticalAppGrid@stuarthayhurst
 
         # set the macbook colour profile
