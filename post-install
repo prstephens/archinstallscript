@@ -312,14 +312,9 @@ install_gnome_mac() {
         make build
         make install
 
-        # get the catppuccin themes for gnome-terminal
-        curl -L https://raw.githubusercontent.com/catppuccin/gnome-terminal/v0.2.0/install.py | python3 -
-
-        # set the defualt theme to Macchiato
-        dconf write /org/gnome/terminal/legacy/profiles:/default "'5083e06b-024e-46be-9cd2-892b814f1fc8'"
-        dconf write /org/gnome/terminal/legacy/profiles:/:5083e06b-024e-46be-9cd2-892b814f1fc8/default-size-columns 120
-        dconf write /org/gnome/terminal/legacy/profiles:/:5083e06b-024e-46be-9cd2-892b814f1fc8/font "'MesloLGS NF 9'"
-        dconf write /org/gnome/terminal/legacy/profiles:/:5083e06b-024e-46be-9cd2-892b814f1fc8/use-system-font false
+        # get the tahoe theme for gnome-terminal
+        curl -sL $BASE_URL/configs/gnome-terminal-profile-tahoe.dconf -o /tmp/gnome-terminal-profile-tahoe.dconf
+        dconf load /org/gnome/terminal/legacy/profiles:/ < /tmp/gnome-terminal-profile-tahoe.dconf
 
         # plymouth macos loading theme
         install_plymouth

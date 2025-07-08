@@ -1,0 +1,14 @@
+[/]
+default='923cb753-20d1-4fd1-97ef-9864e54a5579'
+list=['923cb753-20d1-4fd1-97ef-9864e54a5579']
+
+[:923cb753-20d1-4fd1-97ef-9864e54a5579]
+background-color='rgb(32,39,55)'
+cursor-shape='block'
+default-size-columns=120
+font='SF Mono 11'
+foreground-color='rgb(208,207,204)'
+palette=['rgb(51,66,80)', 'rgb(171,84,76)', 'rgb(104,165,115)', 'rgb(187,166,101)', 'rgb(105,145,179)', 'rgb(181,121,203)', 'rgb(118,197,203)', 'rgb(216,228,238)', 'rgb(94,92,100)', 'rgb(246,97,81)', 'rgb(51,209,122)', 'rgb(233,173,12)', 'rgb(42,123,222)', 'rgb(192,97,203)', 'rgb(51,199,222)', 'rgb(255,255,255)']
+use-system-font=false
+use-theme-colors=false
+visible-name='Tahoe'
