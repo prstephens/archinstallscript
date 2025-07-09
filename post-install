@@ -428,10 +428,10 @@ apply_tahoe(){
         gsettings set org.gnome.shell.extensions.user-theme name MacTahoe-${theme^}
         gsettings set org.gnome.desktop.interface icon-theme MacTahoe-$theme
 
-        gsettings set org.gnome.desktop.interface font-name "SF Pro Rounded Regular 11"
-        gsettings set org.gnome.desktop.interface document-font-name "SF Pro Rounded Regular 11"
-        gsettings set org.gnome.desktop.interface monospace-font-name "Source Code Pro 9"
-        gsettings set org.gnome.desktop.wm.preferences titlebar-font "SF Pro Rounded Regular 11"
+        gsettings set org.gnome.desktop.interface font-name "SF Pro Display Regular 11"
+        gsettings set org.gnome.desktop.interface document-font-name "SF Pro Display Regular 11"
+        gsettings set org.gnome.desktop.interface monospace-font-name "SF Mono Regular 9"
+        gsettings set org.gnome.desktop.wm.preferences titlebar-font "SF Pro Display Regular 11"
 
         gsettings set org.gnome.desktop.wm.preferences button-layout "close,minimize,maximize:"
 }
