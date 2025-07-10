@@ -3,12 +3,19 @@ default='923cb753-20d1-4fd1-97ef-9864e54a5579'
 list=['923cb753-20d1-4fd1-97ef-9864e54a5579']
 
 [:923cb753-20d1-4fd1-97ef-9864e54a5579]
-background-color='rgb(32,39,55)'
-cursor-shape='block'
+audible-bell=false
+bold-is-bright=true
+cursor-background-color='#f4dbd6'
+cursor-colors-set=true
+cursor-foreground-color='#24273a'
+cursor-shape='underline'
 default-size-columns=120
-font='SF Mono 11'
-foreground-color='rgb(208,207,204)'
-palette=['rgb(51,66,80)', 'rgb(171,84,76)', 'rgb(104,165,115)', 'rgb(187,166,101)', 'rgb(105,145,179)', 'rgb(181,121,203)', 'rgb(118,197,203)', 'rgb(216,228,238)', 'rgb(94,92,100)', 'rgb(246,97,81)', 'rgb(51,209,122)', 'rgb(233,173,12)', 'rgb(42,123,222)', 'rgb(192,97,203)', 'rgb(51,199,222)', 'rgb(255,255,255)']
+foreground-color='#cad3f5'
+highlight-background-color='#f4dbd6'
+highlight-colors-set=true
+highlight-foreground-color='#5b6078'
+palette=['#494d64', '#ed8796', '#a6da95', '#eed49f', '#8aadf4', '#f5bde6', '#8bd5ca', '#a5adcb', '#5b6078', '#ec7486', '#8ccf7f', '#e1c682', '#78a1f6', '#f2a9dd', '#63cbc0', '#b8c0e0']
 use-system-font=false
 use-theme-colors=false
 visible-name='Tahoe'
+
