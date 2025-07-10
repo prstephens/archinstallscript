@@ -96,7 +96,7 @@ install_base_packages() {
 
 install_fonts() {
         echo "Installing fonts..."
-        yay -S --noconfirm --needed apple-fonts ttf-cascadia-code-nerd ttf-meslo-nerd-font-powerlevel10k ttf-croscore ttf-google-sans
+        yay -S --noconfirm --needed apple-fonts ttf-cascadia-code-nerd ttf-croscore ttf-google-sans
 
         [[ ! -d $HOME/.local/share/fonts ]] && mkdir -p $HOME/.local/share/fonts
         curl -sL $BASE_URL/fonts/HelveticaNeueLt.ttf -o $HOME/.local/share/fonts/HelveticaNeueLt.ttf
