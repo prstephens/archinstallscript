@@ -344,30 +344,47 @@ install_gnome_mac() {
         fi
 }
 
+download_if_missing() {
+    local url=$1
+    local dest=$2
+
+    if [ ! -f "$dest" ]; then
+        echo "Downloading $(basename "$dest")..."
+        curl -sL "$url" -o "$dest"
+    else
+        echo "File $(basename "$dest") already exists, skipping."
+    fi
+}
+
 install_tahoe() {
         gsettings set org.gnome.desktop.interface clock-show-weekday true
 
-        [[ ! -d $HOME/.local/share/backgrounds ]] && mkdir -p $HOME/.local/share/backgrounds
+        BASE_DIR="$HOME/.local/share/backgrounds"
+        [[ ! -d "$BASE_DIR" ]] && mkdir mkdir -p "$BASE_DIR"
 
-        curl -sL $BASE_URL/wallpaper/macos/ventura-light.jpg -o $HOME/.local/share/backgrounds/ventura-light.jpg
-        curl -sL $BASE_URL/wallpaper/macos/ventura-dark.jpg -o $HOME/.local/share/backgrounds/ventura-dark.jpg
+        # Define wallpapers
+        declare -A wallpapers=(
+                [ventura-light.jpg]="macos/ventura-light.jpg"
+                [ventura-dark.jpg]="macos/ventura-dark.jpg"
+                [monterey-light.jpg]="macos/monterey-light.jpg"
+                [monterey-dark.jpg]="macos/monterey-dark.jpg"
+                [bigsur-light.jpg]="macos/bigsur-light.jpg"
+                [bigsur-dark.jpg]="macos/bigsur-dark.jpg"
+                [sonoma-light.jpg]="macos/sonoma-light.jpg"
+                [sonoma-dark.jpg]="macos/sonoma-dark.jpg"
+                [sonoma-horizon.png]="macos/sonoma-horizon.png"
+                [sequoia-light.jpg]="macos/sequoia-light.jpg"
+                [sequoia-dark.jpg]="macos/sequoia-dark.jpg"
+                [sequoia-sunrise.png]="macos/sequoia-sunrise.png"
+                [tahoe-light.png]="macos/tahoe-light.png"
+                [tahoe-dark.png]="macos/tahoe-dark.png"
+                )
 
-        curl -sL $BASE_URL/wallpaper/macos/monterey-light.jpg -o $HOME/.local/share/backgrounds/monterey-light.jpg
-        curl -sL $BASE_URL/wallpaper/macos/monterey-dark.jpg -o $HOME/.local/share/backgrounds/monterey-dark.jpg
-
-        curl -sL $BASE_URL/wallpaper/macos/bigsur-light.jpg -o $HOME/.local/share/backgrounds/bigsur-light.jpg
-        curl -sL $BASE_URL/wallpaper/macos/bigsur-dark.jpg -o $HOME/.local/share/backgrounds/bigsur-dark.jpg
-
-        curl -sL $BASE_URL/wallpaper/macos/sonoma-light.jpg -o $HOME/.local/share/backgrounds/sonoma-light.jpg
-        curl -sL $BASE_URL/wallpaper/macos/sonoma-dark.jpg -o $HOME/.local/share/backgrounds/sonoma-dark.jpg
-        curl -sL $BASE_URL/wallpaper/macos/sonoma-horizon.png -o $HOME/.local/share/backgrounds/sonoma-horizon.png
-
-        curl -sL $BASE_URL/wallpaper/macos/sequoia-light.jpg -o $HOME/.local/share/backgrounds/sequoia-light.jpg
-        curl -sL $BASE_URL/wallpaper/macos/sequoia-dark.jpg -o $HOME/.local/share/backgrounds/sequoia-dark.jpg
-        curl -sL $BASE_URL/wallpaper/macos/sequoia-sunrise.png -o $HOME/.local/share/backgrounds/sequoia-sunrise.png
-
-        curl -sL $BASE_URL/wallpaper/macos/tahoe-light.png -o $HOME/.local/share/backgrounds/tahoe-light.png
-        curl -sL $BASE_URL/wallpaper/macos/tahoe-dark.png -o $HOME/.local/share/backgrounds/tahoe-dark.png
+                # Download each wallpaper if missing
+                for filename in "${!wallpapers[@]}"; do
+                        remote_path="${wallpapers[$filename]}"
+                        download_if_missing "$BASE_URL/wallpaper/$remote_path" "$BASE_DIR/$filename"
+                done
 
         theme=$(whiptail --backtitle "$BACKTITLE" --title "Select theme variation" --radiolist "Choose" 20 30 5 \
                 "light" "" light \
