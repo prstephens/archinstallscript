@@ -179,7 +179,7 @@ install_gnome() {
         gsettings set org.gnome.mutter center-new-windows true
 
         # Remove some trash from Gnome
-        sudo pacman -Rs --noconfirm epiphany gnome-music totem gnome-connections gnome-text-editor gnome-tour gnome-console gnome-user-docs yelp gnome-maps
+        sudo pacman -Rs --noconfirm epiphany gnome-music totem gnome-connections gnome-text-editor gnome-tour gnome-console gnome-user-docs yelp gnome-maps decibels
 
         
         cat <<EOT >>$HOME/.bash_profile
