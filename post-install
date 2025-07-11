@@ -525,9 +525,7 @@ install_anything-sync-daemon() {
 update_icons(){
         sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/MacTahoe/apps/scalable/gnome-music.svg|" /usr/share/applications/spotify-launcher.desktop
         sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/MacTahoe/apps/scalable/safari.svg|" /usr/share/applications/google-chrome.desktop
-        #sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/MacTahoe/apps/scalable/ms-word.svg|" /usr/share/applications/libreoffice-writer.desktop
-        #sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/MacTahoe/apps/scalable/ms-excel.svg|" /usr/share/applications/libreoffice-calc.desktop
-        #sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/MacTahoe/apps/scalable/ms-powerpoint.svg|" /usr/share/applications/libreoffice-impress.desktop
+        sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/MacTahoe/apps/scalable/utilities-system-monitor.svg|" /usr/share/applications/io.missioncenter.MissionCenter.desktop
         sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/MacTahoe/apps/scalable/org.gnome.Software.Generic.svg|" /usr/share/applications/com.mattjakeman.ExtensionManager.desktop
 }
 
