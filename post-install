@@ -91,7 +91,7 @@ mainmenu() {
 
 install_base_packages() {
         sudo pacman -S --noconfirm --needed xscreensaver firefox sassc gparted code meld pavucontrol mission-center
-        yay -S --noconfirm --needed snapper-gui-git rar btrfs-assistant
+        yay -S --noconfirm --needed snapper-gui-git rar btrfs-assistant localsend-bin
 }
 
 install_fonts() {
