@@ -399,7 +399,7 @@ install_tahoe() {
 
         gsettings set org.gnome.desktop.background picture-uri file:////$HOME/.local/share/backgrounds/tahoe-${theme}.png
         
-        sudo ./tweaks.sh -g -b $HOME/.local/share/backgrounds/tahoe-day.jpg
+        sudo ./tweaks.sh -g 
         ./tweaks.sh -f monterey
         ./tweaks.sh -F
         sudo flatpak override --filesystem=xdg-config/gtk-4.0
@@ -552,7 +552,7 @@ install_apps() {
         clear
 
         echo "Installing apps..."
-        yay -S --noconfirm --needed spotify-launcher google-chrome libreoffice-still gimp vlc geary etcher-bin gnome-photos gnome-notes endeavour
+        yay -S --noconfirm --needed spotify-launcher google-chrome libreoffice-still gimp vlc vlc-plugins-all geary etcher-bin gnome-photos gnome-notes endeavour
 
         update_icons
 }
