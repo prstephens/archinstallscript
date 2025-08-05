@@ -395,7 +395,7 @@ install_tahoe() {
         git clone --depth 1 https://github.com/prstephens/MacTahoe-gtk-theme.git /tmp/MacTahoe-gtk-theme
         cd /tmp/MacTahoe-gtk-theme
 
-        ./install.sh -l -c $theme
+        ./install.sh -l -c $theme -b -l
 
         gsettings set org.gnome.desktop.background picture-uri file:////$HOME/.local/share/backgrounds/tahoe-${theme}.png
         
