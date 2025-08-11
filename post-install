@@ -275,7 +275,7 @@ install_gnome_mac() {
         gsettings set org.gnome.desktop.app-folders folder-children "['YaST']"
 
         # pin some nice favourites to the dash
-        gsettings set org.gnome.shell favorite-apps "['org.gnome.Nautilus.desktop', 'google-chrome.desktop', 'whatsapp.desktop', 'org.gnome.Geary.desktop', 'maps.desktop', 'org.gnome.Photos.desktop', 'org.gnome.Calendar.desktop', 'org.gnome.Contacts.desktop', 'org.gnome.Todo.desktop', 'org.gnome.Notes.desktop', 'spotify-launcher.desktop', 'libreoffice-writer.desktop', 'libreoffice-calc.desktop', 'libreoffice-impress.desktop', 'org.gnome.Software.desktop', 'org.gnome.Settings.desktop']"
+        gsettings set org.gnome.shell favorite-apps "['org.gnome.Nautilus.desktop', 'google-chrome.desktop', 'whatsapp.desktop', 'org.gnome.Geary.desktop', 'maps.desktop', 'org.gnome.Photos.desktop', 'org.gnome.Calendar.desktop', 'org.gnome.Contacts.desktop', 'org.gnome.Todo.desktop', 'org.gnome.Notes.desktop', 'spotify-launcher.desktop', 'libreoffice-impress.desktop', 'libreoffice-calc.desktop', 'libreoffice-writer.desktop', 'org.gnome.Software.desktop', 'org.gnome.Settings.desktop']"
 
         # install the Mac theme set
         install_tahoe
