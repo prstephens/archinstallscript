@@ -378,7 +378,10 @@ install_tahoe() {
                 [sequoia-sunrise.png]="macos/sequoia-sunrise.png"
                 [tahoe-light.png]="macos/tahoe-light.png"
                 [tahoe-dark.png]="macos/tahoe-dark.png"
-                [tahoe-day.jpg]="macos/tahoe-day.jpg"
+                [tahoe-day.png]="macos/tahoe-day.png"
+                [tahoe-dawn.png]="macos/tahoe-dawn.png"
+                [tahoe-dusk.png]="macos/tahoe-dusk.png"
+                [tahoe-night.png]="macos/tahoe-night.png"
                 )
 
                 # Download each wallpaper if missing
