@@ -309,6 +309,11 @@ install_gnome_mac() {
         make build
         make install
 
+        # V Shell
+        git clone https://github.com/G-dH/vertical-workspaces.git /tmp/vshell
+        cd /tmp/vshell
+        make install
+
         # get the tahoe theme for gnome-terminal
         curl -sL $BASE_URL/configs/gnome-terminal-profile-tahoe.dconf -o /tmp/gnome-terminal-profile-tahoe.dconf
         dconf load /org/gnome/terminal/legacy/profiles:/ < /tmp/gnome-terminal-profile-tahoe.dconf
@@ -333,6 +338,7 @@ install_gnome_mac() {
         gnome-extensions enable logomenu@aryan_k
         gnome-extensions enable just-perfection-desktop@just-perfection
         gnome-extensions enable AlphabeticalAppGrid@stuarthayhurst
+        gnome-extensions enable vertical-workspaces@G-dH.github.com
 
         # set the macbook colour profile
         if [[ "$MAC" -eq 1 ]]; then
