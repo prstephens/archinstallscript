@@ -303,12 +303,6 @@ install_gnome_mac() {
         cd /tmp/just-perfection
         ./scripts/build.sh -i
 
-        # Alphabetical App Grid
-        git clone --depth 1 https://github.com/stuarthayhurst/alphabetical-grid-extension.git /tmp/alphabetical-grid-extension
-        cd /tmp/alphabetical-grid-extension
-        make build
-        make install
-
         # V Shell
         git clone https://github.com/G-dH/vertical-workspaces.git /tmp/vshell
         cd /tmp/vshell
