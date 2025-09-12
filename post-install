@@ -406,7 +406,7 @@ install_tahoe() {
 
         ./install.sh -l -c $theme -b -l
 
-        gsettings set org.gnome.desktop.background picture-uri file:////$HOME/.local/share/backgrounds/tahoe-dusk.png
+        gsettings set org.gnome.desktop.background picture-uri file:////$HOME/.local/share/backgrounds/tahoe-dawn.png
         
         sudo ./tweaks.sh -g 
         ./tweaks.sh -f monterey
