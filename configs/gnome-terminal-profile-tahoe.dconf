@@ -4,13 +4,15 @@ list=['923cb753-20d1-4fd1-97ef-9864e54a5579']
 
 [:923cb753-20d1-4fd1-97ef-9864e54a5579]
 audible-bell=false
+background-color='rgb(23,20,33)'
 bold-is-bright=true
 cursor-background-color='#f4dbd6'
 cursor-colors-set=true
 cursor-foreground-color='#24273a'
 cursor-shape='underline'
 default-size-columns=120
-foreground-color='#cad3f5'
+font='SF Mono 10'
+foreground-color='rgb(208,207,204)'
 highlight-background-color='#f4dbd6'
 highlight-colors-set=true
 highlight-foreground-color='#5b6078'
@@ -18,4 +20,3 @@ palette=['#494d64', '#ed8796', '#a6da95', '#eed49f', '#8aadf4', '#f5bde6', '#8bd
 use-system-font=false
 use-theme-colors=false
 visible-name='Tahoe'
-
