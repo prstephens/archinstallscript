@@ -403,7 +403,7 @@ install_tahoe() {
         gsettings set org.gnome.desktop.background picture-uri file:////$HOME/.local/share/backgrounds/tahoe-dawn.png
         
         sudo ./tweaks.sh -g 
-        ./tweaks.sh -f monterey
+        ./tweaks.sh -f default
         ./tweaks.sh -F
         sudo flatpak override --filesystem=xdg-config/gtk-4.0
 
