@@ -752,6 +752,8 @@ initialise() {
         sudo systemctl enable --now snapper-cleanup.timer
         sudo systemctl enable --now btrfs-scrub@-.timer
 
+        systemctl --user enable --now pipewire.service pipewire-pulse.service wireplumber.service
+
         yay -S snapper-rollback snp downgrade --noconfirm
 
         # put root dev into snapper-rollback.conf

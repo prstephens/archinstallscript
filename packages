@@ -34,9 +34,11 @@ p7zip
 fd
 bluez
 bluez-utils
-pulseaudio
-pulseaudio-bluetooth
-pulsemixer
+pipewire
+pipewire-pulse
+pipewire-alsa
+pipewire-jack
+wireplumber
 wget
 cups
 hplip
