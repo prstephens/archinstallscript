@@ -16,7 +16,6 @@ dnsutils
 usbutils
 reflector
 nfs-utils
-xf86-video-intel
 mesa
 vulkan-intel
 nano
