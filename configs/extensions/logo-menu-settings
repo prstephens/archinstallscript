@@ -1,7 +1,7 @@
 [/]
 menu-button-extensions-app='com.mattjakeman.ExtensionManager.desktop'
 menu-button-icon-image=0
-menu-button-icon-size=24
+menu-button-icon-size=25
 menu-button-terminal='gnome-terminal'
 show-activities-button=false
 show-lockscreen=true

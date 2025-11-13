@@ -1,0 +1,10 @@
+[/]
+enable-launchpad-app=true
+hide-activities-button=true
+keyboard-indicator=false
+lock-icon=true
+move-calendar-right=true
+overview-wallpaper-background=false
+panel-transparency=false
+panel-transparency-level=63
+skip-overview-on-login=true
