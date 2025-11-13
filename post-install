@@ -553,7 +553,7 @@ update_icons(){
         sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/MacTahoe/apps/scalable/utilities-system-monitor.svg|" /usr/share/applications/io.missioncenter.MissionCenter.desktop
         sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/MacTahoe/apps/scalable/org.gnome.Software.Generic.svg|" /usr/share/applications/com.mattjakeman.ExtensionManager.desktop
 
-        curl -sL $BASE_URL/icons/launchpad.svg -o $HOME/.local/share/gnome-shell/extensions/kiwi@kemma/icons/
+        curl -sL $BASE_URL/icons/launchpad.svg -o $HOME/.local/share/gnome-shell/extensions/kiwi@kemma/icons/launchpad.svg
 }
 
 install_apps() {
