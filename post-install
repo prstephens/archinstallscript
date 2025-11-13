@@ -263,7 +263,6 @@ apply_plymouth_chicago(){
 
 install_gnome_mac() {
         install_apps
-        update_icons
 
         # copy some custom "apps"
         if [ ! -d $HOME/.local/share/applications/ ]; then mkdir $HOME/.local/share/applications; fi
@@ -333,6 +332,10 @@ install_gnome_mac() {
         gnome-extensions enable panel-corners@aunetx
         gnome-extensions enable logomenu@aryan_k
         gnome-extensions enable just-perfection-desktop@just-perfection
+        gnome-extensions enable kiwi@kemma
+
+
+        update_icons
 
         # set the macbook colour profile
         if [[ "$MAC" -eq 1 ]]; then
@@ -549,6 +552,8 @@ update_icons(){
         sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/MacTahoe/apps/scalable/safari.svg|" /usr/share/applications/google-chrome.desktop
         sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/MacTahoe/apps/scalable/utilities-system-monitor.svg|" /usr/share/applications/io.missioncenter.MissionCenter.desktop
         sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/MacTahoe/apps/scalable/org.gnome.Software.Generic.svg|" /usr/share/applications/com.mattjakeman.ExtensionManager.desktop
+
+        curl -sL $BASE_URL/icons/launchpad.svg -o $HOME/.local/share/gnome-shell/extensions/kiwi@kemma/icons/
 }
 
 install_apps() {
