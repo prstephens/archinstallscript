@@ -267,13 +267,12 @@ install_gnome_mac() {
         # copy some custom "apps"
         if [ ! -d $HOME/.local/share/applications/ ]; then mkdir $HOME/.local/share/applications; fi
         curl -sL $BASE_URL/scripts/maps.desktop -o  $HOME/.local/share/applications/maps.desktop
-        curl -sL $BASE_URL/scripts/whatsapp.desktop -o  $HOME/.local/share/applications/whatsapp.desktop
 
         # Remove 'Utilities' folder in app grid so all apps are in view
         gsettings set org.gnome.desktop.app-folders folder-children "['YaST']"
 
         # pin some nice favourites to the dash
-        gsettings set org.gnome.shell favorite-apps "['org.gnome.Nautilus.desktop', 'google-chrome.desktop', 'whatsapp.desktop', 'org.gnome.Geary.desktop', 'maps.desktop', 'org.gnome.Photos.desktop', 'org.gnome.Calendar.desktop', 'org.gnome.Contacts.desktop', 'org.gnome.Todo.desktop', 'org.gnome.Notes.desktop', 'spotify-launcher.desktop', 'libreoffice-impress.desktop', 'libreoffice-calc.desktop', 'libreoffice-writer.desktop', 'org.gnome.Software.desktop', 'org.gnome.Settings.desktop']"
+        gsettings set org.gnome.shell favorite-apps "['org.gnome.Nautilus.desktop', 'google-chrome.desktop', 'elecwhat.desktop', 'org.gnome.Geary.desktop', 'maps.desktop', 'org.gnome.Photos.desktop', 'org.gnome.Calendar.desktop', 'org.gnome.Contacts.desktop', 'org.gnome.Todo.desktop', 'org.gnome.Notes.desktop', 'spotify-launcher.desktop', 'libreoffice-impress.desktop', 'libreoffice-calc.desktop', 'libreoffice-writer.desktop', 'org.gnome.Software.desktop', 'org.gnome.Settings.desktop']"
 
         # install dash to dock extension
         install_dash_to_dock
@@ -556,6 +555,7 @@ update_icons(){
         sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/MacTahoe/apps/scalable/safari.svg|" /usr/share/applications/google-chrome.desktop
         sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/MacTahoe/apps/scalable/utilities-system-monitor.svg|" /usr/share/applications/io.missioncenter.MissionCenter.desktop
         sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/MacTahoe/apps/scalable/org.gnome.Software.Generic.svg|" /usr/share/applications/com.mattjakeman.ExtensionManager.desktop
+        sudo sed -i "s|^Icon=.*|Icon=internet-chat|" /usr/share/applications/elecwhat.desktop
 
         curl -sL $BASE_URL/icons/launchpad.svg -o $HOME/.local/share/gnome-shell/extensions/kiwi@kemma/icons/launchpad.svg
 }
@@ -564,7 +564,7 @@ install_apps() {
         clear
 
         echo "Installing apps..."
-        yay -S --noconfirm --needed spotify-launcher google-chrome libreoffice-still gimp vlc vlc-plugins-all geary etcher-bin gnome-photos gnome-notes endeavour
+        yay -S --noconfirm --needed spotify-launcher google-chrome libreoffice-still gimp vlc vlc-plugins-all geary etcher-bin gnome-photos gnome-notes endeavour elecwhat-bin
 
         update_icons
 }
