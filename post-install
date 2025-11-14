@@ -275,11 +275,11 @@ install_gnome_mac() {
         # pin some nice favourites to the dash
         gsettings set org.gnome.shell favorite-apps "['org.gnome.Nautilus.desktop', 'google-chrome.desktop', 'whatsapp.desktop', 'org.gnome.Geary.desktop', 'maps.desktop', 'org.gnome.Photos.desktop', 'org.gnome.Calendar.desktop', 'org.gnome.Contacts.desktop', 'org.gnome.Todo.desktop', 'org.gnome.Notes.desktop', 'spotify-launcher.desktop', 'libreoffice-impress.desktop', 'libreoffice-calc.desktop', 'libreoffice-writer.desktop', 'org.gnome.Software.desktop', 'org.gnome.Settings.desktop']"
 
-        # install the Mac theme set
-        install_tahoe
-
         # install dash to dock extension
         install_dash_to_dock
+
+        # install the Mac theme set
+        install_tahoe
 
         # blur my shell
         git clone --depth 1 https://github.com/aunetx/blur-my-shell /tmp/blur-my-shell
@@ -333,7 +333,6 @@ install_gnome_mac() {
         gnome-extensions enable logomenu@aryan_k
         gnome-extensions enable just-perfection-desktop@just-perfection
         gnome-extensions enable kiwi@kemma
-
 
         update_icons
 
