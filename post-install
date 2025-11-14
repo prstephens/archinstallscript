@@ -458,6 +458,11 @@ apply_tahoe(){
         gsettings set org.gnome.desktop.wm.preferences titlebar-font "SF Pro Display Regular 11"
 
         gsettings set org.gnome.desktop.wm.preferences button-layout "close,minimize,maximize:"
+
+        if  [ "$theme" = "dark" ]
+        then
+                gsettings set org.gnome.desktop.interface color-scheme prefer-dark
+        fi
 }
 
 install_plasma() {
