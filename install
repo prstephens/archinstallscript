@@ -604,31 +604,81 @@ installbootloader-grub() {
 }
 
 installbootloader-systemd() {
-        arch-chroot /mnt bootctl install
+    # --- Install systemd-boot ---
+    arch-chroot /mnt bootctl install
 
-        if [[ "$USE_CRYPT" -eq 1 ]]; then
-                mv header.img /mnt/boot
+    # --- Detect CPU microcode ---
+    CPU_VENDOR=$(arch-chroot /mnt lscpu | awk '/Vendor ID:/ {print $3}')
+    if [[ "$CPU_VENDOR" == "GenuineIntel" ]]; then
+        MICROCODE="intel-ucode.img"
+    elif [[ "$CPU_VENDOR" == "AuthenticAMD" ]]; then
+        MICROCODE="amd-ucode.img"
+    else
+        MICROCODE=""
+    fi
 
-                # create a luks key so we dont have to enter a passphase on boot
-                arch-chroot /mnt dd bs=512 count=4 if=/dev/random of=/crypto_keyfile.bin iflag=fullblock
-                arch-chroot /mnt chmod 600 /crypto_keyfile.bin
-                arch-chroot /mnt cryptsetup luksAddKey $realrootdev /crypto_keyfile.bin --header /boot/header.img
-                arch-chroot /mnt sed -i 's/FILES=()/FILES=(\/crypto_keyfile.bin)/' /etc/mkinitcpio.conf
+    # --- Setup kernel options ---
+    if [[ "$USE_CRYPT" -eq 1 ]]; then
+        mv header.img /mnt/boot
 
-                BOOTUUID=$(blkid -s UUID -o value $bootdev)
+        # Create LUKS keyfile for passwordless boot
+        arch-chroot /mnt dd bs=512 count=4 if=/dev/random of=/crypto_keyfile.bin iflag=fullblock
+        arch-chroot /mnt chmod 600 /crypto_keyfile.bin
+        arch-chroot /mnt cryptsetup luksAddKey "$realrootdev" /crypto_keyfile.bin --header /boot/header.img
 
-                options="rd.luks.name=$CRYPTHEADERUUID=cryptlvm rd.luks.options=$CRYPTHEADERUUID=header=/header.img:UUID=$BOOTUUID rd.luks.key=/crypto_keyfile.bin rd.luks.data=$CRYPTHEADERUUID=$realrootdev root=/dev/vg1/root rw rootflags=subvol=@ resume=$swapdev quiet loglevel=3 systemd.show_status=auto rd.udev.log_level=3 nowatchdog mitigations=off"
-        else
-                options="root=UUID=$ROOTUUID rw rootflags=subvol=@ resume=$swapdev quiet loglevel=3 systemd.show_status=auto rd.udev.log_level=3 nowatchdog mitigations=off"
-        fi
+        # Ensure initramfs includes keyfile
+        arch-chroot /mnt sed -i 's/FILES=()/FILES=(\/crypto_keyfile.bin)/' /etc/mkinitcpio.conf
 
-        cat <<EOT >>/mnt/boot/loader/entries/arch.conf
+        BOOTUUID=$(blkid -s UUID -o value "$bootdev")
+
+        options="rd.luks.name=$CRYPTHEADERUUID=cryptlvm \
+rd.luks.options=$CRYPTHEADERUUID=header=/header.img:UUID=$BOOTUUID \
+rd.luks.key=/crypto_keyfile.bin \
+rd.luks.data=$CRYPTHEADERUUID=$realrootdev \
+root=/dev/vg1/root rw rootflags=subvol=@ \
+resume=$swapdev quiet loglevel=3 systemd.show_status=auto \
+rd.udev.log_level=3 nowatchdog mitigations=off"
+    else
+        options="root=UUID=$ROOTUUID rw rootflags=subvol=@ \
+resume=$swapdev quiet loglevel=3 systemd.show_status=auto \
+rd.udev.log_level=3 nowatchdog mitigations=off"
+    fi
+
+    # --- Create systemd-boot loader entry ---
+    ENTRY_FILE="/mnt/boot/loader/entries/arch.conf"
+    cat <<EOT >"$ENTRY_FILE"
 title   Arch Linux
 linux   /vmlinuz-linux-zen
 initrd  /initramfs-linux-zen.img
-options $options
 EOT
+
+    # Add microcode if detected
+    if [[ -n "$MICROCODE" ]]; then
+        sed -i "2i initrd  /$MICROCODE" "$ENTRY_FILE"
+    fi
+
+    # Append kernel options
+    echo "options $options" >>"$ENTRY_FILE"
+
+    # --- Create EFI stub entry with efibootmgr ---
+    # Split disk and partition
+    disk=$(echo $bootdev | sed 's/[0-9]*$//')
+    part=$(echo $bootdev | grep -o '[0-9]*$')
+
+    # Build initrd list for EFI stub
+    EFI_INITRDS=""
+    [[ -n "$MICROCODE" ]] && EFI_INITRDS+="initrd=\\$MICROCODE "
+    EFI_INITRDS+="initrd=\\initramfs-linux-zen.img"
+
+    # Create EFI stub boot entry
+    arch-chroot /mnt efibootmgr --create \
+        --disk "$disk" \
+        --part "$part" \
+        --label "Arch Linux (EFI Stub)" \
+        --loader '\vmlinuz-linux-zen' \
+        --unicode "$EFI_INITRDS $options"
 }
+
 
 setupuser() {
         arch-chroot /mnt useradd -m -G wheel $user
