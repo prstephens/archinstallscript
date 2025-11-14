@@ -10,6 +10,7 @@ mtools
 dosfstools
 dkms
 intel-ucode
+amd-ucode
 ntfs-3g
 networkmanager
 dnsutils
