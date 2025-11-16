@@ -619,7 +619,8 @@ installbootloader-systemd() {
 
     # --- Setup kernel options ---
     if [[ "$USE_CRYPT" -eq 1 ]]; then
-        mv header.img /mnt/boot
+        cp header.img /mnt/
+        cp header.img /mnt/boot/
 
         # Create LUKS keyfile for passwordless boot
         arch-chroot /mnt dd bs=512 count=4 if=/dev/random of=/crypto_keyfile.bin iflag=fullblock
@@ -627,7 +628,7 @@ installbootloader-systemd() {
         arch-chroot /mnt cryptsetup luksAddKey "$realrootdev" /crypto_keyfile.bin --header /boot/header.img
 
         # Ensure initramfs includes keyfile
-        arch-chroot /mnt sed -i 's/FILES=()/FILES=(\/crypto_keyfile.bin)/' /etc/mkinitcpio.conf
+        arch-chroot /mnt sed -i 's/FILES=()/FILES=(\/header.img \/crypto_keyfile.bin)/' /etc/mkinitcpio.conf
 
         BOOTUUID=$(blkid -s UUID -o value "$bootdev")
 
@@ -643,6 +644,7 @@ rd.udev.log_level=3 nowatchdog mitigations=off"
 resume=$swapdev quiet loglevel=3 systemd.show_status=auto \
 rd.udev.log_level=3 nowatchdog mitigations=off"
     fi
+
 
     # --- Create systemd-boot loader entry ---
     ENTRY_FILE="/mnt/boot/loader/entries/arch.conf"
@@ -661,22 +663,24 @@ EOT
     echo "options $options" >>"$ENTRY_FILE"
 
     # --- Create EFI stub entry with efibootmgr ---
+    clean_options="${options/:UUID=$BOOTUUID/}"
+    echo "$clean_options" > /mnt/kernel/cmdline
+
+    arch-chroot /mnt sed -i \
+    -e 's/^#default_options=/default_options=/' \
+    -e 's|^#default_uki=".*"|default_uki="/boot/EFI/Linux/arch-linux-zen.efi"|' \
+    /etc/mkinitcpio.d/linux-zen.preset
+
     # Split disk and partition
     disk=$(echo $bootdev | sed 's/[0-9]*$//')
     part=$(echo $bootdev | grep -o '[0-9]*$')
-
-    # Build initrd list for EFI stub
-    EFI_INITRDS=""
-    [[ -n "$MICROCODE" ]] && EFI_INITRDS+="initrd=\\$MICROCODE "
-    EFI_INITRDS+="initrd=\\initramfs-linux-zen.img"
 
     # Create EFI stub boot entry
     arch-chroot /mnt efibootmgr --create \
         --disk "$disk" \
         --part "$part" \
-        --label "Arch Linux (EFI Stub)" \
-        --loader '\vmlinuz-linux-zen' \
-        --unicode "$EFI_INITRDS $options"
+        --label "Arch Linux (UKI)" \
+        --loader '\EFI\Linux\arch-linux-zen.efi'
 }
 
 
