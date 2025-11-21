@@ -662,9 +662,9 @@ EOT
 
     # --- Create EFI stub entry with efibootmgr ---
     clean_options="${options/:UUID=$BOOTUUID/}"
-    if [ ! -d /mnt/kernel/ ]; then mkdir /mnt/kernel/; fi
+    if [ ! -d /mnt/etc/kernel/ ]; then mkdir /mnt/etc/kernel/; fi
 
-    echo "$clean_options" > /mnt/kernel/cmdline
+    echo "$clean_options" > /mnt/etc/kernel/cmdline
 
     arch-chroot /mnt sed -i \
     -e 's/^#default_options=/default_options=/' \
