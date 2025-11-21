@@ -498,9 +498,7 @@ ACTION=="add|change", KERNEL=="sd[a-z]", ATTR{queue/rotational}=="1", ATTR{queue
 EOT
 
         # speed up boot time with lz4
-        sed -i 's/^MODULES=.*$/MODULES=(i915 btrfs lz4 lz4_compress vfat)/' /mnt/etc/mkinitcpio.conf
-        sed -i 's/^#COMPRESSION="lz4".*$/COMPRESSION="lz4"/' /mnt/etc/mkinitcpio.conf
-        sed -i 's/^#COMPRESSION_OPTIONS=.*$/COMPRESSION_OPTIONS="-9"/' /mnt/etc/mkinitcpio.conf
+        sed -i 's/^MODULES=.*$/MODULES=(i915 btrfs)/' /mnt/etc/mkinitcpio.conf
         sed -i 's/^#MODULES_DECOMPRESS=.*$/MODULES_DECOMPRESS="yes"/' /mnt/etc/mkinitcpio.conf
 
         # setup the mkinitcpio hooks
@@ -664,6 +662,8 @@ EOT
 
     # --- Create EFI stub entry with efibootmgr ---
     clean_options="${options/:UUID=$BOOTUUID/}"
+    if [ ! -d /mnt/kernel/ ]; then mkdir /mnt/kernel/; fi
+
     echo "$clean_options" > /mnt/kernel/cmdline
 
     arch-chroot /mnt sed -i \
