@@ -137,7 +137,7 @@ selectdisk() {
         # Populate menu options
         while IFS= read -r item; do
                 options+=("${item}" "")
-        done <<<"${items}"
+        done <<< "${items}"
 
         # Display selection menu
         local result
@@ -263,7 +263,7 @@ getuserinfo() {
         password2="xx"
         passphrase_invalid_message=""
 
-        while [[ "$password" != "$password2" ]]; do
+        while [[ $password != "$password2" ]]; do
 
                 password=$(whiptail --backtitle "$BACKTITLE" --passwordbox "${passphrase_invalid_message}Please enter the admin password:" --fb 10 50 3>&1 1>&2 2>&3)
                 password2=$(whiptail --backtitle "$BACKTITLE" --passwordbox "Please repeat the admin password:" --fb 10 50 3>&1 1>&2 2>&3)
@@ -291,7 +291,7 @@ checks() {
 }
 
 performinstall() {
-        if [[ ! "$AUTO" -eq 1 ]]; then
+        if [[ ! $AUTO -eq 1 ]]; then
                 checks
         fi
 
@@ -337,7 +337,7 @@ performinstall() {
         chassis=$(cat /sys/class/dmi/id/chassis_type)
         if exists_in_list "8,9,10" "," ${chassis}; then
                 TLP=1
-                echo $'\ntlp\ntlp-rdw\npowertop' >>/tmp/packages
+                echo $'\ntlp\ntlp-rdw\npowertop' >> /tmp/packages
         fi
 
         # Read the product name from sysfs
@@ -346,10 +346,10 @@ performinstall() {
         # Check if the product name contains "macbook" (case-insensitive)
         if echo "$product_name" | grep -iq "macbook"; then
                 MAC=1
-                echo $'\nbroadcom-wl-dkms' >>/tmp/packages
+                echo $'\nbroadcom-wl-dkms' >> /tmp/packages
         fi
 
-        if [[ "$USE_CRYPT" -eq 1 || "$AUTO" -eq 1 ]]; then
+        if [[ $USE_CRYPT -eq 1 || $AUTO -eq 1 ]]; then
                 bootloader="Systemd"
                 mount $bootdev /mnt/boot
         else
@@ -359,9 +359,9 @@ performinstall() {
                         3>&1 1>&2 2>&3)
         fi
 
-        if [[ "$bootloader" == "GRUB" ]]; then
+        if [[ $bootloader == "GRUB" ]]; then
                 USE_GRUB=1
-                echo $'\ngrub\nos-prober\ngrub-btrfs' >>/tmp/packages
+                echo $'\ngrub\nos-prober\ngrub-btrfs' >> /tmp/packages
 
                 mkdir /mnt/boot/efi
                 mount $bootdev /mnt/boot/efi
@@ -369,30 +369,30 @@ performinstall() {
                 mount $bootdev /mnt/boot
         fi
 
-        if [[ "$USE_RAID" -eq 1 ]]; then
-                echo $'\nmdadm' >>/tmp/packages
+        if [[ $USE_RAID -eq 1 ]]; then
+                echo $'\nmdadm' >> /tmp/packages
         fi
 
-        if [[ "$USE_CRYPT" -eq 1 ]]; then
-                echo $'\nlvm2' >>/tmp/packages
+        if [[ $USE_CRYPT -eq 1 ]]; then
+                echo $'\nlvm2' >> /tmp/packages
         fi
 
         # do the install!
-        pacstrap /mnt $(</tmp/packages)
+        pacstrap /mnt $(< /tmp/packages)
 
-        genfstab -U /mnt >>/mnt/etc/fstab
+        genfstab -U /mnt >> /mnt/etc/fstab
 }
 
 exists_in_list() {
         LIST=$1
         DELIMITER=$2
         VALUE=$3
-        [[ "$LIST" =~ ($DELIMITER|^)$VALUE($DELIMITER|$) ]]
+        [[ $LIST =~ ($DELIMITER|^)$VALUE($DELIMITER|$) ]]
 }
 
 configuration() {
         # Set Cloudfare as our DNS
-        cat <<EOT >/mnt/etc/resolv.conf
+        cat << EOT > /mnt/etc/resolv.conf
 options timeout:1
 options single-request
 
@@ -403,18 +403,18 @@ EOT
 
         chattr +i /mnt/etc/resolv.conf
 
-        cat <<EOT >>/mnt/etc/NetworkManager/NetworkManager.conf
+        cat << EOT >> /mnt/etc/NetworkManager/NetworkManager.conf
 [main]
 dns=none
 systemd-resolved=false
 EOT
 
-        cat <<EOT >>/mnt/etc/hosts
+        cat << EOT >> /mnt/etc/hosts
 127.0.0.1	localhost
 ::1		localhost
 EOT
 
-        echo "127.0.1.1 ${hostname}.localdomain  ${hostname}" >>/mnt/etc/hosts
+        echo "127.0.1.1 ${hostname}.localdomain  ${hostname}" >> /mnt/etc/hosts
 
         # make a copy of the host file to be used later in the AdAway service
         arch-chroot /mnt cp /etc/hosts /etc/hosts.base
@@ -431,18 +431,18 @@ EOT
         # Set locale to en_US.UTF-8 UTF-8
         arch-chroot /mnt sed -i '/en_GB.UTF-8 UTF-8/s/^#//g' /etc/locale.gen
         arch-chroot /mnt locale-gen
-        echo "LANG=en_GB.UTF-8" >>/mnt/etc/locale.conf
+        echo "LANG=en_GB.UTF-8" >> /mnt/etc/locale.conf
 
         # Set the console keymap
-        echo "KEYMAP=uk" >>/mnt/etc/vconsole.conf
+        echo "KEYMAP=uk" >> /mnt/etc/vconsole.conf
 
         # Set hostname
-        echo "${hostname}" >/mnt/etc/hostname
+        echo "${hostname}" > /mnt/etc/hostname
 
         # nano syntax highlighting
-        echo "include /usr/share/nano/*.nanorc" >>/mnt/etc/nanorc
+        echo "include /usr/share/nano/*.nanorc" >> /mnt/etc/nanorc
 
-        cat <<EOT >/etc/profile.d/shell-timeout.sh
+        cat << EOT > /etc/profile.d/shell-timeout.sh
 TMOUT="\$(( 60*30 ))";
 [ -z "\$DISPLAY" ] && export TMOUT;
 case \$( /usr/bin/tty ) in
@@ -450,16 +450,16 @@ case \$( /usr/bin/tty ) in
 esac
 EOT
         # performance and secuirty tweaks
-        if [[ "$TLP" -eq 1 ]]; then
+        if [[ $TLP -eq 1 ]]; then
                 arch-chroot /mnt curl -sL $BASE_URL/configs/system/sysctl/99-performance-laptop.conf -o /etc/sysctl.d/99-performance.conf
         else
                 arch-chroot /mnt curl -sL $BASE_URL/configs/system/sysctl/99-performance-desktop.conf -o /etc/sysctl.d/99-performance.conf
         fi
 
-        echo "tcp_bbr" >/mnt/etc/modules-load.d/bbr.conf
+        echo "tcp_bbr" > /mnt/etc/modules-load.d/bbr.conf
 
         # Create the pacman mirrorlist updater service
-        cat <<EOT >/mnt/etc/systemd/system/reflector.service
+        cat << EOT > /mnt/etc/systemd/system/reflector.service
 [Unit]
 Description=Pacman mirrorlist update
 Wants=network-online.target
@@ -471,7 +471,7 @@ ExecStart=/usr/bin/reflector -c GB -l 25 --age 12 -p https --sort rate --save /e
 WantedBy=multi-user.target
 EOT
 
-        cat <<EOT >/mnt/etc/modprobe.d/blacklist.conf
+        cat << EOT > /mnt/etc/modprobe.d/blacklist.conf
 blacklist iTCO_wdt
 blacklist pcspkr
 blacklist joydev
@@ -484,11 +484,11 @@ blacklist nouveau
 EOT
 
         # for 11th cpu or lower
-        cat <<EOT >/mnt/etc/modprobe.d/i915.conf
+        cat << EOT > /mnt/etc/modprobe.d/i915.conf
 options i915 enable_guc=2
 EOT
 
-        cat <<EOT >/mnt/etc/udev/rules.d/60-ioschedulers.rules
+        cat << EOT > /mnt/etc/udev/rules.d/60-ioschedulers.rules
 # set scheduler for NVMe
 ACTION=="add|change", KERNEL=="nvme[0-9]*", ATTR{queue/scheduler}="none"
 # set scheduler for SSD and eMMC
@@ -507,19 +507,19 @@ EOT
         HOOKS_CRYPT="(systemd autodetect microcode keyboard sd-vconsole modconf kms block sd-encrypt lvm2 filesystems)"
         HOOKS_RAID_CRYPT="(systemd autodetect microcode keyboard sd-vconsole modconf kms block mdadm_udev sd-encrypt lvm2 filesystems)"
 
-        if [[ "$USE_RAID" -eq 1 ]]; then
-                mdadm --detail --scan >>/mnt/etc/mdadm.conf
+        if [[ $USE_RAID -eq 1 ]]; then
+                mdadm --detail --scan >> /mnt/etc/mdadm.conf
                 sed -i 's/^BINARIES=.*$/BINARIES=(mdmon)/' /mnt/etc/mkinitcpio.conf
         fi
 
-        if [[ "$USE_CRYPT" -eq 1 ]]; then
-                if [[ "$USE_RAID" -eq 1 ]]; then
+        if [[ $USE_CRYPT -eq 1 ]]; then
+                if [[ $USE_RAID -eq 1 ]]; then
                         HOOKS="$HOOKS_RAID_CRYPT"
                 else
                         HOOKS="$HOOKS_CRYPT"
                 fi
         else
-                if [[ "$USE_RAID" -eq 1 ]]; then
+                if [[ $USE_RAID -eq 1 ]]; then
                         HOOKS="$HOOKS_RAID"
                 fi
         fi
@@ -536,7 +536,7 @@ EOT
         arch-chroot /mnt curl -sL $BASE_URL/fonts/acorn/console/bedstead-10.psf.gz -o /usr/share/kbd/consolefonts/bedstead-10.psf.gz
         arch-chroot /mnt curl -sL $BASE_URL/fonts/acorn/console/bedstead-20.psf.gz -o /usr/share/kbd/consolefonts/bedstead-20.psf.gz
         arch-chroot /mnt curl -sL $BASE_URL/fonts/acorn/console/acorn.psf.gz -o /usr/share/kbd/consolefonts/acorn.psf.gz
-        echo "FONT=bedstead-10" >>/mnt/etc/vconsole.conf
+        echo "FONT=bedstead-10" >> /mnt/etc/vconsole.conf
 
         # Enable services
         echo "Enabling services..."
@@ -547,31 +547,31 @@ EOT
         arch-chroot /mnt systemctl enable fstrim.timer
         arch-chroot /mnt systemctl enable sshd
 
-        if [[ "$TLP" -eq 1 ]]; then
+        if [[ $TLP -eq 1 ]]; then
                 arch-chroot /mnt systemctl enable tlp.service
                 arch-chroot /mnt systemctl enable NetworkManager-dispatcher.service
                 arch-chroot /mnt systemctl mask systemd-rfkill.service systemd-rfkill.socket
         fi
 
-        if [[ "$USE_CRYPT" -eq 1 ]]; then
+        if [[ $USE_CRYPT -eq 1 ]]; then
                 arch-chroot /mnt systemctl enable lvm2-monitor
         else
                 arch-chroot /mnt systemctl mask lvm2-monitor
         fi
 
-        if [[ "$MAC" -eq 1 ]]; then
-                echo "coretemp" >>/mnt/etc/modules-load.d/apple.conf
-                echo "applesmc" >>/mnt/etc/modules-load.d/apple.conf
+        if [[ $MAC -eq 1 ]]; then
+                echo "coretemp" >> /mnt/etc/modules-load.d/apple.conf
+                echo "applesmc" >> /mnt/etc/modules-load.d/apple.conf
                 sed -i '/blacklist mac_hid/d; /blacklist uvcvideo/d' /mnt/etc/modprobe.d/blacklist.conf
                 # Set macbook keyboard fn keys to use media keys by default
-                echo "options hid_apple fnmode=1" >/mnt/etc/modprobe.d/hid_apple.conf
+                echo "options hid_apple fnmode=1" > /mnt/etc/modprobe.d/hid_apple.conf
         fi
 
         arch-chroot /mnt systemctl mask systemd-random-seed
 }
 
 installbootloader() {
-        if [[ "$USE_GRUB" -eq 1 ]]; then
+        if [[ $USE_GRUB -eq 1 ]]; then
                 installbootloader-grub
         else
                 installbootloader-systemd
@@ -602,95 +602,93 @@ installbootloader-grub() {
 }
 
 installbootloader-systemd() {
-    # --- Install systemd-boot ---
-    arch-chroot /mnt bootctl install
+        # --- Install systemd-boot ---
+        arch-chroot /mnt bootctl install
 
-    # --- Detect CPU microcode ---
-    CPU_VENDOR=$(arch-chroot /mnt lscpu | awk '/Vendor ID:/ {print $3}')
-    if [[ "$CPU_VENDOR" == "GenuineIntel" ]]; then
-        MICROCODE="intel-ucode.img"
-    elif [[ "$CPU_VENDOR" == "AuthenticAMD" ]]; then
-        MICROCODE="amd-ucode.img"
-    else
-        MICROCODE=""
-    fi
+        # --- Detect CPU microcode ---
+        CPU_VENDOR=$(arch-chroot /mnt lscpu | awk '/Vendor ID:/ {print $3}')
+        if [[ $CPU_VENDOR == "GenuineIntel" ]]; then
+                MICROCODE="intel-ucode.img"
+        elif [[ $CPU_VENDOR == "AuthenticAMD" ]]; then
+                MICROCODE="amd-ucode.img"
+        else
+                MICROCODE=""
+        fi
 
-    # --- Setup kernel options ---
-    if [[ "$USE_CRYPT" -eq 1 ]]; then
-        cp header.img /mnt/
-        cp header.img /mnt/boot/
+        # --- Setup kernel options ---
+        if [[ $USE_CRYPT -eq 1 ]]; then
+                cp header.img /mnt/
+                cp header.img /mnt/boot/
 
-        # Create LUKS keyfile for passwordless boot
-        arch-chroot /mnt dd bs=512 count=4 if=/dev/random of=/crypto_keyfile.bin iflag=fullblock
-        arch-chroot /mnt chmod 600 /crypto_keyfile.bin
-        arch-chroot /mnt cryptsetup luksAddKey "$realrootdev" /crypto_keyfile.bin --header /boot/header.img
+                # Create LUKS keyfile for passwordless boot
+                arch-chroot /mnt dd bs=512 count=4 if=/dev/random of=/crypto_keyfile.bin iflag=fullblock
+                arch-chroot /mnt chmod 600 /crypto_keyfile.bin
+                arch-chroot /mnt cryptsetup luksAddKey "$realrootdev" /crypto_keyfile.bin --header /boot/header.img
 
-        # Ensure initramfs includes keyfile
-        arch-chroot /mnt sed -i 's/FILES=()/FILES=(\/header.img \/crypto_keyfile.bin)/' /etc/mkinitcpio.conf
+                # Ensure initramfs includes keyfile
+                arch-chroot /mnt sed -i 's/FILES=()/FILES=(\/header.img \/crypto_keyfile.bin)/' /etc/mkinitcpio.conf
 
-        BOOTUUID=$(blkid -s UUID -o value "$bootdev")
+                BOOTUUID=$(blkid -s UUID -o value "$bootdev")
 
-        options="rd.luks.name=$CRYPTHEADERUUID=cryptlvm \
+                options="rd.luks.name=$CRYPTHEADERUUID=cryptlvm \
 rd.luks.options=$CRYPTHEADERUUID=header=/header.img:UUID=$BOOTUUID \
 rd.luks.key=/crypto_keyfile.bin \
 rd.luks.data=$CRYPTHEADERUUID=$realrootdev \
 root=/dev/vg1/root rw rootflags=subvol=@ \
 resume=$swapdev quiet loglevel=3 systemd.show_status=auto \
 rd.udev.log_level=3 nowatchdog mitigations=off"
-    else
-        options="root=UUID=$ROOTUUID rw rootflags=subvol=@ \
+        else
+                options="root=UUID=$ROOTUUID rw rootflags=subvol=@ \
 resume=$swapdev quiet loglevel=3 systemd.show_status=auto \
 rd.udev.log_level=3 nowatchdog mitigations=off"
-    fi
+        fi
 
-
-    # --- Create systemd-boot loader entry ---
-    ENTRY_FILE="/mnt/boot/loader/entries/arch.conf"
-    cat <<EOT >"$ENTRY_FILE"
+        # --- Create systemd-boot loader entry ---
+        ENTRY_FILE="/mnt/boot/loader/entries/arch.conf"
+        cat << EOT > "$ENTRY_FILE"
 title   Arch Linux
 linux   /vmlinuz-linux-zen
 initrd  /initramfs-linux-zen.img
 EOT
 
-    # Add microcode if detected
-    if [[ -n "$MICROCODE" ]]; then
-        sed -i "2i initrd  /$MICROCODE" "$ENTRY_FILE"
-    fi
+        # Add microcode if detected
+        if [[ -n $MICROCODE ]]; then
+                sed -i "2i initrd  /$MICROCODE" "$ENTRY_FILE"
+        fi
 
-    # Append kernel options
-    echo "options $options" >>"$ENTRY_FILE"
+        # Append kernel options
+        echo "options $options" >> "$ENTRY_FILE"
 
-    # --- Create EFI stub entry with efibootmgr ---
-    clean_options="${options/:UUID=$BOOTUUID/}"
-    if [ ! -d /mnt/etc/kernel/ ]; then mkdir /mnt/etc/kernel/; fi
+        # --- Create EFI stub entry with efibootmgr ---
+        clean_options="${options/:UUID=$BOOTUUID/}"
+        if [ ! -d /mnt/etc/kernel/ ]; then mkdir /mnt/etc/kernel/; fi
 
-    echo "$clean_options" > /mnt/etc/kernel/cmdline
+        echo "$clean_options" > /mnt/etc/kernel/cmdline
 
-    arch-chroot /mnt sed -i \
-    -e 's/^#default_options=/default_options=/' \
-    -e 's|^#default_uki=".*"|default_uki="/boot/EFI/Linux/arch-linux-zen.efi"|' \
-    /etc/mkinitcpio.d/linux-zen.preset
+        arch-chroot /mnt sed -i \
+                -e 's/^#default_options=/default_options=/' \
+                -e 's|^#default_uki=".*"|default_uki="/boot/EFI/Linux/arch-linux-zen.efi"|' \
+                /etc/mkinitcpio.d/linux-zen.preset
 
-    # Split disk and partition
-    disk=$(echo $bootdev | sed 's/[0-9]*$//')
-    part=$(echo $bootdev | grep -o '[0-9]*$')
+        # Split disk and partition
+        disk=$(echo $bootdev | sed 's/[0-9]*$//')
+        part=$(echo $bootdev | grep -o '[0-9]*$')
 
-    # Create EFI stub boot entry
-    arch-chroot /mnt efibootmgr --create \
-        --disk "$disk" \
-        --part "$part" \
-        --label "Arch Linux (UKI)" \
-        --loader '\EFI\Linux\arch-linux-zen.efi'
+        # Create EFI stub boot entry
+        arch-chroot /mnt efibootmgr --create \
+                --disk "$disk" \
+                --part "$part" \
+                --label "Arch Linux (UKI)" \
+                --loader '\EFI\Linux\arch-linux-zen.efi'
 }
-
 
 setupuser() {
         arch-chroot /mnt useradd -m -G wheel $user
         arch-chroot /mnt sed -i 's/# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
-        echo "Defaults insults" >>/mnt/etc/sudoers
-        echo "${user} ALL=(ALL) NOPASSWD: /usr/bin/mount" >>/mnt/etc/sudoers
-        echo "${user} ALL=(ALL) NOPASSWD: /usr/bin/umount" >>/mnt/etc/sudoers
-        echo "${user} ALL=(ALL) NOPASSWD: /usr/bin/sed" >>/mnt/etc/sudoers
+        echo "Defaults insults" >> /mnt/etc/sudoers
+        echo "${user} ALL=(ALL) NOPASSWD: /usr/bin/mount" >> /mnt/etc/sudoers
+        echo "${user} ALL=(ALL) NOPASSWD: /usr/bin/umount" >> /mnt/etc/sudoers
+        echo "${user} ALL=(ALL) NOPASSWD: /usr/bin/sed" >> /mnt/etc/sudoers
 
         # Set root password
         echo "Setting user and root password..."
@@ -724,8 +722,8 @@ setupuser() {
         arch-chroot /mnt chmod a+x /home/$user/post-install
 
         # Add shell-option to ~/.inputrc to enable case-insensitive tab completion
-        if [ ! -a /mnt/home/$user/.inputrc ]; then echo '$include /etc/inputrc' >/mnt/home/$user/.inputrc; fi
-        echo 'set completion-ignore-case On' >>/mnt/home/$user/.inputrc
+        if [ ! -a /mnt/home/$user/.inputrc ]; then echo '$include /etc/inputrc' > /mnt/home/$user/.inputrc; fi
+        echo 'set completion-ignore-case On' >> /mnt/home/$user/.inputrc
 
         # remove last login message on console login
         arch-chroot /mnt touch /home/$user/.hushlogin
@@ -774,7 +772,7 @@ wifi_connect() {
         }
 
         # Scan for networks
-        NETWORKS=$(iwctl station wlan0 scan >/dev/null 2>&1 && sleep 2 && iwctl station wlan0 get-networks | awk '(NR > 5) {print $1}')
+        NETWORKS=$(iwctl station wlan0 scan > /dev/null 2>&1 && sleep 2 && iwctl station wlan0 get-networks | awk '(NR > 5) {print $1}')
         if [[ -z $NETWORKS ]]; then
                 tput clear # Reset the terminal before showing a dialog
                 whiptail --backtitle "$BACKTITLE" --msgbox "No networks found. Please try again." 10 60
@@ -785,7 +783,7 @@ wifi_connect() {
         MENU=()
         while IFS= read -r NETWORK; do
                 MENU+=("$NETWORK" "Available")
-        done <<<"$NETWORKS"
+        done <<< "$NETWORKS"
 
         # Display network selection menu
         SSID=$(whiptail --backtitle "$BACKTITLE" --title "Select Wi-Fi Network" --menu "Available Networks:" 20 60 10 "${MENU[@]}" 3>&1 1>&2 2>&3)
@@ -812,7 +810,7 @@ wifi_connect() {
                 echo "10"
                 echo "Attempting to connect to $SSID..."
                 sleep 1
-                iwctl --passphrase "$PASSPHRASE" station wlan0 connect "$SSID" >/dev/null
+                iwctl --passphrase "$PASSPHRASE" station wlan0 connect "$SSID" > /dev/null
                 if ! wait_with_retries "iwctl station wlan0 show | grep -q 'connected'" 10 2; then
                         echo "100"
                         echo "Failed to connect to $SSID."
@@ -837,7 +835,7 @@ wifi_connect() {
 
                 echo "75"
                 echo "Syncing time and date..."
-                timedatectl >/dev/null
+                timedatectl > /dev/null
                 sleep 3
 
                 # Step 3: Connection successful
@@ -856,7 +854,7 @@ wifi_connect() {
 }
 
 check_connection() {
-        if ! ping -q -w1 -c1 google.com &>/dev/null; then
+        if ! ping -q -w1 -c1 google.com &> /dev/null; then
                 whiptail --backtitle "$BACKTITLE" --msgbox --title "No Network Connection" \
                         "You need to be connected to the Internet.\n\nClick OK to begin Wi-Fi setup" 10 60
                 wifi_connect
@@ -891,7 +889,7 @@ initialise() {
 self_update() {
         curl -sL "$BASE_URL/version" -o /tmp/version
         local new_version
-        new_version=$(</tmp/version)
+        new_version=$(< /tmp/version)
 
         if ((VERSION < new_version)); then
                 curl -sL "$BASE_URL/install" -o install
@@ -917,7 +915,7 @@ slient_install() {
 }
 
 display_help() {
-        cat <<EOF
+        cat << EOF
 
 Syntax: install [-c|h|m COUNTRY_CODE|s]
 Options:
@@ -940,7 +938,7 @@ while getopts ":chm:s" option; do
         c) # clean
                 swapoff -a
                 rm /tmp/packages
-                umount -A /mnt/boot /mnt &>/dev/null || true
+                umount -A /mnt/boot /mnt &> /dev/null || true
                 lsblk
                 exit
                 ;;
@@ -975,7 +973,7 @@ self_update
 
 [[ ! -f /tmp/packages ]] && initialise
 
-if [[ "$AUTO" -eq 1 ]]; then
+if [[ $AUTO -eq 1 ]]; then
         slient_install
 else
         mainmenu
