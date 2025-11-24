@@ -128,3 +128,4 @@ zsh
 broadcom-wl-dkms
 linux-headers
 dkms
+networkmanager
