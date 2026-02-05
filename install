@@ -24,7 +24,6 @@ BASE_URL="https://raw.githubusercontent.com/prstephens/archinstallscript/master/
 USE_CRYPT=0
 USE_RAID=0
 TLP=0
-USE_GRUB=0
 MIRROR_COUNTRY=GB
 AUTO=0 # switch to make a non interactive install (for testing)
 MAC=0
@@ -349,26 +348,8 @@ performinstall() {
                 echo $'\nbroadcom-wl-dkms' >> /tmp/packages
         fi
 
-        if [[ $USE_CRYPT -eq 1 || $AUTO -eq 1 ]]; then
-                bootloader="Systemd"
-                mount $bootdev /mnt/boot
-        else
-                bootloader=$(whiptail --backtitle "$BACKTITLE" --title "Select a bootloader to install" --radiolist "Choose" 20 30 5 \
-                        "Systemd" "" Systemd \
-                        "GRUB" "" GRUB \
-                        3>&1 1>&2 2>&3)
-        fi
-
-        if [[ $bootloader == "GRUB" ]]; then
-                USE_GRUB=1
-                echo $'\ngrub\nos-prober\ngrub-btrfs' >> /tmp/packages
-
-                mkdir /mnt/boot/efi
-                mount $bootdev /mnt/boot/efi
-        else
-                mount $bootdev /mnt/boot
-        fi
-
+        mount $bootdev /mnt/boot
+      
         if [[ $USE_RAID -eq 1 ]]; then
                 echo $'\nmdadm' >> /tmp/packages
         fi
@@ -571,51 +552,7 @@ EOT
 }
 
 installbootloader() {
-        if [[ $USE_GRUB -eq 1 ]]; then
-                installbootloader-grub
-        else
-                installbootloader-systemd
-        fi
 
-        # ### Make the Boot files ###
-        arch-chroot /mnt mkinitcpio -P
-}
-
-installbootloader-grub() {
-        arch-chroot /mnt sed -i "s|^GRUB_CMDLINE_LINUX=.*$|GRUB_CMDLINE_LINUX=\"root=UUID=$ROOTUUID rw rootflags=subvol=@ resume=$swapdev\"|" /etc/default/grub
-
-        # faster grub boot time - displays no menu. be warned
-        #         cat <<EOT >> /mnt/etc/default/grub
-        # GRUB_FORCE_HIDDEN_MENU=true
-        # GRUB_TIMEOUT=0
-        # GRUB_TIMEOUT_STYLE=hidden
-        # GRUB_HIDDEN_TIMEOUT=0
-        # GRUB_HIDDEN_TIMEOUT_QUIET=true
-        # GRUB_RECORDFAIL_TIMEOUT=0
-        # EOT
-        arch-chroot /mnt sed -i 's/^GRUB_GFXMODE=.*$/GRUB_GFXMODE=1920x1080x32/' /etc/default/grub
-        arch-chroot /mnt sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT=.*$/GRUB_CMDLINE_LINUX_DEFAULT="quiet loglevel=3 systemd.show_status=auto rd.udev.log_level=3 nowatchdog mitigations=off"/' /etc/default/grub
-        arch-chroot /mnt sed -i 's/^#GRUB_DISABLE_OS_PROBER=.*$/GRUB_DISABLE_OS_PROBER="false"/' /etc/default/grub
-        arch-chroot /mnt os-prober
-        arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --recheck
-        arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
-}
-
-installbootloader-systemd() {
-        # --- Install systemd-boot ---
-        arch-chroot /mnt bootctl install
-
-        # --- Detect CPU microcode ---
-        CPU_VENDOR=$(arch-chroot /mnt lscpu | awk '/Vendor ID:/ {print $3}')
-        if [[ $CPU_VENDOR == "GenuineIntel" ]]; then
-                MICROCODE="intel-ucode.img"
-        elif [[ $CPU_VENDOR == "AuthenticAMD" ]]; then
-                MICROCODE="amd-ucode.img"
-        else
-                MICROCODE=""
-        fi
-
-        # --- Setup kernel options ---
         if [[ $USE_CRYPT -eq 1 ]]; then
                 cp header.img /mnt/
                 cp header.img /mnt/boot/
@@ -631,7 +568,7 @@ installbootloader-systemd() {
                 BOOTUUID=$(blkid -s UUID -o value "$bootdev")
 
                 options="rd.luks.name=$CRYPTHEADERUUID=cryptlvm \
-rd.luks.options=$CRYPTHEADERUUID=header=/header.img:UUID=$BOOTUUID \
+rd.luks.options=$CRYPTHEADERUUID=header=/header.img \
 rd.luks.key=/crypto_keyfile.bin \
 rd.luks.data=$CRYPTHEADERUUID=$realrootdev \
 root=/dev/vg1/root rw rootflags=subvol=@ \
@@ -643,27 +580,11 @@ resume=$swapdev quiet loglevel=3 systemd.show_status=auto \
 rd.udev.log_level=3 nowatchdog mitigations=off"
         fi
 
-        # --- Create systemd-boot loader entry ---
-        ENTRY_FILE="/mnt/boot/loader/entries/arch.conf"
-        cat << EOT > "$ENTRY_FILE"
-title   Arch Linux
-linux   /vmlinuz-linux-zen
-initrd  /initramfs-linux-zen.img
-EOT
-
-        # Add microcode if detected
-        if [[ -n $MICROCODE ]]; then
-                sed -i "2i initrd  /$MICROCODE" "$ENTRY_FILE"
-        fi
-
-        # Append kernel options
-        echo "options $options" >> "$ENTRY_FILE"
-
         # --- Create EFI stub entry with efibootmgr ---
-        clean_options="${options/:UUID=$BOOTUUID/}"
+
         if [ ! -d /mnt/etc/kernel/ ]; then mkdir /mnt/etc/kernel/; fi
 
-        echo "$clean_options" > /mnt/etc/kernel/cmdline
+        echo "$options" > /mnt/etc/kernel/cmdline
 
         arch-chroot /mnt sed -i \
                 -e 's/^#default_options=/default_options=/' \
@@ -680,6 +601,9 @@ EOT
                 --part "$part" \
                 --label "Arch Linux (UKI)" \
                 --loader '\EFI\Linux\arch-linux-zen.efi'
+
+        # ### Make the Boot files ###
+        arch-chroot /mnt mkinitcpio -P
 }
 
 setupuser() {
@@ -716,7 +640,6 @@ setupuser() {
         arch-chroot /mnt sed -i "s|^rootdev=.*$|rootdev=${rootdev}|" /home/$user/post-install
         arch-chroot /mnt sed -i "s|^USE_CRYPT=.*$|USE_CRYPT=${USE_CRYPT}|" /home/$user/post-install
         arch-chroot /mnt sed -i "s|^USE_RAID=.*$|USE_RAID=${USE_RAID}|" /home/$user/post-install
-        arch-chroot /mnt sed -i "s|^USE_GRUB=.*$|USE_GRUB=${USE_GRUB}|" /home/$user/post-install
         arch-chroot /mnt sed -i "s|^TLP=.*$|TLP=${TLP}|" /home/$user/post-install
         arch-chroot /mnt sed -i "s|^MAC=.*$|MAC=${MAC}|" /home/$user/post-install
         arch-chroot /mnt chmod a+x /home/$user/post-install

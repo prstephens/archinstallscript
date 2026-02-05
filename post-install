@@ -15,7 +15,6 @@ BASE_URL="https://raw.githubusercontent.com/prstephens/archinstallscript/master/
 rootdev=/root/dev # changed on the fly during install
 USE_CRYPT=0       # changed on the fly during install
 USE_RAID=0        # changed on the fly during install
-USE_GRUB=0        # changed on the fly during install
 TLP=0             # changed on the fly during install
 MAC=0             # changed on the fly during install
 
@@ -235,13 +234,8 @@ install_plymouth() {
         if ! pacman -Qs plymouth >/dev/null; then
                 sudo pacman -S --noconfirm --needed plymouth
 
-                if [[ "$USE_GRUB" -eq 1 ]]; then
-                        sudo sed -i 's/quiet/quiet splash/' /etc/default/grub
-                        sudo grub-mkconfig -o /boot/grub/grub.cfg
-                else
-                        sudo sed -i 's/quiet/quiet splash/' /boot/loader/entries/arch.conf
-                fi
-
+                sudo sed -i 's/quiet/quiet splash/' /etc/kernel/cmdline
+                
                 sudo sed -i 's/systemd/systemd plymouth/' /etc/mkinitcpio.conf
                 sudo mkinitcpio -P
         fi
@@ -763,40 +757,11 @@ initialise() {
 
         systemctl --user enable --now pipewire.service pipewire-pulse.service wireplumber.service
 
-        yay -S snapper-rollback snp downgrade --noconfirm
+        yay -S snapper-rollback snp snap-pac downgrade --noconfirm
 
         # put root dev into snapper-rollback.conf
         echo "dev=${rootdev}" | sudo tee -a /etc/snapper-rollback.conf
-
-        if [[ "$USE_GRUB" -eq 1 ]]; then
-                yay -S snap-pac-grub --noconfirm
-
-                # config for booting a snapshot in read only
-                sudo cp /lib/initcpio/hooks/grub-btrfs-overlayfs /etc/initcpio/hooks
-                sudo cp /lib/initcpio/install/grub-btrfs-overlayfs /etc/initcpio/install
-
-                HOOKS="(systemd autodetect microcode keyboard sd-vconsole modconf kms block filesystems grub-btrfs-overlayfs)"
-                HOOKS_RAID="(systemd autodetect keyboard microcode sd-vconsole modconf kms block mdadm_udev filesystems grub-btrfs-overlayfs)"
-                HOOKS_CRYPT="(systemd autodetect microcode keyboard sd-vconsole modconf kms block sd-encrypt lvm2 filesystems grub-btrfs-overlayfs)"
-                HOOKS_RAID_CRYPT="(systemd autodetect microcode keyboard sd-vconsole modconf kms block mdadm_udev sd-encrypt lvm2 filesystems grub-btrfs-overlayfs)"
-
-                if [[ "$USE_CRYPT" -eq 1 ]]; then
-                        if [[ "$USE_RAID" -eq 1 ]]; then
-                                HOOKS="$HOOKS_RAID_CRYPT"
-                        else
-                                HOOKS="$HOOKS_CRYPT"
-                        fi
-                else
-                        if [[ "$USE_RAID" -eq 1 ]]; then
-                                HOOKS="$HOOKS_RAID"
-                        fi
-                fi
-
-                sed -i "s|^HOOKS=.*$|HOOKS=${HOOKS}|" /mnt/etc/mkinitcpio.conf
-        else
-                yay -S snap-pac systemd-boot-pacman-hook --noconfirm
-        fi
-
+        
         # Check if we are a macbook
         if [[ "$MAC" -eq 1 ]]; then
                 yay -S facetimehd-dkms facetimehd-data mbpfan macfanctld
