@@ -603,6 +603,7 @@ rd.udev.log_level=3 nowatchdog mitigations=off"
                 --loader '\EFI\Linux\arch-linux-zen.efi'
 
         # ### Make the Boot files ###
+        arch-chroot /mnt mkdir -p /boot/EFI/Linux
         arch-chroot /mnt mkinitcpio -P
 }
 
