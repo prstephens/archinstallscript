@@ -562,7 +562,7 @@ installbootloader() {
                 arch-chroot /mnt cryptsetup luksAddKey "$realrootdev" /boot/crypto_keyfile.bin --header /boot/header.img
 
                 # Ensure initramfs includes keyfile
-                arch-chroot /mnt sed -i 's/FILES=()/FILES=(/boot/header.img /boot/crypto_keyfile.bin)/' /etc/mkinitcpio.conf
+                arch-chroot /mnt sed -i 's/FILES=()/FILES=(\/boot\/header.img \/boot\/crypto_keyfile.bin)/' /etc/mkinitcpio.conf
 
                 options="rd.luks.name=$CRYPTHEADERUUID=cryptlvm \
 rd.luks.options=$CRYPTHEADERUUID=header=/header.img \
