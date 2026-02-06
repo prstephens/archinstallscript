@@ -565,8 +565,8 @@ installbootloader() {
                 arch-chroot /mnt sed -i 's/FILES=()/FILES=(\/boot\/header.img \/boot\/crypto_keyfile.bin)/' /etc/mkinitcpio.conf
 
                 options="rd.luks.name=$CRYPTHEADERUUID=cryptlvm \
-rd.luks.options=$CRYPTHEADERUUID=header=/header.img \
-rd.luks.key=/crypto_keyfile.bin \
+rd.luks.options=$CRYPTHEADERUUID=header=/boot/header.img \
+rd.luks.key=/boot/crypto_keyfile.bin \
 rd.luks.data=$CRYPTHEADERUUID=$realrootdev \
 root=/dev/vg1/root rw rootflags=subvol=@ \
 resume=$swapdev quiet loglevel=3 systemd.show_status=auto \
