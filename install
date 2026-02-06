@@ -320,7 +320,7 @@ performinstall() {
         mount -o noatime,commit=60,compress=zstd,space_cache=v2,subvol=@ $rootdev /mnt
 
         # You need to manually create folders to mount the other subvolumes at
-        mkdir -p /mnt/{boot,home,var/log,var/cache,/tmp,.snapshots}
+        mkdir -p /mnt/{efi,boot,home,var/log,var/cache,tmp,.snapshots}
 
         mount -o noatime,commit=60,compress=zstd,space_cache=v2,discard=async,subvol=@home $rootdev /mnt/home
         mount -o noatime,commit=60,compress=zstd,space_cache=v2,discard=async,subvol=@var_log $rootdev /mnt/var/log
@@ -348,7 +348,7 @@ performinstall() {
                 echo $'\nbroadcom-wl-dkms' >> /tmp/packages
         fi
 
-        mount $bootdev /mnt/boot
+        mount $bootdev /mnt/efi
       
         if [[ $USE_RAID -eq 1 ]]; then
                 echo $'\nmdadm' >> /tmp/packages
@@ -554,18 +554,15 @@ EOT
 installbootloader() {
 
         if [[ $USE_CRYPT -eq 1 ]]; then
-                cp header.img /mnt/
                 cp header.img /mnt/boot/
 
                 # Create LUKS keyfile for passwordless boot
-                arch-chroot /mnt dd bs=512 count=4 if=/dev/random of=/crypto_keyfile.bin iflag=fullblock
-                arch-chroot /mnt chmod 600 /crypto_keyfile.bin
-                arch-chroot /mnt cryptsetup luksAddKey "$realrootdev" /crypto_keyfile.bin --header /boot/header.img
+                arch-chroot /mnt dd bs=512 count=4 if=/dev/random of=/boot/crypto_keyfile.bin iflag=fullblock
+                arch-chroot /mnt chmod 600 /boot/crypto_keyfile.bin
+                arch-chroot /mnt cryptsetup luksAddKey "$realrootdev" /boot/crypto_keyfile.bin --header /boot/header.img
 
                 # Ensure initramfs includes keyfile
-                arch-chroot /mnt sed -i 's/FILES=()/FILES=(\/header.img \/crypto_keyfile.bin)/' /etc/mkinitcpio.conf
-
-                BOOTUUID=$(blkid -s UUID -o value "$bootdev")
+                arch-chroot /mnt sed -i 's/FILES=()/FILES=(/boot/header.img /boot/crypto_keyfile.bin)/' /etc/mkinitcpio.conf
 
                 options="rd.luks.name=$CRYPTHEADERUUID=cryptlvm \
 rd.luks.options=$CRYPTHEADERUUID=header=/header.img \
@@ -588,7 +585,7 @@ rd.udev.log_level=3 nowatchdog mitigations=off"
 
         arch-chroot /mnt sed -i \
                 -e 's/^#default_options=/default_options=/' \
-                -e 's|^#default_uki=".*"|default_uki="/boot/EFI/Linux/arch-linux-zen.efi"|' \
+                -e 's|^#default_uki=".*"|default_uki="/efi/EFI/Linux/arch-linux-zen.efi"|' \
                 /etc/mkinitcpio.d/linux-zen.preset
 
         # Split disk and partition
@@ -603,7 +600,7 @@ rd.udev.log_level=3 nowatchdog mitigations=off"
                 --loader '\EFI\Linux\arch-linux-zen.efi'
 
         # ### Make the Boot files ###
-        arch-chroot /mnt mkdir -p /boot/EFI/Linux
+        arch-chroot /mnt mkdir -p /efi/EFI/Linux
         arch-chroot /mnt mkinitcpio -P
 }
 
