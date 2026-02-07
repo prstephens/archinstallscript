@@ -298,7 +298,7 @@ checks() {
 add_package() {
         local pkg=$1
         if ! grep -qx "${pkg}" /tmp/packages; then
-                echo "${pkg}" >> /tmp/packages
+                echo "\n${pkg}" >> /tmp/packages
         fi
 }
 
