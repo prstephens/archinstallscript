@@ -97,8 +97,8 @@ mainmenu() {
 }
 
 yesno() {
-        title=$1
-        message=$2
+        local title=$1
+        local message=$2
         whiptail --backtitle "${BACKTITLE}" --title "${title}" --fb --yesno "${message}" --defaultno 0 78
 }
 
@@ -155,8 +155,8 @@ enablelvm() {
 
         dd if=/dev/zero of=header.img bs=16M count=1
         chmod 600 header.img
-        cryptsetup luksFormat $realrootdev --offset 32768 --header header.img
-        cryptsetup open --header header.img $realrootdev cryptlvm
+        cryptsetup luksFormat "${realrootdev}" --offset 32768 --header header.img
+        cryptsetup open --header header.img "${realrootdev}" cryptlvm
 
         CRYPTHEADERUUID=$(blkid -s UUID -o value header.img)
 
@@ -164,27 +164,30 @@ enablelvm() {
         pvcreate /dev/mapper/cryptlvm
         vgcreate vg1 /dev/mapper/cryptlvm
 
-        swapspace=$(whiptail --backtitle "$BACKTITLE" --inputbox "Enter SWAP size:" --fb 0 20 3>&1 1>&2 2>&3)
+        swapspace=$(whiptail --backtitle "$BACKTITLE" --inputbox "Enter SWAP size (GB):" --fb 0 24 3>&1 1>&2 2>&3)
 
-        lvcreate -L ${swapspace}G vg1 -n swap
+        lvcreate -L "${swapspace}G" vg1 -n swap
         lvcreate -l 100%FREE vg1 -n root
 }
 
 chooseencryptpartition() {
+        local itemsinfo
+        local items
+        local deviceitems
+        local options=()
+        local optionstoremove=()
+        local IFS_ORIG=$IFS
         itemsinfo=$(lsblk -o NAME,SIZE,FSTYPE)
         items=$(lsblk -p -n -l -o NAME -e 7,11)
         deviceitems=$(lsblk -d -n -l -o NAME -e 7,11)
-        options=()
-        optionstoremove=()
-        IFS_ORIG=$IFS
         IFS=$'\n'
         for item in ${deviceitems}; do
                 optionstoremove+=("/dev/${item}")
         done
         for item in ${items}; do
-                if [[ ! " ${optionstoremove[@]} " =~ " ${item} " ]]; then
+            if [[ ! " ${optionstoremove[*]} " =~ " ${item} " ]]; then
                         options+=("${item}" "")
-                fi
+            fi
         done
 
         realrootdev=$(whiptail --backtitle "${BACKTITLE}" --title "Select Root partition to encrypt" --menu "${itemsinfo}" --fb --default-item "${rootdev}" 0 78 0 \
@@ -197,20 +200,23 @@ chooseencryptpartition() {
 }
 
 choosepartitions() {
+        local itemsinfo
+        local items
+        local deviceitems
+        local options=()
+        local optionstoremove=()
+        local IFS_ORIG=$IFS
         itemsinfo=$(lsblk -o NAME,SIZE,FSTYPE)
         items=$(lsblk -p -n -l -o NAME -e 7,11)
         deviceitems=$(lsblk -d -n -l -o NAME -e 7,11)
-        options=()
-        optionstoremove=()
-        IFS_ORIG=$IFS
         IFS=$'\n'
         for item in ${deviceitems}; do
                 optionstoremove+=("/dev/${item}")
         done
         for item in ${items}; do
-                if [[ ! " ${optionstoremove[@]} " =~ " ${item} " ]]; then
+            if [[ ! " ${optionstoremove[*]} " =~ " ${item} " ]]; then
                         options+=("${item}" "")
-                fi
+            fi
         done
 
         bootdev=$(whiptail --backtitle "${BACKTITLE}" --title "Select Boot partition" --menu "${itemsinfo}" --fb --default-item "${bootdev}" 0 78 0 \
@@ -284,8 +290,15 @@ checks() {
                 mainmenu "MOUNT"
         fi
 
-        if yesno "### WARNING ###" "Do you want to format ${bootdev}? \n\nTHIS COULD ERASE EXISITING OPERATING SYSTEM BOOTLOADERS"; then
-                mkfs.fat -F 32 ${bootdev}
+        if [ -n "${bootdev}" ] && yesno "### WARNING ###" "Do you want to format ${bootdev}? \n\nTHIS COULD ERASE EXISITING OPERATING SYSTEM BOOTLOADERS"; then
+                mkfs.fat -F 32 "${bootdev}"
+        fi
+}
+
+add_package() {
+        local pkg=$1
+        if ! grep -qx "${pkg}" /tmp/packages; then
+                echo "${pkg}" >> /tmp/packages
         fi
 }
 
@@ -297,16 +310,16 @@ performinstall() {
         timedatectl set-ntp true
 
         # Setup the partitions
-        wipefs -a $rootdev
-        mkfs.btrfs $rootdev
+        wipefs -a "${rootdev}"
+        mkfs.btrfs -f "${rootdev}"
 
-        if [ ! "${swapdev}" = "" ]; then
-                mkswap $swapdev
-                swapon $swapdev
+        if [ -n "${swapdev}" ]; then
+                mkswap "${swapdev}"
+                swapon "${swapdev}"
         fi
 
         #root
-        mount $rootdev /mnt
+        mount "${rootdev}" /mnt
 
         echo "Creating BTRFS subvolumes..."
         btrfs su cr /mnt/@
@@ -317,26 +330,28 @@ performinstall() {
         btrfs su cr /mnt/@snapshots
         umount /mnt
 
-        mount -o noatime,commit=60,compress=zstd,space_cache=v2,subvol=@ $rootdev /mnt
+        mount -o noatime,commit=60,compress=zstd,space_cache=v2,subvol=@ "${rootdev}" /mnt
 
         # You need to manually create folders to mount the other subvolumes at
         mkdir -p /mnt/{efi,boot,home,var/log,var/cache,tmp,.snapshots}
 
-        mount -o noatime,commit=60,compress=zstd,space_cache=v2,discard=async,subvol=@home $rootdev /mnt/home
-        mount -o noatime,commit=60,compress=zstd,space_cache=v2,discard=async,subvol=@var_log $rootdev /mnt/var/log
-        mount -o noatime,commit=60,compress=zstd,space_cache=v2,discard=async,subvol=@var_cache $rootdev /mnt/var/cache
-        mount -o noatime,commit=60,compress=zstd,space_cache=v2,discard=async,subvol=@tmp $rootdev /mnt/tmp
-        mount -o noatime,commit=60,compress=zstd,space_cache=v2,discard=async,subvol=@snapshots $rootdev /mnt/.snapshots
+        mount -o noatime,commit=60,compress=zstd,space_cache=v2,discard=async,subvol=@home "${rootdev}" /mnt/home
+        mount -o noatime,commit=60,compress=zstd,space_cache=v2,discard=async,subvol=@var_log "${rootdev}" /mnt/var/log
+        mount -o noatime,commit=60,compress=zstd,space_cache=v2,discard=async,subvol=@var_cache "${rootdev}" /mnt/var/cache
+        mount -o noatime,commit=60,compress=zstd,space_cache=v2,discard=async,subvol=@tmp "${rootdev}" /mnt/tmp
+        mount -o noatime,commit=60,compress=zstd,space_cache=v2,discard=async,subvol=@snapshots "${rootdev}" /mnt/.snapshots
 
-        ROOTUUID=$(blkid -s UUID -o value $rootdev)
+        ROOTUUID=$(blkid -s UUID -o value "${rootdev}")
 
         # determine if we are installing on a laptop or desktop
         # if laptop, install tlp for better power management
         # see here: https://www.dmtf.org/sites/default/files/standards/documents/DSP0134_3.6.0.pdf
         chassis=$(cat /sys/class/dmi/id/chassis_type)
-        if exists_in_list "8,9,10" "," ${chassis}; then
+        if exists_in_list "8,9,10" "," "${chassis}"; then
                 TLP=1
-                echo $'\ntlp\ntlp-rdw\npowertop' >> /tmp/packages
+                add_package "tlp"
+                add_package "tlp-rdw"
+                add_package "powertop"
         fi
 
         # Read the product name from sysfs
@@ -345,17 +360,19 @@ performinstall() {
         # Check if the product name contains "macbook" (case-insensitive)
         if echo "$product_name" | grep -iq "macbook"; then
                 MAC=1
-                echo $'\nbroadcom-wl-dkms' >> /tmp/packages
+                add_package "broadcom-wl-dkms"
         fi
 
-        mount $bootdev /mnt/efi
+        if [ -n "${bootdev}" ]; then
+                mount "${bootdev}" /mnt/efi
+        fi
       
         if [[ $USE_RAID -eq 1 ]]; then
-                echo $'\nmdadm' >> /tmp/packages
+                add_package "mdadm"
         fi
 
         if [[ $USE_CRYPT -eq 1 ]]; then
-                echo $'\nlvm2' >> /tmp/packages
+                add_package "lvm2"
         fi
 
         # do the install!
@@ -365,10 +382,10 @@ performinstall() {
 }
 
 exists_in_list() {
-        LIST=$1
-        DELIMITER=$2
-        VALUE=$3
-        [[ $LIST =~ ($DELIMITER|^)$VALUE($DELIMITER|$) ]]
+        local LIST=$1
+        local DELIMITER=$2
+        local VALUE=$3
+        [[ $LIST =~ (${DELIMITER}|^)${VALUE}(${DELIMITER}|$) ]]
 }
 
 configuration() {
@@ -423,7 +440,7 @@ EOT
         # nano syntax highlighting
         echo "include /usr/share/nano/*.nanorc" >> /mnt/etc/nanorc
 
-        cat << EOT > /etc/profile.d/shell-timeout.sh
+        cat << EOT > /mnt/etc/profile.d/shell-timeout.sh
 TMOUT="\$(( 60*30 ))";
 [ -z "\$DISPLAY" ] && export TMOUT;
 case \$( /usr/bin/tty ) in
@@ -579,7 +596,7 @@ rd.udev.log_level=3 nowatchdog mitigations=off"
 
         # --- Create EFI stub entry with efibootmgr ---
 
-        if [ ! -d /mnt/etc/kernel/ ]; then mkdir /mnt/etc/kernel/; fi
+        if [ ! -d /mnt/etc/kernel/ ]; then mkdir -p /mnt/etc/kernel/; fi
 
         echo "$options" > /mnt/etc/kernel/cmdline
 
@@ -589,8 +606,8 @@ rd.udev.log_level=3 nowatchdog mitigations=off"
                 /etc/mkinitcpio.d/linux-zen.preset
 
         # Split disk and partition
-        disk=$(echo $bootdev | sed 's/[0-9]*$//')
-        part=$(echo $bootdev | grep -o '[0-9]*$')
+        disk=$(echo "${bootdev}" | sed 's/[0-9]*$//')
+        part=$(echo "${bootdev}" | grep -o '[0-9]*$')
 
         # Create EFI stub boot entry
         arch-chroot /mnt efibootmgr --create \
@@ -605,7 +622,7 @@ rd.udev.log_level=3 nowatchdog mitigations=off"
 }
 
 setupuser() {
-        arch-chroot /mnt useradd -m -G wheel $user
+        arch-chroot /mnt useradd -m -G wheel "${user}"
         arch-chroot /mnt sed -i 's/# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
         echo "Defaults insults" >> /mnt/etc/sudoers
         echo "${user} ALL=(ALL) NOPASSWD: /usr/bin/mount" >> /mnt/etc/sudoers
@@ -614,16 +631,16 @@ setupuser() {
 
         # Set root password
         echo "Setting user and root password..."
-        echo "${user}:${password}" | arch-chroot /mnt chpasswd --md5
-        echo "root:${password}" | arch-chroot /mnt chpasswd --md5
+        echo "${user}:${password}" | arch-chroot /mnt chpasswd -c SHA512
+        echo "root:${password}" | arch-chroot /mnt chpasswd -c SHA512
 
         # config files
         echo "Getting some config files..."
-        arch-chroot /mnt curl -sL $BASE_URL/configs/home/.Xresources-Dark -o /home/$user/.Xresources
-        arch-chroot /mnt curl -sL $BASE_URL/configs/home/.bashrc -o /home/$user/.bashrc
+        arch-chroot /mnt curl -sL $BASE_URL/configs/home/.Xresources-Dark -o /home/"${user}"/.Xresources
+        arch-chroot /mnt curl -sL $BASE_URL/configs/home/.bashrc -o /home/"${user}"/.bashrc
 
         # add a dummy file to let bashrc know to run post-install on first login
-        arch-chroot /mnt touch /home/$user/newbie
+        arch-chroot /mnt touch /home/"${user}"/newbie
 
         # awesome tty login
         arch-chroot /mnt curl -sL $BASE_URL/configs/system/issue -o /etc/issue
@@ -634,23 +651,23 @@ setupuser() {
 
         # Copy post-install file to /home/$user
         echo "Copy post-install file to /home/${user}..."
-        arch-chroot /mnt curl -sL $BASE_URL/post-install -o /home/$user/post-install
-        arch-chroot /mnt sed -i "s|^rootdev=.*$|rootdev=${rootdev}|" /home/$user/post-install
-        arch-chroot /mnt sed -i "s|^USE_CRYPT=.*$|USE_CRYPT=${USE_CRYPT}|" /home/$user/post-install
-        arch-chroot /mnt sed -i "s|^USE_RAID=.*$|USE_RAID=${USE_RAID}|" /home/$user/post-install
-        arch-chroot /mnt sed -i "s|^TLP=.*$|TLP=${TLP}|" /home/$user/post-install
-        arch-chroot /mnt sed -i "s|^MAC=.*$|MAC=${MAC}|" /home/$user/post-install
-        arch-chroot /mnt chmod a+x /home/$user/post-install
+        arch-chroot /mnt curl -sL $BASE_URL/post-install -o /home/"${user}"/post-install
+        arch-chroot /mnt sed -i "s|^rootdev=.*$|rootdev=${rootdev}|" /home/"${user}"/post-install
+        arch-chroot /mnt sed -i "s|^USE_CRYPT=.*$|USE_CRYPT=${USE_CRYPT}|" /home/"${user}"/post-install
+        arch-chroot /mnt sed -i "s|^USE_RAID=.*$|USE_RAID=${USE_RAID}|" /home/"${user}"/post-install
+        arch-chroot /mnt sed -i "s|^TLP=.*$|TLP=${TLP}|" /home/"${user}"/post-install
+        arch-chroot /mnt sed -i "s|^MAC=.*$|MAC=${MAC}|" /home/"${user}"/post-install
+        arch-chroot /mnt chmod a+x /home/"${user}"/post-install
 
         # Add shell-option to ~/.inputrc to enable case-insensitive tab completion
-        if [ ! -a /mnt/home/$user/.inputrc ]; then echo '$include /etc/inputrc' > /mnt/home/$user/.inputrc; fi
-        echo 'set completion-ignore-case On' >> /mnt/home/$user/.inputrc
+        if [ ! -a /mnt/home/"${user}"/.inputrc ]; then echo '$include /etc/inputrc' > /mnt/home/"${user}"/.inputrc; fi
+        echo 'set completion-ignore-case On' >> /mnt/home/"${user}"/.inputrc
 
         # remove last login message on console login
-        arch-chroot /mnt touch /home/$user/.hushlogin
+        arch-chroot /mnt touch /home/"${user}"/.hushlogin
 
         # own that stuff!
-        arch-chroot /mnt chown -R $user:$user /home/$user/
+        arch-chroot /mnt chown -R "${user}:${user}" /home/"${user}"/
 }
 
 finish() {
@@ -820,7 +837,7 @@ self_update() {
         fi
 }
 
-slient_install() {
+silent_install() {
         bootdev=/dev/vda1
         swapdev=/dev/vda2
         rootdev=/dev/vda3
@@ -895,7 +912,7 @@ self_update
 [[ ! -f /tmp/packages ]] && initialise
 
 if [[ $AUTO -eq 1 ]]; then
-        slient_install
+        silent_install
 else
         mainmenu
 fi
