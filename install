@@ -296,8 +296,7 @@ checks() {
 }
 
 add_package() {
-        local pkg=$1
-        grep -qxF "$pkg" /tmp/packages || printf '%s\n' "$pkg" >> /tmp/packages
+        printf '\n%s' "$1" >> /tmp/packages
 }
 
 performinstall() {
