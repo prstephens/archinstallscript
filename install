@@ -297,9 +297,7 @@ checks() {
 
 add_package() {
         local pkg=$1
-        if ! grep -qx "${pkg}" /tmp/packages; then
-                echo "\n${pkg}" >> /tmp/packages
-        fi
+        grep -qxF "$pkg" /tmp/packages || printf '%s\n' "$pkg" >> /tmp/packages
 }
 
 performinstall() {
