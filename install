@@ -567,24 +567,41 @@ EOT
 
 installbootloader() {
 
+        TPM=0
+        if [ -c /dev/tpm0 ]; then
+                TPM=1
+        fi
+
         if [[ $USE_CRYPT -eq 1 ]]; then
                 cp header.img /mnt/boot/
 
-                # Create LUKS keyfile for passwordless boot
-                arch-chroot /mnt dd bs=512 count=4 if=/dev/random of=/boot/crypto_keyfile.bin iflag=fullblock
-                arch-chroot /mnt chmod 600 /boot/crypto_keyfile.bin
-                arch-chroot /mnt cryptsetup luksAddKey "$realrootdev" /boot/crypto_keyfile.bin --header /boot/header.img
+                if [[ $TPM -eq 0 ]] && yesno "LUKS Keyfile" "Do you want to create a LUKS keyfile for passwordless boot?"; then
+                        # Create LUKS keyfile for passwordless boot
+                        arch-chroot /mnt dd bs=512 count=4 if=/dev/random of=/boot/crypto_keyfile.bin iflag=fullblock
+                        arch-chroot /mnt chmod 600 /boot/crypto_keyfile.bin
+                        arch-chroot /mnt cryptsetup luksAddKey "$realrootdev" /boot/crypto_keyfile.bin --header /boot/header.img
 
-                # Ensure initramfs includes keyfile
-                arch-chroot /mnt sed -i 's/FILES=()/FILES=(\/boot\/header.img \/boot\/crypto_keyfile.bin)/' /etc/mkinitcpio.conf
+                        # Ensure initramfs includes keyfile
+                        arch-chroot /mnt sed -i 's/FILES=()/FILES=(\/boot\/header.img \/boot\/crypto_keyfile.bin)/' /etc/mkinitcpio.conf
 
-                options="rd.luks.name=$CRYPTHEADERUUID=cryptlvm \
+                        options="rd.luks.name=$CRYPTHEADERUUID=cryptlvm \
 rd.luks.options=$CRYPTHEADERUUID=header=/boot/header.img \
 rd.luks.key=/boot/crypto_keyfile.bin \
 rd.luks.data=$CRYPTHEADERUUID=$realrootdev \
 root=/dev/vg1/root rw rootflags=subvol=@ \
 resume=$swapdev quiet loglevel=3 systemd.show_status=auto \
 rd.udev.log_level=3 nowatchdog mitigations=off"
+                else
+                        # Ensure initramfs includes header
+                        arch-chroot /mnt sed -i 's/FILES=()/FILES=(\/boot\/header.img)/' /etc/mkinitcpio.conf
+
+                        options="rd.luks.name=$CRYPTHEADERUUID=cryptlvm \
+rd.luks.options=$CRYPTHEADERUUID=header=/boot/header.img \
+rd.luks.data=$CRYPTHEADERUUID=$realrootdev \
+root=/dev/vg1/root rw rootflags=subvol=@ \
+resume=$swapdev quiet loglevel=3 systemd.show_status=auto \
+rd.udev.log_level=3 nowatchdog mitigations=off"
+                fi
         else
                 options="root=UUID=$ROOTUUID rw rootflags=subvol=@ \
 resume=$swapdev quiet loglevel=3 systemd.show_status=auto \
