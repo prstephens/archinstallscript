@@ -35,359 +35,354 @@ MAC=0
 #   ================================
 
 mainmenu() {
-        local nextitem="${1:-.}" # Default to "." if no argument is provided
-        local options=(
-                "WIPE DEVICE" "(Optional) Securely wipe disk or partition before installation"
-                "PARTITION DISK" "Partition disk using cfdisk to create EFI, swap, and root partitions"
-                "ENCRYPTION" "(Optional) Use full disk encryption with detached LUKS header"
-                "MOUNT" "Select the partitions to mount"
-                "SETUP USER" "Setup a user and root password"
-                "INSTALL" "Perform Arch Linux base Installation"
-                "" ""
-                "FINISH" "Finish and reboot"
-        )
+    local nextitem="${1:-.}" # Default to "." if no argument is provided
+    local options=(
+        "WIPE DEVICE" "(Optional) Securely wipe disk or partition before installation"
+        "PARTITION DISK" "Partition disk using cfdisk to create EFI, swap, and root partitions"
+        "ENCRYPTION" "(Optional) Use full disk encryption with detached LUKS header"
+        "MOUNT" "Select the partitions to mount"
+        "SETUP USER" "Setup a user and root password"
+        "INSTALL" "Perform Arch Linux base Installation"
+        "" ""
+        "FINISH" "Finish and reboot"
+    )
 
-        # Display the menu using whiptail
-        local sel
-        sel=$(whiptail --backtitle "${BACKTITLE}" --title "Main Menu" --menu "" \
-                --fb --cancel-button "Exit" --default-item "${nextitem}" 0 78 0 "${options[@]}" \
-                3>&1 1>&2 2>&3)
+    # Display the menu using whiptail
+    local sel
+    sel=$(whiptail --backtitle "${BACKTITLE}" --title "Main Menu" --menu "" \
+        --fb --cancel-button "Exit" --default-item "${nextitem}" 0 78 0 "${options[@]}" \
+        3>&1 1>&2 2>&3)
 
-        # Check the result of whiptail and act accordingly
-        if [ $? -eq 0 ]; then
-                case "${sel}" in
-                "WIPE DEVICE")
-                        preparedisk
-                        nextitem="PARTITION DISK"
-                        ;;
-                "PARTITION DISK")
-                        diskpartcfdisk
-                        nextitem="ENCRYPTION"
-                        ;;
-                "ENCRYPTION")
-                        enablelvm
-                        nextitem="MOUNT"
-                        ;;
-                "MOUNT")
-                        choosepartitions
-                        nextitem="SETUP USER"
-                        ;;
-                "SETUP USER")
-                        getuserinfo
-                        nextitem="INSTALL"
-                        ;;
-                "INSTALL")
-                        performinstall
-                        configuration
-                        setupuser
-                        installbootloader
-                        finish
-                        nextitem="FINISH"
-                        ;;
-                "FINISH")
-                        rebootpc
-                        nextitem="FINISH"
-                        ;;
-                esac
-                # Recursively call the main menu with the updated nextitem
-                mainmenu "${nextitem}"
-        else
-                clear
-        fi
+    # Check the result of whiptail and act accordingly
+    if [[ $? -eq 0 ]]; then
+        case "${sel}" in
+            "WIPE DEVICE")
+                preparedisk
+                nextitem="PARTITION DISK"
+                ;;
+            "PARTITION DISK")
+                diskpartcfdisk
+                nextitem="ENCRYPTION"
+                ;;
+            "ENCRYPTION")
+                enablelvm
+                nextitem="MOUNT"
+                ;;
+            "MOUNT")
+                choosepartitions
+                nextitem="SETUP USER"
+                ;;
+            "SETUP USER")
+                getuserinfo
+                nextitem="INSTALL"
+                ;;
+            "INSTALL")
+                performinstall
+                configuration
+                setupuser
+                installbootloader
+                finish
+                nextitem="FINISH"
+                ;;
+            "FINISH")
+                rebootpc
+                nextitem="FINISH"
+                ;;
+        esac
+        # Recursively call the main menu with the updated nextitem
+        mainmenu "${nextitem}"
+    else
+        clear
+    fi
 }
 
 yesno() {
-        local title=$1
-        local message=$2
-        whiptail --backtitle "${BACKTITLE}" --title "${title}" --fb --yesno "${message}" --defaultno 0 78
+    local title="$1"
+    local message="$2"
+    whiptail --backtitle "${BACKTITLE}" --title "${title}" --fb --yesno "${message}" --defaultno 0 78
 }
 
 preparedisk() {
-        local wipedevice
-        wipedevice=$(selectdisk "Choose device to be wiped")
+    local wipedevice
+    wipedevice=$(selectdisk "Choose device to be wiped")
 
-        if yesno "### WARNING ###" "Are you sure you want to secure wipe ${wipedevice}?\n\nTHIS CANNOT BE UNDONE. ALL DATA WILL BE PERMANENTLY LOST!"; then
-                # Open the device with cryptsetup
-                if cryptsetup open --type plain -d /dev/urandom "${wipedevice}" to_be_wiped; then
-                        # Securely wipe the device
-                        dd if=/dev/zero of=/dev/mapper/to_be_wiped status=progress || :
-                        cryptsetup close to_be_wiped
-                else
-                        echo "Failed to open ${wipedevice} for wiping" >&2
-                fi
+    if yesno "### WARNING ###" "Are you sure you want to secure wipe ${wipedevice}?\n\nTHIS CANNOT BE UNDONE. ALL DATA WILL BE PERMANENTLY LOST!"; then
+        # Open the device with cryptsetup
+        if cryptsetup open --type plain -d /dev/urandom "${wipedevice}" to_be_wiped; then
+            # Securely wipe the device
+            dd if=/dev/zero of=/dev/mapper/to_be_wiped status=progress || :
+            cryptsetup close to_be_wiped
+        else
+            echo "Failed to open ${wipedevice} for wiping" >&2
         fi
+    fi
 }
 
 diskpartcfdisk() {
-        local device
-        device=$(selectdisk "Edit Partitions (cfdisk)")
-        if [ $? -eq 0 ] && [ -n "${device}" ]; then
-                clear
-                cfdisk "${device}"
-        fi
+    local device
+    device=$(selectdisk "Edit Partitions (cfdisk)")
+    if [[ $? -eq 0 ]] && [[ -n "${device}" ]]; then
+        clear
+        cfdisk "${device}"
+    fi
 }
 
 selectdisk() {
-        # Fetch disk list excluding loop and RAM devices
-        local items
-        items=$(lsblk -d -p -n -l -o NAME,SIZE -e 7,11)
-        local options=()
+    # Fetch disk list excluding loop and RAM devices
+    local items
+    items=$(lsblk -d -p -n -l -o NAME,SIZE -e 7,11)
+    local options=()
 
-        # Populate menu options
-        while IFS= read -r item; do
-                options+=("${item}" "")
-        done <<< "${items}"
+    # Populate menu options
+    while IFS= read -r item; do
+        options+=("${item}" "")
+    done <<< "${items}"
 
-        # Display selection menu
-        local result
-        result=$(whiptail --backtitle "${BACKTITLE}" --title "$1" --menu "" --fb 0 78 0 "${options[@]}" 3>&1 1>&2 2>&3)
-        if [ $? -ne 0 ]; then
-                return 1
-        fi
+    # Display selection menu
+    local result
+    result=$(whiptail --backtitle "${BACKTITLE}" --title "$1" --menu "" --fb 0 78 0 "${options[@]}" 3>&1 1>&2 2>&3)
+    if [[ $? -ne 0 ]]; then
+        return 1
+    fi
 
-        echo "${result%% *}" # Return selected disk
-        return 0
+    echo "${result%% *}" # Return selected disk
+    return 0
 }
 
 enablelvm() {
-        USE_CRYPT=1
-        chooseencryptpartition
+    USE_CRYPT=1
+    chooseencryptpartition
 
-        dd if=/dev/zero of=header.img bs=16M count=1
-        chmod 600 header.img
-        cryptsetup luksFormat "${realrootdev}" --offset 32768 --header header.img
-        cryptsetup open --header header.img "${realrootdev}" cryptlvm
+    dd if=/dev/zero of=header.img bs=16M count=1
+    chmod 600 header.img
+    cryptsetup luksFormat "${realrootdev}" --offset 32768 --header header.img
+    cryptsetup open --header header.img "${realrootdev}" cryptlvm
 
-        CRYPTHEADERUUID=$(blkid -s UUID -o value header.img)
+    CRYPTHEADERUUID=$(blkid -s UUID -o value header.img)
 
-        # create the LVM partitons
-        pvcreate /dev/mapper/cryptlvm
-        vgcreate vg1 /dev/mapper/cryptlvm
+    # create the LVM partitons
+    pvcreate /dev/mapper/cryptlvm
+    vgcreate vg1 /dev/mapper/cryptlvm
 
-        swapspace=$(whiptail --backtitle "$BACKTITLE" --inputbox "Enter SWAP size (GB):" --fb 0 24 3>&1 1>&2 2>&3)
+    swapspace=$(whiptail --backtitle "$BACKTITLE" --inputbox "Enter SWAP size (GB):" --fb 0 24 3>&1 1>&2 2>&3)
 
-        lvcreate -L "${swapspace}G" vg1 -n swap
-        lvcreate -l 100%FREE vg1 -n root
+    lvcreate -L "${swapspace}G" vg1 -n swap
+    lvcreate -l 100%FREE vg1 -n root
 }
 
 chooseencryptpartition() {
-        local itemsinfo
-        local items
-        local deviceitems
-        local options=()
-        local optionstoremove=()
-        local IFS_ORIG=$IFS
-        itemsinfo=$(lsblk -o NAME,SIZE,FSTYPE)
-        items=$(lsblk -p -n -l -o NAME -e 7,11)
-        deviceitems=$(lsblk -d -n -l -o NAME -e 7,11)
-        IFS=$'\n'
-        for item in ${deviceitems}; do
-                optionstoremove+=("/dev/${item}")
-        done
-        for item in ${items}; do
-            if [[ ! " ${optionstoremove[*]} " =~ " ${item} " ]]; then
-                        options+=("${item}" "")
-            fi
-        done
-
-        realrootdev=$(whiptail --backtitle "${BACKTITLE}" --title "Select Root partition to encrypt" --menu "${itemsinfo}" --fb --default-item "${rootdev}" 0 78 0 \
-                "${options[@]}" \
-                3>&1 1>&2 2>&3)
-        if [ ! "$?" = "0" ]; then
-                return 1
+    local itemsinfo
+    local items
+    local deviceitems
+    local options=()
+    local optionstoremove=()
+    local IFS_ORIG=$IFS
+    itemsinfo=$(lsblk -o NAME,SIZE,FSTYPE)
+    items=$(lsblk -p -n -l -o NAME -e 7,11)
+    deviceitems=$(lsblk -d -n -l -o NAME -e 7,11)
+    IFS=$'\n'
+    for item in ${deviceitems}; do
+        optionstoremove+=("/dev/${item}")
+    done
+    for item in ${items}; do
+        if [[ ! " ${optionstoremove[*]} " =~ " ${item} " ]]; then
+            options+=("${item}" "")
         fi
+    done
 
+    realrootdev=$(whiptail --backtitle "${BACKTITLE}" --title "Select Root partition to encrypt" \
+        --menu "${itemsinfo}" --fb --default-item "${rootdev}" 0 78 0 \
+        "${options[@]}" 3>&1 1>&2 2>&3)
+    if [[ $? -ne 0 ]]; then
+        return 1
+    fi
 }
 
 choosepartitions() {
-        local itemsinfo
-        local items
-        local deviceitems
-        local options=()
-        local optionstoremove=()
-        local IFS_ORIG=$IFS
-        itemsinfo=$(lsblk -o NAME,SIZE,FSTYPE)
-        items=$(lsblk -p -n -l -o NAME -e 7,11)
-        deviceitems=$(lsblk -d -n -l -o NAME -e 7,11)
-        IFS=$'\n'
-        for item in ${deviceitems}; do
-                optionstoremove+=("/dev/${item}")
-        done
-        for item in ${items}; do
-            if [[ ! " ${optionstoremove[*]} " =~ " ${item} " ]]; then
-                        options+=("${item}" "")
-            fi
-        done
-
-        bootdev=$(whiptail --backtitle "${BACKTITLE}" --title "Select Boot partition" --menu "${itemsinfo}" --fb --default-item "${bootdev}" 0 78 0 \
-                "none" "-" \
-                "${options[@]}" \
-                3>&1 1>&2 2>&3)
-        if [ ! "$?" = "0" ]; then
-                return 1
-        else
-                if [ "${bootdev}" = "none" ]; then
-                        bootdev=
-                fi
+    local itemsinfo
+    local items
+    local deviceitems
+    local options=()
+    local optionstoremove=()
+    local IFS_ORIG=$IFS
+    itemsinfo=$(lsblk -o NAME,SIZE,FSTYPE)
+    items=$(lsblk -p -n -l -o NAME -e 7,11)
+    deviceitems=$(lsblk -d -n -l -o NAME -e 7,11)
+    IFS=$'\n'
+    for item in ${deviceitems}; do
+        optionstoremove+=("/dev/${item}")
+    done
+    for item in ${items}; do
+        if [[ ! " ${optionstoremove[*]} " =~ " ${item} " ]]; then
+            options+=("${item}" "")
         fi
+    done
 
-        swapdev=$(whiptail --backtitle "${BACKTITLE}" --title "Select Swap partition" --menu "${itemsinfo}" --fb --default-item "${swapdev}" 0 78 0 \
-                "none" "-" \
-                "${options[@]}" \
-                3>&1 1>&2 2>&3)
-        if [ ! "$?" = "0" ]; then
-                return 1
-        else
-                if [ "${swapdev}" = "none" ]; then
-                        swapdev=
-                fi
+    bootdev=$(whiptail --backtitle "${BACKTITLE}" --title "Select Boot partition" \
+        --menu "${itemsinfo}" --fb --default-item "${bootdev}" 0 78 0 \
+        "none" "-" "${options[@]}" 3>&1 1>&2 2>&3)
+    if [[ $? -ne 0 ]]; then
+        return 1
+    else
+        if [[ "${bootdev}" == "none" ]]; then
+            bootdev=
         fi
+    fi
 
-        rootdev=$(whiptail --backtitle "${BACKTITLE}" --title "Select Root partition" --menu "${itemsinfo}" --fb --default-item "${rootdev}" 0 78 0 \
-                "${options[@]}" \
-                3>&1 1>&2 2>&3)
-        if [ ! "$?" = "0" ]; then
-                return 1
+    swapdev=$(whiptail --backtitle "${BACKTITLE}" --title "Select Swap partition" \
+        --menu "${itemsinfo}" --fb --default-item "${swapdev}" 0 78 0 \
+        "none" "-" "${options[@]}" 3>&1 1>&2 2>&3)
+    if [[ $? -ne 0 ]]; then
+        return 1
+    else
+        if [[ "${swapdev}" == "none" ]]; then
+            swapdev=
         fi
+    fi
 
-        msg=""
-        msg=${msg}"Boot          : "${bootdev}"\n"
-        msg=${msg}"Swap          : "${swapdev}"\n"
-        msg=${msg}"Root          : "${rootdev}"\n"
+    rootdev=$(whiptail --backtitle "${BACKTITLE}" --title "Select Root partition" \
+        --menu "${itemsinfo}" --fb --default-item "${rootdev}" 0 78 0 \
+        "${options[@]}" 3>&1 1>&2 2>&3)
+    if [[ $? -ne 0 ]]; then
+        return 1
+    fi
 
-        if ! yesno "Are these values correct?" "${msg}"; then
-                choosepartitions
-        fi
+    msg=""
+    msg+="Boot          : ${bootdev}\n"
+    msg+="Swap          : ${swapdev}\n"
+    msg+="Root          : ${rootdev}\n"
+
+    if ! yesno "Are these values correct?" "${msg}"; then
+        choosepartitions
+    fi
 }
 
 getuserinfo() {
-        hostname=$(whiptail --backtitle "$BACKTITLE" --inputbox "Enter hostname:" --fb 0 50 3>&1 1>&2 2>&3)
-        user=$(whiptail --backtitle "$BACKTITLE" --inputbox "Enter admin username:" --fb 0 50 3>&1 1>&2 2>&3)
+    hostname=$(whiptail --backtitle "$BACKTITLE" --inputbox "Enter hostname:" --fb 0 50 3>&1 1>&2 2>&3)
+    user=$(whiptail --backtitle "$BACKTITLE" --inputbox "Enter admin username:" --fb 0 50 3>&1 1>&2 2>&3)
 
-        password="x"
-        password2="xx"
-        passphrase_invalid_message=""
+    password="x"
+    password2="xx"
+    passphrase_invalid_message=""
 
-        while [[ $password != "$password2" ]]; do
+    while [[ $password != "$password2" ]]; do
+        password=$(whiptail --backtitle "$BACKTITLE" --passwordbox "${passphrase_invalid_message}Please enter the admin password:" --fb 10 50 3>&1 1>&2 2>&3)
+        password2=$(whiptail --backtitle "$BACKTITLE" --passwordbox "Please repeat the admin password:" --fb 10 50 3>&1 1>&2 2>&3)
+        passphrase_invalid_message="Passwords do not match! "
+    done
 
-                password=$(whiptail --backtitle "$BACKTITLE" --passwordbox "${passphrase_invalid_message}Please enter the admin password:" --fb 10 50 3>&1 1>&2 2>&3)
-                password2=$(whiptail --backtitle "$BACKTITLE" --passwordbox "Please repeat the admin password:" --fb 10 50 3>&1 1>&2 2>&3)
-                passphrase_invalid_message="Passwords do not match! "
-
-        done
-
-        msg=${msg}"Hostname      : "${hostname}"\n"
-        msg=${msg}"User          : "${user}"\n\n"
+    msg+="Hostname      : ${hostname}\n"
+    msg+="User          : ${user}\n\n"
 }
 
 checks() {
-        if yesno "RAID" "Is a RAID Array being used?"; then
-                USE_RAID=1
-                msg=${msg}"Use RAID?     : "${USE_RAID}"\n\n"
-        fi
+    if yesno "RAID" "Is a RAID Array being used?"; then
+        USE_RAID=1
+        msg+="Use RAID?     : ${USE_RAID}\n\n"
+    fi
 
-        if ! yesno "Are these values correct?" "${msg}"; then
-                mainmenu "MOUNT"
-        fi
+    if ! yesno "Are these values correct?" "${msg}"; then
+        mainmenu "MOUNT"
+    fi
 
-        if [ -n "${bootdev}" ] && yesno "### WARNING ###" "Do you want to format ${bootdev}? \n\nTHIS COULD ERASE EXISITING OPERATING SYSTEM BOOTLOADERS"; then
-                mkfs.fat -F 32 "${bootdev}"
-        fi
+    if [[ -n "${bootdev}" ]] && yesno "### WARNING ###" "Do you want to format ${bootdev}? \n\nTHIS COULD ERASE EXISITING OPERATING SYSTEM BOOTLOADERS"; then
+        mkfs.fat -F 32 "${bootdev}"
+    fi
 }
 
 add_package() {
-        printf '\n%s' "$1" >> /tmp/packages
+    printf '\n%s' "$1" >> /tmp/packages
 }
 
 performinstall() {
-        if [[ ! $AUTO -eq 1 ]]; then
-                checks
-        fi
+    if [[ $AUTO -ne 1 ]]; then
+        checks
+    fi
 
-        timedatectl set-ntp true
+    timedatectl set-ntp true
 
-        # Setup the partitions
-        wipefs -a "${rootdev}"
-        mkfs.btrfs -f "${rootdev}"
+    # Setup the partitions
+    wipefs -a "${rootdev}"
+    mkfs.btrfs -f "${rootdev}"
 
-        if [ -n "${swapdev}" ]; then
-                mkswap "${swapdev}"
-                swapon "${swapdev}"
-        fi
+    if [[ -n "${swapdev}" ]]; then
+        mkswap "${swapdev}"
+        swapon "${swapdev}"
+    fi
 
-        #root
-        mount "${rootdev}" /mnt
+    # root
+    mount "${rootdev}" /mnt
 
-        echo "Creating BTRFS subvolumes..."
-        btrfs su cr /mnt/@
-        btrfs su cr /mnt/@home
-        btrfs su cr /mnt/@var_log
-        btrfs su cr /mnt/@var_cache
-        btrfs su cr /mnt/@tmp
-        btrfs su cr /mnt/@snapshots
-        umount /mnt
+    echo "Creating BTRFS subvolumes..."
+    btrfs su cr /mnt/@
+    btrfs su cr /mnt/@home
+    btrfs su cr /mnt/@var_log
+    btrfs su cr /mnt/@var_cache
+    btrfs su cr /mnt/@tmp
+    btrfs su cr /mnt/@snapshots
+    umount /mnt
 
-        mount -o noatime,commit=60,compress=zstd,space_cache=v2,subvol=@ "${rootdev}" /mnt
+    mount -o noatime,commit=60,compress=zstd,space_cache=v2,subvol=@ "${rootdev}" /mnt
 
-        # You need to manually create folders to mount the other subvolumes at
-        mkdir -p /mnt/{efi,boot,home,var/log,var/cache,tmp,.snapshots}
+    # You need to manually create folders to mount the other subvolumes at
+    mkdir -p /mnt/{efi,boot,home,var/log,var/cache,tmp,.snapshots}
 
-        mount -o noatime,commit=60,compress=zstd,space_cache=v2,discard=async,subvol=@home "${rootdev}" /mnt/home
-        mount -o noatime,commit=60,compress=zstd,space_cache=v2,discard=async,subvol=@var_log "${rootdev}" /mnt/var/log
-        mount -o noatime,commit=60,compress=zstd,space_cache=v2,discard=async,subvol=@var_cache "${rootdev}" /mnt/var/cache
-        mount -o noatime,commit=60,compress=zstd,space_cache=v2,discard=async,subvol=@tmp "${rootdev}" /mnt/tmp
-        mount -o noatime,commit=60,compress=zstd,space_cache=v2,discard=async,subvol=@snapshots "${rootdev}" /mnt/.snapshots
+    mount -o noatime,commit=60,compress=zstd,space_cache=v2,discard=async,subvol=@home "${rootdev}" /mnt/home
+    mount -o noatime,commit=60,compress=zstd,space_cache=v2,discard=async,subvol=@var_log "${rootdev}" /mnt/var/log
+    mount -o noatime,commit=60,compress=zstd,space_cache=v2,discard=async,subvol=@var_cache "${rootdev}" /mnt/var/cache
+    mount -o noatime,commit=60,compress=zstd,space_cache=v2,discard=async,subvol=@tmp "${rootdev}" /mnt/tmp
+    mount -o noatime,commit=60,compress=zstd,space_cache=v2,discard=async,subvol=@snapshots "${rootdev}" /mnt/.snapshots
 
-        ROOTUUID=$(blkid -s UUID -o value "${rootdev}")
+    ROOTUUID=$(blkid -s UUID -o value "${rootdev}")
 
-        # determine if we are installing on a laptop or desktop
-        # if laptop, install tlp for better power management
-        # see here: https://www.dmtf.org/sites/default/files/standards/documents/DSP0134_3.6.0.pdf
-        chassis=$(cat /sys/class/dmi/id/chassis_type)
-        if exists_in_list "8,9,10" "," "${chassis}"; then
-                TLP=1
-                add_package "tlp"
-                add_package "tlp-rdw"
-                add_package "powertop"
-        fi
+    # determine if we are installing on a laptop or desktop
+    # if laptop, install tlp for better power management
+    # see here: https://www.dmtf.org/sites/default/files/standards/documents/DSP0134_3.6.0.pdf
+    chassis=$(cat /sys/class/dmi/id/chassis_type)
+    if exists_in_list "8,9,10" "," "${chassis}"; then
+        TLP=1
+        add_package "tlp"
+        add_package "tlp-rdw"
+        add_package "powertop"
+    fi
 
-        # Read the product name from sysfs
-        product_name=$(cat /sys/devices/virtual/dmi/id/product_name)
+    # Read the product name from sysfs
+    product_name=$(cat /sys/devices/virtual/dmi/id/product_name)
 
-        # Check if the product name contains "macbook" (case-insensitive)
-        if echo "$product_name" | grep -iq "macbook"; then
-                MAC=1
-                add_package "broadcom-wl-dkms"
-        fi
+    # Check if the product name contains "macbook" (case-insensitive)
+    if echo "$product_name" | grep -iq "macbook"; then
+        MAC=1
+        add_package "broadcom-wl-dkms"
+    fi
 
-        if [ -n "${bootdev}" ]; then
-                mount "${bootdev}" /mnt/efi
-        fi
-      
-        if [[ $USE_RAID -eq 1 ]]; then
-                add_package "mdadm"
-        fi
+    if [[ -n "${bootdev}" ]]; then
+        mount "${bootdev}" /mnt/efi
+    fi
 
-        if [[ $USE_CRYPT -eq 1 ]]; then
-                add_package "lvm2"
-        fi
+    if [[ $USE_RAID -eq 1 ]]; then
+        add_package "mdadm"
+    fi
 
-        # do the install!
-        pacstrap /mnt $(< /tmp/packages)
+    if [[ $USE_CRYPT -eq 1 ]]; then
+        add_package "lvm2"
+    fi
 
-        genfstab -U /mnt >> /mnt/etc/fstab
+    # do the install!
+    pacstrap /mnt "$(cat /tmp/packages)"
+
+    genfstab -U /mnt >> /mnt/etc/fstab
 }
 
 exists_in_list() {
-        local LIST=$1
-        local DELIMITER=$2
-        local VALUE=$3
-        [[ $LIST =~ (${DELIMITER}|^)${VALUE}(${DELIMITER}|$) ]]
+    local LIST="$1"
+    local DELIMITER="$2"
+    local VALUE="$3"
+    [[ $LIST =~ (${DELIMITER}|^)${VALUE}(${DELIMITER}|$) ]]
 }
 
 configuration() {
-        # Set Cloudfare as our DNS
-        cat << EOT > /mnt/etc/resolv.conf
+    # Set Cloudfare as our DNS
+    cat << EOT > /mnt/etc/resolv.conf
 options timeout:1
 options single-request
 
@@ -396,65 +391,67 @@ nameserver 1.0.0.1
 nameserver 8.8.8.8
 EOT
 
-        chattr +i /mnt/etc/resolv.conf
+    chattr +i /mnt/etc/resolv.conf
 
-        cat << EOT >> /mnt/etc/NetworkManager/NetworkManager.conf
+    cat << EOT >> /mnt/etc/NetworkManager/NetworkManager.conf
 [main]
 dns=none
 systemd-resolved=false
 EOT
 
-        cat << EOT >> /mnt/etc/hosts
+    cat << EOT >> /mnt/etc/hosts
 127.0.0.1	localhost
 ::1		localhost
 EOT
 
-        echo "127.0.1.1 ${hostname}.localdomain  ${hostname}" >> /mnt/etc/hosts
+    echo "127.0.1.1 ${hostname}.localdomain  ${hostname}" >> /mnt/etc/hosts
 
-        # make a copy of the host file to be used later in the AdAway service
-        arch-chroot /mnt cp /etc/hosts /etc/hosts.base
+    # make a copy of the host file to be used later in the AdAway service
+    arch-chroot /mnt cp /etc/hosts /etc/hosts.base
 
-        echo "Updating pacman mirrors to awesomeness..."
-        # Update pacman mirror list
-        arch-chroot /mnt reflector --verbose -c $MIRROR_COUNTRY -l 25 --age 12 -p https --sort rate --save /etc/pacman.d/mirrorlist
+    echo "Updating pacman mirrors to awesomeness..."
+    # Update pacman mirror list
+    arch-chroot /mnt reflector --verbose -c "$MIRROR_COUNTRY" -l 25 --age 12 -p https --sort rate --save /etc/pacman.d/mirrorlist
 
-        echo "Setting up spacetime continuum..."
-        # Set date time
-        arch-chroot /mnt ln -sf /usr/share/zoneinfo/Europe/London /etc/localtime
-        arch-chroot /mnt hwclock --systohc
+    echo "Setting up spacetime continuum..."
+    # Set date time
+    arch-chroot /mnt ln -sf /usr/share/zoneinfo/Europe/London /etc/localtime
+    arch-chroot /mnt hwclock --systohc
 
-        # Set locale to en_US.UTF-8 UTF-8
-        arch-chroot /mnt sed -i '/en_GB.UTF-8 UTF-8/s/^#//g' /etc/locale.gen
-        arch-chroot /mnt locale-gen
-        echo "LANG=en_GB.UTF-8" >> /mnt/etc/locale.conf
+    # Set locale to en_US.UTF-8 UTF-8
+    arch-chroot /mnt sed -i '/en_GB.UTF-8 UTF-8/s/^#//g' /etc/locale.gen
+    arch-chroot /mnt locale-gen
+    echo "LANG=en_GB.UTF-8" >> /mnt/etc/locale.conf
 
-        # Set the console keymap
-        echo "KEYMAP=uk" >> /mnt/etc/vconsole.conf
+    # Set the console keymap
+    echo "KEYMAP=uk" >> /mnt/etc/vconsole.conf
 
-        # Set hostname
-        echo "${hostname}" > /mnt/etc/hostname
+    # Set hostname
+    echo "${hostname}" > /mnt/etc/hostname
 
-        # nano syntax highlighting
-        echo "include /usr/share/nano/*.nanorc" >> /mnt/etc/nanorc
+    # nano syntax highlighting
+    echo "include /usr/share/nano/*.nanorc" >> /mnt/etc/nanorc
 
-        cat << EOT > /mnt/etc/profile.d/shell-timeout.sh
+    cat << EOT > /mnt/etc/profile.d/shell-timeout.sh
 TMOUT="\$(( 60*30 ))";
 [ -z "\$DISPLAY" ] && export TMOUT;
 case \$( /usr/bin/tty ) in
-	/dev/tty[0-9]*) export TMOUT;;
+    /dev/tty[0-9]*) export TMOUT;;
 esac
 EOT
-        # performance and secuirty tweaks
-        if [[ $TLP -eq 1 ]]; then
-                arch-chroot /mnt curl -sL $BASE_URL/configs/system/sysctl/99-performance-laptop.conf -o /etc/sysctl.d/99-performance.conf
-        else
-                arch-chroot /mnt curl -sL $BASE_URL/configs/system/sysctl/99-performance-desktop.conf -o /etc/sysctl.d/99-performance.conf
-        fi
+    # performance and secuirty tweaks
+    if [[ $TLP -eq 1 ]]; then
+        arch-chroot /mnt curl -sL "$BASE_URL/configs/system/sysctl/99-performance-laptop.conf" \
+            -o /etc/sysctl.d/99-performance.conf
+    else
+        arch-chroot /mnt curl -sL "$BASE_URL/configs/system/sysctl/99-performance-desktop.conf" \
+            -o /etc/sysctl.d/99-performance.conf
+    fi
 
-        echo "tcp_bbr" > /mnt/etc/modules-load.d/bbr.conf
+    echo "tcp_bbr" > /mnt/etc/modules-load.d/bbr.conf
 
-        # Create the pacman mirrorlist updater service
-        cat << EOT > /mnt/etc/systemd/system/reflector.service
+    # Create the pacman mirrorlist updater service
+    cat << EOT > /mnt/etc/systemd/system/reflector.service
 [Unit]
 Description=Pacman mirrorlist update
 Wants=network-online.target
@@ -466,7 +463,7 @@ ExecStart=/usr/bin/reflector -c GB -l 25 --age 12 -p https --sort rate --save /e
 WantedBy=multi-user.target
 EOT
 
-        cat << EOT > /mnt/etc/modprobe.d/blacklist.conf
+    cat << EOT > /mnt/etc/modprobe.d/blacklist.conf
 blacklist iTCO_wdt
 blacklist pcspkr
 blacklist joydev
@@ -478,12 +475,12 @@ blacklist nvidiafb
 blacklist nouveau
 EOT
 
-        # for 11th cpu or lower
-        cat << EOT > /mnt/etc/modprobe.d/i915.conf
+    # for 11th cpu or lower
+    cat << EOT > /mnt/etc/modprobe.d/i915.conf
 options i915 enable_guc=2
 EOT
 
-        cat << EOT > /mnt/etc/udev/rules.d/60-ioschedulers.rules
+    cat << EOT > /mnt/etc/udev/rules.d/60-ioschedulers.rules
 # set scheduler for NVMe
 ACTION=="add|change", KERNEL=="nvme[0-9]*", ATTR{queue/scheduler}="none"
 # set scheduler for SSD and eMMC
@@ -492,208 +489,215 @@ ACTION=="add|change", KERNEL=="sd[a-z]|mmcblk[0-9]*", ATTR{queue/rotational}=="0
 ACTION=="add|change", KERNEL=="sd[a-z]", ATTR{queue/rotational}=="1", ATTR{queue/scheduler}="bfq"
 EOT
 
-        # speed up boot time with lz4
-        sed -i 's/^MODULES=.*$/MODULES=(i915 btrfs)/' /mnt/etc/mkinitcpio.conf
-        sed -i 's/^#MODULES_DECOMPRESS=.*$/MODULES_DECOMPRESS="yes"/' /mnt/etc/mkinitcpio.conf
+    # speed up boot time with lz4
+    sed -i 's/^MODULES=.*$/MODULES=(i915 btrfs)/' /mnt/etc/mkinitcpio.conf
+    sed -i 's/^#MODULES_DECOMPRESS=.*$/MODULES_DECOMPRESS="yes"/' /mnt/etc/mkinitcpio.conf
 
-        # setup the mkinitcpio hooks
-        HOOKS="(systemd autodetect microcode keyboard sd-vconsole modconf kms block filesystems)"
-        HOOKS_RAID="(systemd autodetect microcode keyboard sd-vconsole modconf kms block mdadm_udev filesystems)"
-        HOOKS_CRYPT="(systemd autodetect microcode keyboard sd-vconsole modconf kms block sd-encrypt lvm2 filesystems)"
-        HOOKS_RAID_CRYPT="(systemd autodetect microcode keyboard sd-vconsole modconf kms block mdadm_udev sd-encrypt lvm2 filesystems)"
+    # setup the mkinitcpio hooks
+    HOOKS="(systemd autodetect microcode keyboard sd-vconsole modconf kms block filesystems)"
+    HOOKS_RAID="(systemd autodetect microcode keyboard sd-vconsole modconf kms block mdadm_udev filesystems)"
+    HOOKS_CRYPT="(systemd autodetect microcode keyboard sd-vconsole modconf kms block sd-encrypt lvm2 filesystems)"
+    HOOKS_RAID_CRYPT="(systemd autodetect microcode keyboard sd-vconsole modconf kms block mdadm_udev sd-encrypt lvm2 filesystems)"
 
+    if [[ $USE_RAID -eq 1 ]]; then
+        mdadm --detail --scan >> /mnt/etc/mdadm.conf
+        sed -i 's/^BINARIES=.*$/BINARIES=(mdmon)/' /mnt/etc/mkinitcpio.conf
+    fi
+
+    if [[ $USE_CRYPT -eq 1 ]]; then
         if [[ $USE_RAID -eq 1 ]]; then
-                mdadm --detail --scan >> /mnt/etc/mdadm.conf
-                sed -i 's/^BINARIES=.*$/BINARIES=(mdmon)/' /mnt/etc/mkinitcpio.conf
-        fi
-
-        if [[ $USE_CRYPT -eq 1 ]]; then
-                if [[ $USE_RAID -eq 1 ]]; then
-                        HOOKS="$HOOKS_RAID_CRYPT"
-                else
-                        HOOKS="$HOOKS_CRYPT"
-                fi
+            HOOKS="$HOOKS_RAID_CRYPT"
         else
-                if [[ $USE_RAID -eq 1 ]]; then
-                        HOOKS="$HOOKS_RAID"
-                fi
+            HOOKS="$HOOKS_CRYPT"
         fi
-
-        sed -i "s|^HOOKS=.*$|HOOKS=${HOOKS}|" /mnt/etc/mkinitcpio.conf
-
-        # Bluetooth config
-        arch-chroot /mnt sed -i 's/^#DiscoverableTimeout = 0/DiscoverableTimeout = 0/' /etc/bluetooth/main.conf
-        arch-chroot /mnt sed -i 's/^#AutoEnable=true/AutoEnable=true/' /etc/bluetooth/main.conf
-        arch-chroot /mnt sed -i 's/^#FastConnectable=.*$/FastConnectable=true/' /etc/bluetooth/main.conf
-        arch-chroot /mnt sed -i 's/^#ReconnectIntervals=.*$/ReconnectIntervals=5/' /etc/bluetooth/main.conf
-
-        # BBC Micro console font :)
-        arch-chroot /mnt curl -sL $BASE_URL/fonts/acorn/console/bedstead-10.psf.gz -o /usr/share/kbd/consolefonts/bedstead-10.psf.gz
-        arch-chroot /mnt curl -sL $BASE_URL/fonts/acorn/console/bedstead-20.psf.gz -o /usr/share/kbd/consolefonts/bedstead-20.psf.gz
-        arch-chroot /mnt curl -sL $BASE_URL/fonts/acorn/console/acorn.psf.gz -o /usr/share/kbd/consolefonts/acorn.psf.gz
-        echo "FONT=bedstead-10" >> /mnt/etc/vconsole.conf
-
-        # Enable services
-        echo "Enabling services..."
-        arch-chroot /mnt systemctl enable NetworkManager.service
-        arch-chroot /mnt systemctl enable bluetooth.service
-        arch-chroot /mnt systemctl enable cups.socket
-        arch-chroot /mnt systemctl enable reflector.timer
-        arch-chroot /mnt systemctl enable fstrim.timer
-        arch-chroot /mnt systemctl enable sshd
-
-        if [[ $TLP -eq 1 ]]; then
-                arch-chroot /mnt systemctl enable tlp.service
-                arch-chroot /mnt systemctl enable NetworkManager-dispatcher.service
-                arch-chroot /mnt systemctl mask systemd-rfkill.service systemd-rfkill.socket
+    else
+        if [[ $USE_RAID -eq 1 ]]; then
+            HOOKS="$HOOKS_RAID"
         fi
+    fi
 
-        if [[ $USE_CRYPT -eq 1 ]]; then
-                arch-chroot /mnt systemctl enable lvm2-monitor
-        else
-                arch-chroot /mnt systemctl mask lvm2-monitor
-        fi
+    sed -i "s|^HOOKS=.*$|HOOKS=${HOOKS}|" /mnt/etc/mkinitcpio.conf
 
-        if [[ $MAC -eq 1 ]]; then
-                echo "coretemp" >> /mnt/etc/modules-load.d/apple.conf
-                echo "applesmc" >> /mnt/etc/modules-load.d/apple.conf
-                sed -i '/blacklist mac_hid/d; /blacklist uvcvideo/d' /mnt/etc/modprobe.d/blacklist.conf
-                # Set macbook keyboard fn keys to use media keys by default
-                echo "options hid_apple fnmode=1" > /mnt/etc/modprobe.d/hid_apple.conf
-        fi
+    # Bluetooth config
+    arch-chroot /mnt sed -i 's/^#DiscoverableTimeout = 0/DiscoverableTimeout = 0/' /etc/bluetooth/main.conf
+    arch-chroot /mnt sed -i 's/^#AutoEnable=true/AutoEnable=true/' /etc/bluetooth/main.conf
+    arch-chroot /mnt sed -i 's/^#FastConnectable=.*$/FastConnectable=true/' /etc/bluetooth/main.conf
+    arch-chroot /mnt sed -i 's/^#ReconnectIntervals=.*$/ReconnectIntervals=5/' /etc/bluetooth/main.conf
 
-        arch-chroot /mnt systemctl mask systemd-random-seed
+    # BBC Micro console font :)
+    arch-chroot /mnt curl -sL "$BASE_URL/fonts/acorn/console/bedstead-10.psf.gz" \
+        -o /usr/share/kbd/consolefonts/bedstead-10.psf.gz
+    arch-chroot /mnt curl -sL "$BASE_URL/fonts/acorn/console/bedstead-20.psf.gz" \
+        -o /usr/share/kbd/consolefonts/bedstead-20.psf.gz
+    arch-chroot /mnt curl -sL "$BASE_URL/fonts/acorn/console/acorn.psf.gz" \
+        -o /usr/share/kbd/consolefonts/acorn.psf.gz
+    echo "FONT=bedstead-10" >> /mnt/etc/vconsole.conf
+
+    # Enable services
+    echo "Enabling services..."
+    arch-chroot /mnt systemctl enable NetworkManager.service
+    arch-chroot /mnt systemctl enable bluetooth.service
+    arch-chroot /mnt systemctl enable cups.socket
+    arch-chroot /mnt systemctl enable reflector.timer
+    arch-chroot /mnt systemctl enable fstrim.timer
+    arch-chroot /mnt systemctl enable sshd
+
+    if [[ $TLP -eq 1 ]]; then
+        arch-chroot /mnt systemctl enable tlp.service
+        arch-chroot /mnt systemctl enable NetworkManager-dispatcher.service
+        arch-chroot /mnt systemctl mask systemd-rfkill.service systemd-rfkill.socket
+    fi
+
+    if [[ $USE_CRYPT -eq 1 ]]; then
+        arch-chroot /mnt systemctl enable lvm2-monitor
+    else
+        arch-chroot /mnt systemctl mask lvm2-monitor
+    fi
+
+    if [[ $MAC -eq 1 ]]; then
+        echo "coretemp" >> /mnt/etc/modules-load.d/apple.conf
+        echo "applesmc" >> /mnt/etc/modules-load.d/apple.conf
+        sed -i '/blacklist mac_hid/d; /blacklist uvcvideo/d' /mnt/etc/modprobe.d/blacklist.conf
+        # Set macbook keyboard fn keys to use media keys by default
+        echo "options hid_apple fnmode=1" > /mnt/etc/modprobe.d/hid_apple.conf
+    fi
+
+    arch-chroot /mnt systemctl mask systemd-random-seed
 }
 
 installbootloader() {
+    local TPM=0
+    if [[ -c /dev/tpm0 ]]; then
+        TPM=1
+    fi
 
-        TPM=0
-        if [ -c /dev/tpm0 ]; then
-                TPM=1
-        fi
+    if [[ $USE_CRYPT -eq 1 ]]; then
+        cp header.img /mnt/boot/
+        arch-chroot /mnt sed -i 's/FILES=()/FILES=(\/boot\/header.img)/' /etc/mkinitcpio.conf
 
-        if [[ $USE_CRYPT -eq 1 ]]; then
-                cp header.img /mnt/boot/
-
-                if [[ $TPM -eq 0 ]] && yesno "LUKS Keyfile" "Do you want to create a LUKS keyfile for passwordless boot?"; then
-                        # Create LUKS keyfile for passwordless boot
-                        arch-chroot /mnt dd bs=512 count=4 if=/dev/random of=/boot/crypto_keyfile.bin iflag=fullblock
-                        arch-chroot /mnt chmod 600 /boot/crypto_keyfile.bin
-                        arch-chroot /mnt cryptsetup luksAddKey "$realrootdev" /boot/crypto_keyfile.bin --header /boot/header.img
-
-                        # Ensure initramfs includes keyfile
-                        arch-chroot /mnt sed -i 's/FILES=()/FILES=(\/boot\/header.img \/boot\/crypto_keyfile.bin)/' /etc/mkinitcpio.conf
-
-                        options="rd.luks.name=$CRYPTHEADERUUID=cryptlvm \
-rd.luks.options=$CRYPTHEADERUUID=header=/boot/header.img \
-rd.luks.key=/boot/crypto_keyfile.bin \
-rd.luks.data=$CRYPTHEADERUUID=$realrootdev \
-root=/dev/vg1/root rw rootflags=subvol=@ \
-resume=$swapdev quiet loglevel=3 systemd.show_status=auto \
-rd.udev.log_level=3 nowatchdog mitigations=off"
-                else
-                        # Ensure initramfs includes header
-                        arch-chroot /mnt sed -i 's/FILES=()/FILES=(\/boot\/header.img)/' /etc/mkinitcpio.conf
-
-                        options="rd.luks.name=$CRYPTHEADERUUID=cryptlvm \
-rd.luks.options=$CRYPTHEADERUUID=header=/boot/header.img \
-rd.luks.data=$CRYPTHEADERUUID=$realrootdev \
-root=/dev/vg1/root rw rootflags=subvol=@ \
-resume=$swapdev quiet loglevel=3 systemd.show_status=auto \
-rd.udev.log_level=3 nowatchdog mitigations=off"
-                fi
+        local KEY_PARAM=""
+        if [[ $TPM -eq 1 ]]; then
+            echo "Enrolling TPM2 key for disk unlock..."
+            arch-chroot /mnt systemd-cryptenroll --tpm2-device=auto "$realrootdev" --header /boot/header.img || true
+            LUKS_OPTIONS="$CRYPTHEADERUUID=header=/boot/header.img,tpm2-device=auto"
         else
-                options="root=UUID=$ROOTUUID rw rootflags=subvol=@ \
-resume=$swapdev quiet loglevel=3 systemd.show_status=auto \
-rd.udev.log_level=3 nowatchdog mitigations=off"
+            LUKS_OPTIONS="$CRYPTHEADERUUID=header=/boot/header.img"
+            if yesno "LUKS Keyfile" "Do you want to create a LUKS keyfile for passwordless boot?"; then
+                # Create LUKS keyfile for passwordless boot
+                arch-chroot /mnt dd bs=512 count=4 if=/dev/random of=/boot/crypto_keyfile.bin iflag=fullblock
+                arch-chroot /mnt chmod 600 /boot/crypto_keyfile.bin
+                arch-chroot /mnt cryptsetup luksAddKey "$realrootdev" /boot/crypto_keyfile.bin --header /boot/header.img
+
+                # Ensure initramfs includes keyfile
+                arch-chroot /mnt sed -i 's/FILES=()/FILES=(\/boot\/header.img \/boot\/crypto_keyfile.bin)/' /etc/mkinitcpio.conf
+                KEY_PARAM="rd.luks.key=/boot/crypto_keyfile.bin"
+            fi
         fi
 
-        # --- Create EFI stub entry with efibootmgr ---
+        local options="rd.luks.name=$CRYPTHEADERUUID=cryptlvm \
+rd.luks.options=$LUKS_OPTIONS \
+${KEY_PARAM:+$KEY_PARAM \
+}rd.luks.data=$CRYPTHEADERUUID=$realrootdev \
+root=/dev/vg1/root rw rootflags=subvol=@ \
+resume=$swapdev quiet loglevel=3 systemd.show_status=auto \
+rd.udev.log_level=3 nowatchdog mitigations=off"
+    else
+        local options="root=UUID=$ROOTUUID rw rootflags=subvol=@ \
+resume=$swapdev quiet loglevel=3 systemd.show_status=auto \
+rd.udev.log_level=3 nowatchdog mitigations=off"
+    fi
 
-        if [ ! -d /mnt/etc/kernel/ ]; then mkdir -p /mnt/etc/kernel/; fi
+    # --- Create EFI stub entry with efibootmgr ---
 
-        echo "$options" > /mnt/etc/kernel/cmdline
+    if [[ ! -d /mnt/etc/kernel/ ]]; then
+        mkdir -p /mnt/etc/kernel/
+    fi
 
-        arch-chroot /mnt sed -i \
-                -e 's/^#default_options=/default_options=/' \
-                -e 's|^#default_uki=".*"|default_uki="/efi/EFI/Linux/arch-linux-zen.efi"|' \
-                /etc/mkinitcpio.d/linux-zen.preset
+    echo "$options" > /mnt/etc/kernel/cmdline
 
-        # Split disk and partition
-        disk=$(echo "${bootdev}" | sed 's/[0-9]*$//')
-        part=$(echo "${bootdev}" | grep -o '[0-9]*$')
+    arch-chroot /mnt sed -i \
+        -e 's/^#default_options=/default_options=/' \
+        -e 's|^#default_uki=".*"|default_uki="/efi/EFI/Linux/arch-linux-zen.efi"|' \
+        /etc/mkinitcpio.d/linux-zen.preset
 
-        # Create EFI stub boot entry
-        arch-chroot /mnt efibootmgr --create \
-                --disk "$disk" \
-                --part "$part" \
-                --label "Arch Linux (UKI)" \
-                --loader '\EFI\Linux\arch-linux-zen.efi'
+    # Split disk and partition
+    local disk="${bootdev%[0-9]*}"
+    local part="${bootdev##*[!0-9]}"
 
-        # ### Make the Boot files ###
-        arch-chroot /mnt mkdir -p /efi/EFI/Linux
-        arch-chroot /mnt mkinitcpio -P
+    # Create EFI stub boot entry
+    arch-chroot /mnt efibootmgr --create \
+        --disk "$disk" \
+        --part "$part" \
+        --label "Arch Linux (UKI)" \
+        --loader '\EFI\Linux\arch-linux-zen.efi'
+
+    # ### Make the Boot files ###
+    arch-chroot /mnt mkdir -p /efi/EFI/Linux
+    arch-chroot /mnt mkinitcpio -P
 }
 
 setupuser() {
-        arch-chroot /mnt useradd -m -G wheel "${user}"
-        arch-chroot /mnt sed -i 's/# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
-        echo "Defaults insults" >> /mnt/etc/sudoers
-        echo "${user} ALL=(ALL) NOPASSWD: /usr/bin/mount" >> /mnt/etc/sudoers
-        echo "${user} ALL=(ALL) NOPASSWD: /usr/bin/umount" >> /mnt/etc/sudoers
-        echo "${user} ALL=(ALL) NOPASSWD: /usr/bin/sed" >> /mnt/etc/sudoers
+    arch-chroot /mnt useradd -m -G wheel "${user}"
+    arch-chroot /mnt sed -i 's/# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
+    echo "Defaults insults" >> /mnt/etc/sudoers
+    echo "${user} ALL=(ALL) NOPASSWD: /usr/bin/mount" >> /mnt/etc/sudoers
+    echo "${user} ALL=(ALL) NOPASSWD: /usr/bin/umount" >> /mnt/etc/sudoers
+    echo "${user} ALL=(ALL) NOPASSWD: /usr/bin/sed" >> /mnt/etc/sudoers
 
-        # Set root password
-        echo "Setting user and root password..."
-        echo "${user}:${password}" | arch-chroot /mnt chpasswd -c SHA512
-        echo "root:${password}" | arch-chroot /mnt chpasswd -c SHA512
+    # Set root password
+    echo "Setting user and root password..."
+    echo "${user}:${password}" | arch-chroot /mnt chpasswd -c SHA512
+    echo "root:${password}" | arch-chroot /mnt chpasswd -c SHA512
 
-        # config files
-        echo "Getting some config files..."
-        arch-chroot /mnt curl -sL $BASE_URL/configs/home/.Xresources-Dark -o /home/"${user}"/.Xresources
-        arch-chroot /mnt curl -sL $BASE_URL/configs/home/.bashrc -o /home/"${user}"/.bashrc
+    # config files
+    echo "Getting some config files..."
+    arch-chroot /mnt curl -sL "$BASE_URL/configs/home/.Xresources-Dark" -o /home/"${user}"/.Xresources
+    arch-chroot /mnt curl -sL "$BASE_URL/configs/home/.bashrc" -o /home/"${user}"/.bashrc
 
-        # add a dummy file to let bashrc know to run post-install on first login
-        arch-chroot /mnt touch /home/"${user}"/newbie
+    # add a dummy file to let bashrc know to run post-install on first login
+    arch-chroot /mnt touch /home/"${user}"/newbie
 
-        # awesome tty login
-        arch-chroot /mnt curl -sL $BASE_URL/configs/system/issue -o /etc/issue
+    # awesome tty login
+    arch-chroot /mnt curl -sL "$BASE_URL/configs/system/issue" -o /etc/issue
 
-        # set custom pacman.conf
-        arch-chroot /mnt mv /etc/pacman.conf /etc/pacman.conf.bak
-        arch-chroot /mnt curl -sL $BASE_URL/configs/system/pacman.conf -o /etc/pacman.conf
+    # set custom pacman.conf
+    arch-chroot /mnt mv /etc/pacman.conf /etc/pacman.conf.bak
+    arch-chroot /mnt curl -sL "$BASE_URL/configs/system/pacman.conf" -o /etc/pacman.conf
 
-        # Copy post-install file to /home/$user
-        echo "Copy post-install file to /home/${user}..."
-        arch-chroot /mnt curl -sL $BASE_URL/post-install -o /home/"${user}"/post-install
-        arch-chroot /mnt sed -i "s|^rootdev=.*$|rootdev=${rootdev}|" /home/"${user}"/post-install
-        arch-chroot /mnt sed -i "s|^USE_CRYPT=.*$|USE_CRYPT=${USE_CRYPT}|" /home/"${user}"/post-install
-        arch-chroot /mnt sed -i "s|^USE_RAID=.*$|USE_RAID=${USE_RAID}|" /home/"${user}"/post-install
-        arch-chroot /mnt sed -i "s|^TLP=.*$|TLP=${TLP}|" /home/"${user}"/post-install
-        arch-chroot /mnt sed -i "s|^MAC=.*$|MAC=${MAC}|" /home/"${user}"/post-install
-        arch-chroot /mnt chmod a+x /home/"${user}"/post-install
+    # Copy post-install file to /home/$user
+    echo "Copy post-install file to /home/${user}..."
+    arch-chroot /mnt curl -sL "$BASE_URL/post-install" -o /home/"${user}"/post-install
+    arch-chroot /mnt sed -i "s|^rootdev=.*$|rootdev=${rootdev}|" /home/"${user}"/post-install
+    arch-chroot /mnt sed -i "s|^USE_CRYPT=.*$|USE_CRYPT=${USE_CRYPT}|" /home/"${user}"/post-install
+    arch-chroot /mnt sed -i "s|^USE_RAID=.*$|USE_RAID=${USE_RAID}|" /home/"${user}"/post-install
+    arch-chroot /mnt sed -i "s|^TLP=.*$|TLP=${TLP}|" /home/"${user}"/post-install
+    arch-chroot /mnt sed -i "s|^MAC=.*$|MAC=${MAC}|" /home/"${user}"/post-install
+    arch-chroot /mnt chmod a+x /home/"${user}"/post-install
 
-        # Add shell-option to ~/.inputrc to enable case-insensitive tab completion
-        if [ ! -a /mnt/home/"${user}"/.inputrc ]; then echo '$include /etc/inputrc' > /mnt/home/"${user}"/.inputrc; fi
-        echo 'set completion-ignore-case On' >> /mnt/home/"${user}"/.inputrc
+    # Add shell-option to ~/.inputrc to enable case-insensitive tab completion
+    if [[ ! -a /mnt/home/"${user}"/.inputrc ]]; then
+        echo '$include /etc/inputrc' > /mnt/home/"${user}"/.inputrc
+    fi
+    echo 'set completion-ignore-case On' >> /mnt/home/"${user}"/.inputrc
 
-        # remove last login message on console login
-        arch-chroot /mnt touch /home/"${user}"/.hushlogin
+    # remove last login message on console login
+    arch-chroot /mnt touch /home/"${user}"/.hushlogin
 
-        # own that stuff!
-        arch-chroot /mnt chown -R "${user}:${user}" /home/"${user}"/
+    # own that stuff!
+    arch-chroot /mnt chown -R "${user}:${user}" /home/"${user}"/
 }
 
 finish() {
-        whiptail --backtitle "$BACKTITLE" --msgbox --title "Congratulations" "Install Complete\n\nReturn to main menu and select 'Finsh and Reboot'" --fb 0 78
+    whiptail --backtitle "$BACKTITLE" --msgbox --title "Congratulations" \
+        "Install Complete\n\nReturn to main menu and select 'Finsh and Reboot'" --fb 0 78
 }
 
 rebootpc() {
-        if (yesno "Reboot?"); then
-                clear
-                umount -a
-                reboot
-        fi
+    if yesno "Reboot?" ""; then
+        clear
+        umount -a
+        reboot
+    fi
 }
 
 #   ============ initialisation functions ==============
@@ -701,173 +705,173 @@ rebootpc() {
 #   ====================================================
 
 wifi_connect() {
-        local SSID=""
-        local PASSPHRASE=""
+    local SSID=""
+    local PASSPHRASE=""
 
-        # Helper function to wait with retries
-        wait_with_retries() {
-                local condition="$1"
-                local max_retries="$2"
-                local delay="$3"
-                local retries=0
+    # Helper function to wait with retries
+    wait_with_retries() {
+        local condition="$1"
+        local max_retries="$2"
+        local delay="$3"
+        local retries=0
 
-                while ! eval "$condition"; do
-                        #echo "Attempt $((retries + 1)) of $max_retries..."
-                        sleep "$delay"
-                        ((retries++))
+        while ! eval "$condition"; do
+            # echo "Attempt $((retries + 1)) of $max_retries..."
+            sleep "$delay"
+            ((retries++))
 
-                        if ((retries >= max_retries)); then
-                                return 1
-                        fi
-                done
-                return 0
-        }
-
-        # Scan for networks
-        NETWORKS=$(iwctl station wlan0 scan > /dev/null 2>&1 && sleep 2 && iwctl station wlan0 get-networks | awk '(NR > 5) {print $1}')
-        if [[ -z $NETWORKS ]]; then
-                tput clear # Reset the terminal before showing a dialog
-                whiptail --backtitle "$BACKTITLE" --msgbox "No networks found. Please try again." 10 60
+            if ((retries >= max_retries)); then
                 return 1
-        fi
-
-        # Prepare menu options
-        MENU=()
-        while IFS= read -r NETWORK; do
-                MENU+=("$NETWORK" "Available")
-        done <<< "$NETWORKS"
-
-        # Display network selection menu
-        SSID=$(whiptail --backtitle "$BACKTITLE" --title "Select Wi-Fi Network" --menu "Available Networks:" 20 60 10 "${MENU[@]}" 3>&1 1>&2 2>&3)
-        if [[ -z $SSID ]]; then
-                tput clear
-                whiptail --backtitle "$BACKTITLE" --msgbox "No network selected. Exiting." 10 60
-                return 1
-        fi
-
-        # Prompt for passphrase
-        PASSPHRASE=$(whiptail --backtitle "$BACKTITLE" --passwordbox "Enter passphrase for $SSID:" 10 60 3>&1 1>&2 2>&3)
-        if [[ -z $PASSPHRASE ]]; then
-                tput clear
-                whiptail --backtitle "$BACKTITLE" --msgbox "Passphrase cannot be empty. Exiting." 10 60
-                return 1
-        fi
-
-        # Initialize gauge progress at 0%
-        (
-                echo 0
-                sleep 0.5
-
-                # Step 1: Attempting to connect
-                echo "10"
-                echo "Attempting to connect to $SSID..."
-                sleep 1
-                iwctl --passphrase "$PASSPHRASE" station wlan0 connect "$SSID" > /dev/null
-                if ! wait_with_retries "iwctl station wlan0 show | grep -q 'connected'" 10 2; then
-                        echo "100"
-                        echo "Failed to connect to $SSID."
-                        sleep 1
-                        tput clear
-                        whiptail --msgbox "Failed to connect to $SSID after 10 attempts.\n\nPlease check your credentials." 10 60
-                        exit 1
-                fi
-
-                # Step 2: Verify IP address
-                echo "50"
-                echo "Checking for IP address..."
-                sleep 1
-                if ! wait_with_retries "[[ -n \$(ip -4 addr show wlan0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}') ]]" 10 2; then
-                        echo "100"
-                        echo "Failed to obtain an IP address."
-                        sleep 1
-                        tput clear
-                        whiptail --msgbox "Failed to obtain an IP address. Please check your network configuration." 10 60
-                        exit 1
-                fi
-
-                echo "75"
-                echo "Syncing time and date..."
-                timedatectl > /dev/null
-                sleep 3
-
-                # Step 3: Connection successful
-                echo "100"
-                echo "Successfully connected to $SSID!"
-                sleep 1
-
-        ) | whiptail --title "Connecting to WiFi" --gauge "Please wait while we connect to $SSID..." 10 60 0
-
-        # Ensure terminal is reset after messages
-        clear
-
-        whiptail --backtitle "$BACKTITLE" --msgbox "Successfully connected to $SSID!\n\nPress OK to continue" 10 60
-
+            fi
+        done
         return 0
+    }
+
+    # Scan for networks
+    NETWORKS=$(iwctl station wlan0 scan > /dev/null 2>&1 && sleep 2 && iwctl station wlan0 get-networks | awk '(NR > 5) {print $1}')
+    if [[ -z $NETWORKS ]]; then
+        tput clear # Reset the terminal before showing a dialog
+        whiptail --backtitle "$BACKTITLE" --msgbox "No networks found. Please try again." 10 60
+        return 1
+    fi
+
+    # Prepare menu options
+    MENU=()
+    while IFS= read -r NETWORK; do
+        MENU+=("$NETWORK" "Available")
+    done <<< "$NETWORKS"
+
+    # Display network selection menu
+    SSID=$(whiptail --backtitle "$BACKTITLE" --title "Select Wi-Fi Network" --menu "Available Networks:" 20 60 10 "${MENU[@]}" 3>&1 1>&2 2>&3)
+    if [[ -z $SSID ]]; then
+        tput clear
+        whiptail --backtitle "$BACKTITLE" --msgbox "No network selected. Exiting." 10 60
+        return 1
+    fi
+
+    # Prompt for passphrase
+    PASSPHRASE=$(whiptail --backtitle "$BACKTITLE" --passwordbox "Enter passphrase for $SSID:" 10 60 3>&1 1>&2 2>&3)
+    if [[ -z $PASSPHRASE ]]; then
+        tput clear
+        whiptail --backtitle "$BACKTITLE" --msgbox "Passphrase cannot be empty. Exiting." 10 60
+        return 1
+    fi
+
+    # Initialize gauge progress at 0%
+    (
+        echo 0
+        sleep 0.5
+
+        # Step 1: Attempting to connect
+        echo "10"
+        echo "Attempting to connect to $SSID..."
+        sleep 1
+        iwctl --passphrase "$PASSPHRASE" station wlan0 connect "$SSID" > /dev/null
+        if ! wait_with_retries "iwctl station wlan0 show | grep -q 'connected'" 10 2; then
+            echo "100"
+            echo "Failed to connect to $SSID."
+            sleep 1
+            tput clear
+            whiptail --msgbox "Failed to connect to $SSID after 10 attempts.\n\nPlease check your credentials." 10 60
+            exit 1
+        fi
+
+        # Step 2: Verify IP address
+        echo "50"
+        echo "Checking for IP address..."
+        sleep 1
+        if ! wait_with_retries "[[ -n \$(ip -4 addr show wlan0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}') ]]" 10 2; then
+            echo "100"
+            echo "Failed to obtain an IP address."
+            sleep 1
+            tput clear
+            whiptail --msgbox "Failed to obtain an IP address. Please check your network configuration." 10 60
+            exit 1
+        fi
+
+        echo "75"
+        echo "Syncing time and date..."
+        timedatectl > /dev/null
+        sleep 3
+
+        # Step 3: Connection successful
+        echo "100"
+        echo "Successfully connected to $SSID!"
+        sleep 1
+    ) | whiptail --title "Connecting to WiFi" --gauge "Please wait while we connect to $SSID..." 10 60 0
+
+    # Ensure terminal is reset after messages
+    clear
+
+    whiptail --backtitle "$BACKTITLE" --msgbox "Successfully connected to $SSID!\n\nPress OK to continue" 10 60
+
+    return 0
 }
 
 check_connection() {
-        if ! ping -q -w1 -c1 google.com &> /dev/null; then
-                whiptail --backtitle "$BACKTITLE" --msgbox --title "No Network Connection" \
-                        "You need to be connected to the Internet.\n\nClick OK to begin Wi-Fi setup" 10 60
-                wifi_connect
-                return $?
-        fi
-        return 0
+    if ! ping -q -w1 -c1 google.com &> /dev/null; then
+        whiptail --backtitle "$BACKTITLE" --msgbox --title "No Network Connection" \
+            "You need to be connected to the Internet.\n\nClick OK to begin Wi-Fi setup" 10 60
+        wifi_connect
+        return $?
+    fi
+    return 0
 }
 
 dependencies() {
-        pacman -Sy --noconfirm archlinux-keyring
+    pacman -Sy --noconfirm archlinux-keyring
 }
 
 updatemirrors() {
-        MIRROR_COUNTRY=$(echo $MIRROR_COUNTRY | tr '[:lower:]' '[:upper:]')
-        reflector --verbose -c $MIRROR_COUNTRY -l 25 --age 12 -p https --sort rate --save /etc/pacman.d/mirrorlist
+    MIRROR_COUNTRY=$(echo "$MIRROR_COUNTRY" | tr '[:lower:]' '[:upper:]')
+    reflector --verbose -c "$MIRROR_COUNTRY" -l 25 --age 12 -p https --sort rate \
+        --save /etc/pacman.d/mirrorlist
 }
 
 getpackagelist() {
-        curl -sL $BASE_URL/packages -o /tmp/packages
+    curl -sL "$BASE_URL/packages" -o /tmp/packages
 }
 
 initialise() {
-        dependencies
-        updatemirrors
-        getpackagelist
+    dependencies
+    updatemirrors
+    getpackagelist
 
-        sed -i '/ParallelDownloads/s/^[#[:space:]]*//g' /etc/pacman.conf
-        sed -i '/Color/s/^[#[:space:]]*//g' /etc/pacman.conf
-        sed -i '/Color/a ILoveCandy' /etc/pacman.conf
+    sed -i '/ParallelDownloads/s/^[#[:space:]]*//g' /etc/pacman.conf
+    sed -i '/Color/s/^[#[:space:]]*//g' /etc/pacman.conf
+    sed -i '/Color/a ILoveCandy' /etc/pacman.conf
 }
 
 self_update() {
-        curl -sL "$BASE_URL/version" -o /tmp/version
-        local new_version
-        new_version=$(< /tmp/version)
+    curl -sL "$BASE_URL/version" -o /tmp/version
+    local new_version
+    new_version=$(< /tmp/version)
 
-        if ((VERSION < new_version)); then
-                curl -sL "$BASE_URL/install" -o install
-                chmod +x install
-                exec ./install
-                exit 1
-        fi
+    if ((VERSION < new_version)); then
+        curl -sL "$BASE_URL/install" -o install
+        chmod +x install
+        exec ./install
+        exit 1
+    fi
 }
 
 silent_install() {
-        bootdev=/dev/vda1
-        swapdev=/dev/vda2
-        rootdev=/dev/vda3
-        user="paul"
-        password="password"
-        hostname="archvm"
+    bootdev=/dev/vda1
+    swapdev=/dev/vda2
+    rootdev=/dev/vda3
+    user="paul"
+    password="password"
+    hostname="archvm"
 
-        mkfs.fat -F 32 ${bootdev}
-        performinstall
-        configuration
-        setupuser
-        installbootloader
+    mkfs.fat -F 32 "${bootdev}"
+    performinstall
+    configuration
+    setupuser
+    installbootloader
 }
 
 display_help() {
-        cat << EOF
+    cat << EOF
 
 Syntax: install [-c|h|m COUNTRY_CODE|s]
 Options:
@@ -886,47 +890,47 @@ EOF
 #
 #   ================================
 while getopts ":chm:s" option; do
-        case $option in
+    case $option in
         c) # clean
-                swapoff -a
-                rm /tmp/packages
-                umount -A /mnt/boot /mnt &> /dev/null || true
-                lsblk
-                exit
-                ;;
+            swapoff -a
+            rm /tmp/packages
+            umount -A /mnt/boot /mnt &> /dev/null || true
+            lsblk
+            exit
+            ;;
         h) # display Help
-                display_help
-                exit
-                ;;
+            display_help
+            exit
+            ;;
         m) # mirror to use
-                MIRROR_COUNTRY=$OPTARG
-                ;;
+            MIRROR_COUNTRY=$OPTARG
+            ;;
         s) # non interactive install (for testing)
-                AUTO=1
-                ;;
+            AUTO=1
+            ;;
         \?)
-                echo "Error: Invalid option"
-                display_help
-                exit
-                ;;
+            echo "Error: Invalid option"
+            display_help
+            exit
+            ;;
         :)
-                echo "Option -$OPTARG requires an argument"
-                display_help
-                exit
-                ;;
-        esac
+            echo "Option -$OPTARG requires an argument"
+            display_help
+            exit
+            ;;
+    esac
 done
 
 check_connection || {
-        echo "Connection failed. Exiting."
-        exit 1
+    echo "Connection failed. Exiting."
+    exit 1
 }
 self_update
 
 [[ ! -f /tmp/packages ]] && initialise
 
 if [[ $AUTO -eq 1 ]]; then
-        silent_install
+    silent_install
 else
-        mainmenu
+    mainmenu
 fi
