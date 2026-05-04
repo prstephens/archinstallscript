@@ -596,8 +596,8 @@ installbootloader() {
 
         local options="rd.luks.name=$CRYPTHEADERUUID=cryptlvm \
 rd.luks.options=$LUKS_OPTIONS \
-${KEY_PARAM:+$KEY_PARAM \
-}rd.luks.data=$CRYPTHEADERUUID=$realrootdev \
+${KEY_PARAM:+$KEY_PARA} \
+rd.luks.data=$CRYPTHEADERUUID=$realrootdev \
 root=/dev/vg1/root rw rootflags=subvol=@ \
 resume=$swapdev quiet loglevel=3 systemd.show_status=auto \
 rd.udev.log_level=3 nowatchdog mitigations=off"
