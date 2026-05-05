@@ -368,7 +368,7 @@ performinstall() {
     fi
 
     # do the install!
-    pacstrap /mnt "$(cat /tmp/packages)"
+    pacstrap /mnt $(grep -v '^$' /tmp/packages)
 
     genfstab -U /mnt >> /mnt/etc/fstab
 }
