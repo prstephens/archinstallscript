@@ -578,7 +578,7 @@ installbootloader() {
         local KEY_PARAM=""
         if [[ $TPM -eq 1 ]]; then
             echo "Enrolling TPM2 key for disk unlock..."
-            arch-chroot /mnt systemd-cryptenroll --tpm2-device=auto "$realrootdev" --header /boot/header.img || true
+            arch-chroot /mnt systemd-cryptenroll --tpm2-device=auto --tpm2-pcrs=7 /boot/header.img
             LUKS_OPTIONS="$CRYPTHEADERUUID=header=/boot/header.img,tpm2-device=auto"
         else
             LUKS_OPTIONS="$CRYPTHEADERUUID=header=/boot/header.img"
