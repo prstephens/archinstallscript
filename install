@@ -570,19 +570,11 @@ installbootloader() {
         cp header.img /mnt/boot/
 
         # create a LUKS recovery key and store this offline
-        systemd-cryptenroll --recovery-key $realrootdev > /mnt/recovery.key
+        dd if=/dev/urandom bs=32 count=1 | base64 > /mnt/recovery.key
         chmod 600 /mnt/recovery.key
+        arch-chroot /mnt cryptsetup luksAddKey "$realrootdev" /recovery.key --header /boot/header.img
+        arch-chroot /mnt sed -i 's/FILES=()/FILES=(\/boot\/header.img)/' /etc/mkinitcpio.conf
         
-        if yesno "LUKS Keyfile" "Do you want to create a LUKS keyfile for passwordless boot?"; then
-            # Create LUKS keyfile for passwordless boot
-            arch-chroot /mnt dd bs=512 count=4 if=/dev/random of=/boot/crypto_keyfile.bin iflag=fullblock
-            arch-chroot /mnt chmod 600 /boot/crypto_keyfile.bin
-            arch-chroot /mnt cryptsetup luksAddKey "$realrootdev" /boot/crypto_keyfile.bin --header /boot/header.img
-
-            # Ensure initramfs includes keyfile
-            arch-chroot /mnt sed -i 's/FILES=()/FILES=(\/boot\/header.img \/boot\/crypto_keyfile.bin)/' /etc/mkinitcpio.conf
-        fi
-
         local options="rd.luks.name=$CRYPTHEADERUUID=cryptlvm \
 rd.luks.options=$CRYPTHEADERUUID=header=/boot/header.img \
 rd.luks.key=/boot/crypto_keyfile.bin \
@@ -633,7 +625,7 @@ rd.udev.log_level=3 nowatchdog mitigations=off"
     # create keys with sbctl create-keys
     # enroll keys in firmware with sbctl enroll-keys -m 
     # test and reboot system to verify secure boot works
-    # enroll TPM2.0 with systemd-cryptenroll --tpm2-device=auto --tpm2-pcrs=7+11 /boot/header.img
+    # enroll TPM2.0 with systemd-cryptenroll --tpm2-device=auto --tpm2-pcrs=7+11 --tpm2-with-pin=yes /boot/header.img
     # add kernel param to luks options: d.luks.options=$CRYPTHEADERUUID=header=/boot/header.img,tpm2-device=auto
     # recreate UKI with mkinitcpio -P to include the TPM2.0 key 
     # reboot and verify that the system can boot with secure boot enabled and that the TPM2.0 key is being used for authentication
