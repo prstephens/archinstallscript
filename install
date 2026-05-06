@@ -570,7 +570,7 @@ installbootloader() {
         cp header.img /mnt/boot/
 
         # create a LUKS recovery key and store this offline
-        systemd-cryptenroll --recovery-key $realrootdev > /mnt/root/recovery.key
+        systemd-cryptenroll --recovery-key $realrootdev > /mnt/recovery.key
         chmod 600 /mnt/recovery.key
         
         if yesno "LUKS Keyfile" "Do you want to create a LUKS keyfile for passwordless boot?"; then
