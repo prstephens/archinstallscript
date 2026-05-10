@@ -790,6 +790,8 @@ EOT
                 curl -sL $BASE_URL/configs/MacbookAir_Color_LCD.icc -o /tmp/MacbookAir_Color_LCD.icc
         fi
 
+        # install sbctl for secure boot support
+        sudo sbctl create-keys
         sudo mkinitcpio -P
 
         # create a snapshot
