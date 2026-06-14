@@ -706,6 +706,13 @@ setup_cloudflare_warp() {
         sudo systemctl enable --now warp-svc.service
 }
 
+create_luks_recovery_key() {
+    # create a LUKS recovery key and store this offline
+    dd if=/dev/urandom bs=32 count=1 status=none | base64 | sudo tee /recovery.key > /dev/null
+    sudo chmod 600 /recovery.key
+    sudo cryptsetup luksAddKey "$rootdev" /recovery.key --header /boot/header.img
+}
+
 initialise() {
         whiptail --backtitle "$BACKTITLE" --msgbox --title "Welcome!" "Welcome to Arch Linux\n\nWe will now initialise the system" 0 78
 
@@ -784,6 +791,8 @@ EOT
                 curl -sL $BASE_URL/configs/MacbookAir_Color_LCD.icc -o /tmp/MacbookAir_Color_LCD.icc
         fi
 
+        # install sbctl for secure boot support
+        sudo sbctl create-keys
         sudo mkinitcpio -P
 
         # create a snapshot
