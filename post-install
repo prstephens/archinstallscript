@@ -175,6 +175,7 @@ install_gnome() {
         gnome-extensions enable arch-update@RaphaelRochet
 
         gsettings set org.gnome.mutter center-new-windows true
+        gsettings set org.gnome.shell always-show-log-out true
 
         # Remove some trash from Gnome
         sudo pacman -Rs --noconfirm epiphany gnome-music showtime gnome-connections gnome-text-editor gnome-tour gnome-console gnome-user-docs yelp gnome-maps decibels
