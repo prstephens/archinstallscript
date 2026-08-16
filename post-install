@@ -380,6 +380,7 @@ install_tahoe() {
                 [tahoe-night.png]="macos/tahoe-night.png"
                 [goldengate-light.png]="macos/goldengat-light.png"
                 [goldengate-dark.png]="macos/goldengate-dark.png"
+                [goldengate.jpg]="macos/goldengate.jpg"
                 )
 
                 # Download each wallpaper if missing
@@ -555,6 +556,7 @@ update_icons(){
         sudo sed -i "s|^Icon=.*|Icon=internet-chat|" /usr/share/applications/elecwhat.desktop
 
         curl -sL $BASE_URL/icons/launchpad.svg -o $HOME/.local/share/gnome-shell/extensions/kiwi@kemma/icons/launchpad.svg
+        curl -sL $BASE_URL/icons/file-manager.svg -o $HOME/.local/share/icons/MacTahoe/apps/scalable/file-manager.svg
 }
 
 install_apps() {
