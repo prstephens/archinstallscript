@@ -23,10 +23,242 @@ BACKTITLE="Arch Installer v"$VERSION
 BASE_URL="https://raw.githubusercontent.com/prstephens/archinstallscript/master/"
 USE_CRYPT=0
 USE_RAID=0
+USE_SECUREBOOT=0   # opt-in: create sbctl keys and sign the UKI
+USE_TPM=0          # opt-in: unlock the encrypted disk with the TPM2 chip
 TLP=0
 MIRROR_COUNTRY=GB
 AUTO=0 # switch to make a non interactive install (for testing)
 MAC=0
+FORMAT_BOOT=0      # set by checks() when the user opts to format the EFI partition
+INSTALL_ABORTED=0  # set by performinstall() when the user rejects the summary
+DISK_PARTITIONED=0 # set once cfdisk has been run, to drive the menu state
+INSTALL_DONE=0     # set once the install has completed, to drive the menu state
+SECUREBOOT_SETUP_MODE=0 # set when the firmware allows key enrollment from here
+
+# Status markers. Deliberately ASCII: the live console uses a PSF font
+# (bedstead-20) that has no glyph for U+2713, so a tick would render as junk.
+MARK_DONE="[*]"
+MARK_TODO="[ ]"
+MARK_SKIP="[-]"
+MARK_NEXT="[>]"
+
+# One-line summaries shown against each menu entry once a step is done
+DISK_SUMMARY=""
+CRYPT_SUMMARY=""
+MOUNT_SUMMARY=""
+USER_SUMMARY=""
+SECUREBOOT_SUMMARY=""
+
+#   ============ UI HELPERS ========
+#
+#   Consistent dialogs, validation, and
+#   failure reporting
+#
+#   ================================
+
+ui_msg() {
+    whiptail --backtitle "${BACKTITLE}" --title "$1" --fb --msgbox "$2" 0 78
+}
+
+ui_error() {
+    whiptail --backtitle "${BACKTITLE}" --title "$1" --fb --msgbox "$2" 0 78
+}
+
+# Clears the screen and prints a banner before a long-running command.
+# Long operations (pacstrap, mkinitcpio, reflector) deliberately run on the
+# raw console rather than behind a --gauge: hiding pacman's progress and
+# errors behind a spinner is what made failures impossible to diagnose.
+banner() {
+    clear
+    echo "=============================================================================="
+    echo "  $1"
+    echo "=============================================================================="
+    echo
+}
+
+# Human readable size of a block device, for the menu summaries
+dev_size() {
+    [[ -b "$1" ]] || return 0
+    lsblk -d -n -o SIZE "$1" 2>/dev/null | tr -d ' '
+}
+
+# Describes a partition as "/dev/sda1 (512M)" for menu/review display
+dev_desc() {
+    local dev="$1" size
+    [[ -n "${dev}" ]] || { printf 'not set'; return 0; }
+    size=$(dev_size "${dev}")
+    if [[ -n "${size}" ]]; then
+        printf '%s (%s)' "${dev}" "${size}"
+    else
+        printf '%s' "${dev}"
+    fi
+}
+
+# Linux hostname rules: alphanumerics and hyphens, no leading/trailing hyphen
+validate_hostname() {
+    local name="$1"
+    [[ -n "${name}" ]] || { printf 'Hostname cannot be empty.'; return 1; }
+    ((${#name} <= 63)) || { printf 'Hostname must be 63 characters or fewer.'; return 1; }
+    [[ "${name}" =~ ^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$ ]] || {
+        printf 'Hostname may only contain letters, digits and hyphens, and cannot start or end with a hyphen.'
+        return 1
+    }
+    return 0
+}
+
+# useradd rules, plus a guard against colliding with an existing system account
+validate_username() {
+    local name="$1"
+    [[ -n "${name}" ]] || { printf 'Username cannot be empty.'; return 1; }
+    ((${#name} <= 32)) || { printf 'Username must be 32 characters or fewer.'; return 1; }
+    [[ "${name}" =~ ^[a-z_][a-z0-9_-]*$ ]] || {
+        printf 'Username must start with a lowercase letter or underscore, and contain only lowercase letters, digits, hyphens and underscores.'
+        return 1
+    }
+    case "${name}" in
+        root|bin|daemon|mail|ftp|http|nobody|systemd-*|dbus|sshd)
+            printf 'That username is reserved by the system.'
+            return 1
+            ;;
+    esac
+    return 0
+}
+
+validate_swapsize() {
+    local size="$1"
+    [[ "${size}" =~ ^[0-9]+$ ]] || { printf 'Swap size must be a whole number of gigabytes.'; return 1; }
+    ((size >= 1 && size <= 128)) || { printf 'Swap size must be between 1 and 128 GB.'; return 1; }
+    return 0
+}
+
+# Fires on any command that would otherwise kill the script under `set -e`.
+# Without this a failure drops you to a dead console with no explanation,
+# which is what made people reboot and start over.
+installer_failed() {
+    local exit_code="$1" line="$2" cmd="$3"
+
+    trap - ERR
+    set +e
+
+    local advice="Nothing further has been written to disk."
+    if [[ ${INSTALL_DONE} -eq 1 ]]; then
+        advice="The base install had already completed before this failure."
+    fi
+
+    # Non-interactive runs and a missing whiptail both need a plain console
+    # report rather than a dialog that cannot be drawn
+    if [[ ${AUTO} -eq 1 ]] || ! command -v whiptail > /dev/null 2>&1; then
+        echo >&2
+        echo "=============================================================================" >&2
+        echo "  INSTALL FAILED" >&2
+        echo "=============================================================================" >&2
+        echo "  Command : ${cmd}" >&2
+        echo "  Line    : ${line}" >&2
+        echo "  Exit    : ${exit_code}" >&2
+        echo "  ${advice}" >&2
+        echo "  Reset with './install -c', then re-run './install'." >&2
+        echo >&2
+        exit "${exit_code}"
+    fi
+
+    clear
+    whiptail --backtitle "${BACKTITLE}" --title "Installation Failed" --fb --msgbox \
+"The installer stopped because a command failed.
+
+  Command : ${cmd}
+  Line    : ${line}
+  Exit    : ${exit_code}
+
+${advice}
+
+Run './install -c' to reset the mounts and swap, then './install'
+to start again. A reboot is not required." 0 78
+
+    clear
+    echo "Installer aborted at line ${line}: ${cmd} (exit ${exit_code})"
+    echo "Reset with './install -c', then re-run './install'."
+    exit "${exit_code}"
+}
+
+# Verifies the things that silently break the installer much later on
+preflight() {
+    local problems=()
+    local cmd problem list
+
+    if [[ ${EUID} -ne 0 ]]; then
+        echo "This installer must be run as root." >&2
+        exit 1
+    fi
+
+    # whiptail drives every prompt in this script. It is only a transitive
+    # dependency of the ISO, so make sure it is really here before relying on it.
+    if ! command -v whiptail > /dev/null 2>&1; then
+        echo "whiptail is missing. Installing libnewt..." >&2
+        pacman -Sy --noconfirm libnewt || {
+            echo "Could not install libnewt - cannot show the installer UI." >&2
+            exit 1
+        }
+    fi
+
+    for cmd in cfdisk lsblk pacstrap arch-chroot genfstab btrfs cryptsetup efibootmgr curl; do
+        command -v "${cmd}" > /dev/null 2>&1 || problems+=("${cmd} is not installed")
+    done
+
+    # The bootloader path is UKI + efibootmgr, which cannot work on BIOS
+    [[ -d /sys/firmware/efi ]] || problems+=("This system is not booted in UEFI mode - the UKI bootloader will not work")
+
+    if ((${#problems[@]} > 0)); then
+        list=""
+        for problem in "${problems[@]}"; do
+            list+="  - ${problem}\n"
+        done
+        ui_error "Preflight Check Failed" "The installer cannot continue:\n\n${list}"
+        exit 1
+    fi
+}
+
+show_help() {
+    ui_msg "How This Installer Works" \
+"Work down the menu. Steps marked ${MARK_DONE} are done, ${MARK_TODO} are
+outstanding, and ${MARK_SKIP} were skipped as optional.
+
+  WIPE DEVICE   Optional. Overwrites a disk with random data first.
+                Slow, and only needed if you are disposing of the disk
+                or want old data genuinely gone.
+
+  PARTITION     Opens cfdisk. Create a GPT label with:
+                  1) EFI System  - 512M or larger
+                  2) Linux swap  - optional, size to taste
+                  3) Linux root  - the rest
+                Write the table and quit to come back here.
+
+  ENCRYPTION    Optional. LUKS2 with a detached header plus LVM. The
+                header is kept at /boot/header.img, so the disk itself
+                carries no LUKS signature. Creates its own swap and
+                root volumes, so a swap partition is not needed.
+
+  MOUNT         Tells the installer which partitions to use. The root
+                partition is reformatted as Btrfs with subvolumes
+                @ @home @var_log @var_cache @tmp @snapshots.
+
+  SECURE BOOT   Optional. Creates your own Secure Boot keys, signs the
+                kernel, and keeps it signed across updates. On an
+                encrypted disk with a TPM2 chip it can also set up
+                automatic unlock, so you type a short PIN instead of
+                the full passphrase.
+
+                Both need a trip to your firmware menu afterwards.
+                The 'secureboot' command on the installed system
+                shows what is left to do, one step at a time.
+
+  SETUP USER    Hostname, admin username and password. The same
+                password is set for root.
+
+  INSTALL       Shows a full summary, then does the work. Everything
+                before this point is reversible - this step is not.
+
+Nothing is written to disk until you confirm the summary at INSTALL."
+}
 
 #   ========== FUNCTIONS ===========
 #
@@ -34,27 +266,98 @@ MAC=0
 #
 #   ================================
 
+# Renders the status marker for each menu entry
+step_mark() {
+    case "$1" in
+        wipe)
+            [[ ${DISK_PARTITIONED} -eq 1 ]] && printf '%s' "${MARK_SKIP}" || printf '%s' "${MARK_TODO}"
+            ;;
+        partition)
+            [[ ${DISK_PARTITIONED} -eq 1 ]] && printf '%s' "${MARK_DONE}" || printf '%s' "${MARK_TODO}"
+            ;;
+        encrypt)
+            [[ ${USE_CRYPT} -eq 1 ]] && printf '%s' "${MARK_DONE}" || printf '%s' "${MARK_TODO}"
+            ;;
+        mount)
+            [[ -n "${rootdev}" ]] && printf '%s' "${MARK_DONE}" || printf '%s' "${MARK_TODO}"
+            ;;
+        secureboot)
+            if [[ ${USE_SECUREBOOT} -eq 1 ]]; then
+                printf '%s' "${MARK_DONE}"
+            elif [[ -n "${SECUREBOOT_SUMMARY}" ]]; then
+                # Visited and declined
+                printf '%s' "${MARK_SKIP}"
+            else
+                printf '%s' "${MARK_TODO}"
+            fi
+            ;;
+        user)
+            [[ -n "${user}" && -n "${hostname}" && -n "${password}" ]] && printf '%s' "${MARK_DONE}" || printf '%s' "${MARK_TODO}"
+            ;;
+        install)
+            if [[ ${INSTALL_DONE} -eq 1 ]]; then
+                printf '%s' "${MARK_DONE}"
+            elif [[ -n "${rootdev}" && -n "${user}" && -n "${password}" ]]; then
+                printf '%s' "${MARK_NEXT}"
+            else
+                printf '%s' "${MARK_TODO}"
+            fi
+            ;;
+    esac
+}
+
+# Lists what is still missing before INSTALL can run
+install_blockers() {
+    local missing=()
+    local item list
+    [[ -n "${rootdev}" ]] || missing+=("a root partition (MOUNT)")
+    [[ -n "${user}" ]] || missing+=("an admin username (SETUP USER)")
+    [[ -n "${password}" ]] || missing+=("an admin password (SETUP USER)")
+    [[ -n "${hostname}" ]] || missing+=("a hostname (SETUP USER)")
+
+    if ((${#missing[@]} == 0)); then
+        return 0
+    fi
+
+    list=""
+    for item in "${missing[@]}"; do
+        list+="  - ${item}\n"
+    done
+    printf '%s' "${list}"
+    return 1
+}
+
 mainmenu() {
     local nextitem="${1:-.}" # Default to "." if no argument is provided
-    local options=(
-        "WIPE DEVICE" "(Optional) Securely wipe disk or partition before installation"
-        "PARTITION DISK" "Partition disk using cfdisk to create EFI, swap, and root partitions"
-        "ENCRYPTION" "(Optional) Use full disk encryption with detached LUKS header"
-        "MOUNT" "Select the partitions to mount"
-        "SETUP USER" "Setup a user and root password"
-        "INSTALL" "Perform Arch Linux base Installation"
-        "" ""
-        "FINISH" "Finish and reboot"
-    )
+    local sel options blockers
 
-    # Display the menu using whiptail
-    local sel
-    sel=$(whiptail --backtitle "${BACKTITLE}" --title "Main Menu" --menu "" \
-        --fb --cancel-button "Exit" --default-item "${nextitem}" 0 78 0 "${options[@]}" \
-        3>&1 1>&2 2>&3)
+    while true; do
+        # Rebuilt every pass so the status markers and summaries stay current
+        options=(
+            "WIPE DEVICE"    "$(step_mark wipe)  Optional: secure-wipe a disk before installing"
+            "PARTITION DISK" "$(step_mark partition)  ${DISK_SUMMARY:-Create EFI, swap and root partitions with cfdisk}"
+            "ENCRYPTION"     "$(step_mark encrypt)  ${CRYPT_SUMMARY:-Optional: LUKS2 + LVM with a detached header}"
+            "MOUNT"          "$(step_mark mount)  ${MOUNT_SUMMARY:-Choose the boot, swap and root partitions}"
+            "SECURE BOOT"    "$(step_mark secureboot)  ${SECUREBOOT_SUMMARY:-Optional: sign the kernel, and TPM2 disk unlock}"
+            "SETUP USER"     "$(step_mark user)  ${USER_SUMMARY:-Set the hostname, admin user and password}"
+            "INSTALL"        "$(step_mark install)  Review everything, then install"
+            ""               ""
+            "HELP"           "     What each step does, and the expected layout"
+            "FINISH"         "     Reboot into the new system"
+        )
 
-    # Check the result of whiptail and act accordingly
-    if [[ $? -eq 0 ]]; then
+        # Cancel/Exit must not abort the script, so the menu is run as an
+        # if condition (a bare assignment would trip `set -e`).
+        if ! sel=$(whiptail --backtitle "${BACKTITLE}" --title "Main Menu" --menu "" \
+            --fb --cancel-button "Exit" --default-item "${nextitem}" 0 78 0 "${options[@]}" \
+            3>&1 1>&2 2>&3); then
+            if yesno "Quit Installer?" "Leave the installer?\n\nNothing already written to disk will be undone."; then
+                clear
+                return 0
+            fi
+            continue
+        fi
+
         case "${sel}" in
             "WIPE DEVICE")
                 preparedisk
@@ -70,30 +373,59 @@ mainmenu() {
                 ;;
             "MOUNT")
                 choosepartitions
+                nextitem="SECURE BOOT"
+                ;;
+            "SECURE BOOT")
+                choose_secureboot
                 nextitem="SETUP USER"
                 ;;
             "SETUP USER")
                 getuserinfo
                 nextitem="INSTALL"
                 ;;
+            "HELP")
+                show_help
+                nextitem="HELP"
+                ;;
             "INSTALL")
+                if [[ ${INSTALL_DONE} -eq 1 ]]; then
+                    if ! yesno "Already Installed" "The base install has already completed.\n\nRun it again from the start?"; then
+                        nextitem="FINISH"
+                        continue
+                    fi
+                    INSTALL_DONE=0
+                fi
+
+                # Tell the user exactly what is missing rather than failing
+                # part way through with a cryptic error
+                if ! blockers=$(install_blockers); then
+                    ui_error "Not Ready To Install" \
+                        "The installer still needs:\n\n${blockers}\nComplete those steps first."
+                    nextitem="MOUNT"
+                    continue
+                fi
+
+                # performinstall must NOT run inside an if/&&/|| condition:
+                # that would disable `set -e` for everything it calls, so a
+                # failed mkfs/pacstrap would no longer abort the install.
                 performinstall
-                configuration
-                setupuser
-                installbootloader
-                finish
-                nextitem="FINISH"
+                if [[ ${INSTALL_ABORTED} -eq 1 ]]; then
+                    nextitem="MOUNT"
+                else
+                    configuration
+                    setupuser
+                    installbootloader
+                    INSTALL_DONE=1
+                    finish
+                    nextitem="FINISH"
+                fi
                 ;;
             "FINISH")
                 rebootpc
                 nextitem="FINISH"
                 ;;
         esac
-        # Recursively call the main menu with the updated nextitem
-        mainmenu "${nextitem}"
-    else
-        clear
-    fi
+    done
 }
 
 yesno() {
@@ -104,190 +436,393 @@ yesno() {
 
 preparedisk() {
     local wipedevice
-    wipedevice=$(selectdisk "Choose device to be wiped")
+    wipedevice=$(selectdisk "Choose device to be wiped") || return 0
 
-    if yesno "### WARNING ###" "Are you sure you want to secure wipe ${wipedevice}?\n\nTHIS CANNOT BE UNDONE. ALL DATA WILL BE PERMANENTLY LOST!"; then
+    if yesno "### WARNING ###" "Securely wipe ${wipedevice} ($(dev_size "${wipedevice}"))?\n\nTHIS CANNOT BE UNDONE. ALL DATA WILL BE PERMANENTLY LOST!\n\nThis writes zeroes through an encrypted mapping across the whole\ndevice. On a large spinning disk it can take many hours. You can\nstop it with Ctrl-C and return to the menu."; then
+        banner "Wiping ${wipedevice} - press Ctrl-C to stop"
         # Open the device with cryptsetup
         if cryptsetup open --type plain -d /dev/urandom "${wipedevice}" to_be_wiped; then
             # Securely wipe the device
             dd if=/dev/zero of=/dev/mapper/to_be_wiped status=progress || :
             cryptsetup close to_be_wiped
+            ui_msg "Wipe Complete" "${wipedevice} has been wiped."
         else
-            echo "Failed to open ${wipedevice} for wiping" >&2
+            ui_error "Wipe Failed" "Could not open ${wipedevice} for wiping.\n\nIt may be mounted or in use by LVM or RAID."
         fi
     fi
 }
 
 diskpartcfdisk() {
     local device
-    device=$(selectdisk "Edit Partitions (cfdisk)")
-    if [[ $? -eq 0 ]] && [[ -n "${device}" ]]; then
+    device=$(selectdisk "Edit Partitions (cfdisk)") || return 0
+
+    if [[ -n "${device}" ]]; then
+        # cfdisk is a bare TUI with no context, so explain the expected
+        # layout before dropping the user into it
+        ui_msg "Partition ${device}" \
+"cfdisk is about to open on ${device} ($(dev_size "${device}")).
+
+Create a GPT label with:
+
+  1)  EFI System       512M or larger
+  2)  Linux swap       optional, size to taste
+  3)  Linux filesystem the remaining space
+
+Select [Write] and type 'yes' to commit, then [Quit] to return here.
+
+Nothing is written until you choose [Write] inside cfdisk."
+
         clear
         cfdisk "${device}"
+
+        DISK_PARTITIONED=1
+        DISK_SUMMARY="Partitioned ${device} ($(dev_size "${device}"))"
     fi
 }
 
 selectdisk() {
     # Fetch disk list excluding loop and RAM devices
-    local items
-    items=$(lsblk -d -p -n -l -o NAME,SIZE -e 7,11)
     local options=()
+    local item
 
     # Populate menu options
     while IFS= read -r item; do
         options+=("${item}" "")
-    done <<< "${items}"
+    done < <(lsblk -d -p -n -l -o NAME,SIZE -e 7,11)
 
     # Display selection menu
     local result
-    result=$(whiptail --backtitle "${BACKTITLE}" --title "$1" --menu "" --fb 0 78 0 "${options[@]}" 3>&1 1>&2 2>&3)
-    if [[ $? -ne 0 ]]; then
-        return 1
-    fi
+    result=$(whiptail --backtitle "${BACKTITLE}" --title "$1" --menu "" --fb 0 78 0 \
+        "${options[@]}" 3>&1 1>&2 2>&3) || return 1
 
     echo "${result%% *}" # Return selected disk
-    return 0
 }
 
 enablelvm() {
-    USE_CRYPT=1
-    chooseencryptpartition
+    local swapspace error
 
+    chooseencryptpartition || return 0
+
+    if ! yesno "Encrypt ${realrootdev}?" \
+"${realrootdev} ($(dev_size "${realrootdev}")) will be formatted as a LUKS2
+container with a DETACHED header, then filled with LVM volumes.
+
+ALL DATA ON ${realrootdev} WILL BE LOST.
+
+Important: the header is stored at /boot/header.img, not on the
+disk. If you lose that file the data is unrecoverable, even with
+the passphrase. Keep a backup of it.
+
+Continue?"; then
+        return 0
+    fi
+
+    # Validate before anything destructive happens
+    while true; do
+        swapspace=$(whiptail --backtitle "${BACKTITLE}" --title "Swap Size" --fb \
+            --inputbox "Size of the swap volume, in GB.\n\nFor hibernation use at least as much as your RAM." 0 60 \
+            3>&1 1>&2 2>&3) || return 0
+
+        if error=$(validate_swapsize "${swapspace}"); then
+            break
+        fi
+        ui_error "Invalid Swap Size" "${error}"
+    done
+
+    banner "Creating the LUKS2 container on ${realrootdev}"
     dd if=/dev/zero of=header.img bs=16M count=1
     chmod 600 header.img
+
+    echo
+    echo "Choose a passphrase for the encrypted container."
+    echo "You will need this every time the machine boots."
+    echo
     cryptsetup luksFormat "${realrootdev}" --offset 32768 --header header.img
+
+    echo
+    echo "Unlocking the container..."
     cryptsetup open --header header.img "${realrootdev}" cryptlvm
 
     CRYPTHEADERUUID=$(blkid -s UUID -o value header.img)
 
     # create the LVM partitons
+    banner "Creating LVM volumes"
     pvcreate /dev/mapper/cryptlvm
     vgcreate vg1 /dev/mapper/cryptlvm
-
-    swapspace=$(whiptail --backtitle "$BACKTITLE" --inputbox "Enter SWAP size (GB):" --fb 0 24 3>&1 1>&2 2>&3)
-
     lvcreate -L "${swapspace}G" vg1 -n swap
     lvcreate -l 100%FREE vg1 -n root
+
+    USE_CRYPT=1
+    CRYPT_SUMMARY="LUKS2 + LVM on ${realrootdev}, ${swapspace}G swap"
+
+    ui_msg "Encryption Ready" \
+"${realrootdev} is now a LUKS2 container with:
+
+  /dev/vg1/swap   ${swapspace}G
+  /dev/vg1/root   remaining space
+
+The detached header will be copied to /boot/header.img during
+the install.
+
+Next, choose your partitions at MOUNT. Pick /dev/vg1/root as the
+root partition - a separate swap partition is not needed."
+}
+
+# Collects every partition (whole disks excluded) into PART_OPTIONS as
+# whiptail menu pairs, with a NAME/SIZE/FSTYPE overview in PART_INFO.
+# Both are globals so the arrays survive without a subshell.
+partition_options() {
+    local item disk
+    local wholedisks=()
+    local is_disk
+
+    PART_INFO=$(lsblk -o NAME,SIZE,FSTYPE)
+    PART_OPTIONS=()
+
+    while IFS= read -r item; do
+        wholedisks+=("/dev/${item}")
+    done < <(lsblk -d -n -l -o NAME -e 7,11)
+
+    while IFS= read -r item; do
+        # Exact comparison rather than a quoted =~ substring test, which
+        # trips SC2076 and silently depends on IFS
+        is_disk=0
+        for disk in "${wholedisks[@]}"; do
+            if [[ "${item}" == "${disk}" ]]; then
+                is_disk=1
+                break
+            fi
+        done
+        if [[ ${is_disk} -eq 0 ]]; then
+            PART_OPTIONS+=("${item}" "")
+        fi
+    done < <(lsblk -p -n -l -o NAME -e 7,11)
 }
 
 chooseencryptpartition() {
-    local itemsinfo
-    local items
-    local deviceitems
-    local options=()
-    local optionstoremove=()
-    local IFS_ORIG=$IFS
-    itemsinfo=$(lsblk -o NAME,SIZE,FSTYPE)
-    items=$(lsblk -p -n -l -o NAME -e 7,11)
-    deviceitems=$(lsblk -d -n -l -o NAME -e 7,11)
-    IFS=$'\n'
-    for item in ${deviceitems}; do
-        optionstoremove+=("/dev/${item}")
-    done
-    for item in ${items}; do
-        if [[ ! " ${optionstoremove[*]} " =~ " ${item} " ]]; then
-            options+=("${item}" "")
-        fi
-    done
+    partition_options
 
     realrootdev=$(whiptail --backtitle "${BACKTITLE}" --title "Select Root partition to encrypt" \
-        --menu "${itemsinfo}" --fb --default-item "${rootdev}" 0 78 0 \
-        "${options[@]}" 3>&1 1>&2 2>&3)
-    if [[ $? -ne 0 ]]; then
-        return 1
-    fi
+        --menu "${PART_INFO}" --fb --default-item "${rootdev}" 0 78 0 \
+        "${PART_OPTIONS[@]}" 3>&1 1>&2 2>&3) || return 1
 }
 
 choosepartitions() {
-    local itemsinfo
-    local items
-    local deviceitems
-    local options=()
-    local optionstoremove=()
-    local IFS_ORIG=$IFS
-    itemsinfo=$(lsblk -o NAME,SIZE,FSTYPE)
-    items=$(lsblk -p -n -l -o NAME -e 7,11)
-    deviceitems=$(lsblk -d -n -l -o NAME -e 7,11)
-    IFS=$'\n'
-    for item in ${deviceitems}; do
-        optionstoremove+=("/dev/${item}")
-    done
-    for item in ${items}; do
-        if [[ ! " ${optionstoremove[*]} " =~ " ${item} " ]]; then
-            options+=("${item}" "")
-        fi
-    done
+    # Cancelling any picker drops straight back to the main menu.
+    while true; do
+        partition_options
 
-    bootdev=$(whiptail --backtitle "${BACKTITLE}" --title "Select Boot partition" \
-        --menu "${itemsinfo}" --fb --default-item "${bootdev}" 0 78 0 \
-        "none" "-" "${options[@]}" 3>&1 1>&2 2>&3)
-    if [[ $? -ne 0 ]]; then
-        return 1
-    else
+        bootdev=$(whiptail --backtitle "${BACKTITLE}" --title "Select Boot (EFI) partition" \
+            --menu "The EFI System Partition. Usually the small FAT32 one.\n\n${PART_INFO}" \
+            --fb --default-item "${bootdev}" 0 78 0 \
+            "none" "-" "${PART_OPTIONS[@]}" 3>&1 1>&2 2>&3) || return 0
         if [[ "${bootdev}" == "none" ]]; then
             bootdev=
         fi
-    fi
 
-    swapdev=$(whiptail --backtitle "${BACKTITLE}" --title "Select Swap partition" \
-        --menu "${itemsinfo}" --fb --default-item "${swapdev}" 0 78 0 \
-        "none" "-" "${options[@]}" 3>&1 1>&2 2>&3)
-    if [[ $? -ne 0 ]]; then
-        return 1
-    else
+        swapdev=$(whiptail --backtitle "${BACKTITLE}" --title "Select Swap partition" \
+            --menu "Choose 'none' if you are not using swap, or if you chose\nencryption (LVM provides its own swap volume).\n\n${PART_INFO}" \
+            --fb --default-item "${swapdev}" 0 78 0 \
+            "none" "-" "${PART_OPTIONS[@]}" 3>&1 1>&2 2>&3) || return 0
         if [[ "${swapdev}" == "none" ]]; then
             swapdev=
         fi
+
+        rootdev=$(whiptail --backtitle "${BACKTITLE}" --title "Select Root partition" \
+            --menu "This will be REFORMATTED as Btrfs. All data on it will be lost.\n\n${PART_INFO}" \
+            --fb --default-item "${rootdev}" 0 78 0 \
+            "${PART_OPTIONS[@]}" 3>&1 1>&2 2>&3) || return 0
+
+        # Catch the mistakes that otherwise surface as a failed install
+        if [[ -n "${bootdev}" && "${bootdev}" == "${rootdev}" ]]; then
+            ui_error "Invalid Selection" "The boot and root partitions cannot be the same device."
+            continue
+        fi
+        if [[ -n "${swapdev}" && "${swapdev}" == "${rootdev}" ]]; then
+            ui_error "Invalid Selection" "The swap and root partitions cannot be the same device."
+            continue
+        fi
+        if [[ -n "${bootdev}" && -n "${swapdev}" && "${bootdev}" == "${swapdev}" ]]; then
+            ui_error "Invalid Selection" "The boot and swap partitions cannot be the same device."
+            continue
+        fi
+        if [[ -z "${bootdev}" ]]; then
+            ui_error "No EFI Partition" \
+"No boot partition was selected.
+
+This installer boots with a UKI registered by efibootmgr, which
+needs an EFI System Partition. The install will fail without one."
+            continue
+        fi
+
+        msg=""
+        msg+="Boot          : $(dev_desc "${bootdev}")\n"
+        msg+="Swap          : $(dev_desc "${swapdev}")\n"
+        msg+="Root          : $(dev_desc "${rootdev}")\n"
+
+        if yesno "Are these values correct?" "${msg}"; then
+            MOUNT_SUMMARY="root ${rootdev}"
+            [[ -n "${bootdev}" ]] && MOUNT_SUMMARY+=" | boot ${bootdev}"
+            [[ -n "${swapdev}" ]] && MOUNT_SUMMARY+=" | swap ${swapdev}"
+            return 0
+        fi
+    done
+}
+
+# TPM2 chip present on this machine? The live ISO sees the same hardware as
+# the installed system, so this is a reliable check.
+tpm_available() {
+    [[ -e /sys/class/tpm/tpm0 ]]
+}
+
+choose_secureboot() {
+    if ! yesno "Set Up Secure Boot?" \
+"Create your own Secure Boot keys with sbctl and sign the kernel?
+
+This installs sbctl, signs the unified kernel image, and adds a
+hook so future kernel updates stay signed. It is safe to say yes
+even if you never turn Secure Boot on - nothing breaks either way.
+
+Finishing the process needs a visit to your firmware menu after
+the install. The 'secureboot' command on the new system walks you
+through it."; then
+        USE_SECUREBOOT=0
+        USE_TPM=0
+        SECUREBOOT_SUMMARY="Skipped - kernel will not be signed"
+        return 0
     fi
 
-    rootdev=$(whiptail --backtitle "${BACKTITLE}" --title "Select Root partition" \
-        --menu "${itemsinfo}" --fb --default-item "${rootdev}" 0 78 0 \
-        "${options[@]}" 3>&1 1>&2 2>&3)
-    if [[ $? -ne 0 ]]; then
-        return 1
+    USE_SECUREBOOT=1
+    USE_TPM=0
+    SECUREBOOT_SUMMARY="sbctl keys, signed UKI"
+
+    # TPM unlock only means anything on an encrypted disk
+    if [[ ${USE_CRYPT} -ne 1 ]]; then
+        SECUREBOOT_SUMMARY+=" (no disk encryption, so no TPM unlock)"
+        return 0
     fi
 
-    msg=""
-    msg+="Boot          : ${bootdev}\n"
-    msg+="Swap          : ${swapdev}\n"
-    msg+="Root          : ${rootdev}\n"
+    if ! tpm_available; then
+        ui_msg "No TPM2 Chip" \
+"Secure Boot is enabled, but no TPM2 chip was detected on this
+machine, so automatic disk unlock is not available.
 
-    if ! yesno "Are these values correct?" "${msg}"; then
-        choosepartitions
+You will type the LUKS passphrase at each boot, as normal."
+        SECUREBOOT_SUMMARY+=" (no TPM2 chip detected)"
+        return 0
+    fi
+
+    if yesno "Use the TPM2 to unlock the disk?" \
+"A TPM2 chip was detected.
+
+The TPM can release the disk encryption key automatically at boot,
+so you enter a short PIN instead of the full passphrase. The PIN is
+checked by the TPM itself, which locks out after repeated wrong
+guesses.
+
+This installs tpm2-tss and tpm2-tools. Enrolment happens after the
+install via 'secureboot enroll-tpm', which asks whether to bind to
+the Secure Boot state or not - the default needs no maintenance and
+survives kernel and firmware updates.
+
+Your passphrase always keeps working as a fallback."; then
+        USE_TPM=1
+        SECUREBOOT_SUMMARY="sbctl keys, signed UKI, TPM2 unlock"
+    else
+        SECUREBOOT_SUMMARY+=" (passphrase only)"
     fi
 }
 
 getuserinfo() {
-    hostname=$(whiptail --backtitle "$BACKTITLE" --inputbox "Enter hostname:" --fb 0 50 3>&1 1>&2 2>&3)
-    user=$(whiptail --backtitle "$BACKTITLE" --inputbox "Enter admin username:" --fb 0 50 3>&1 1>&2 2>&3)
+    local error
 
-    password="x"
-    password2="xx"
-    passphrase_invalid_message=""
-
-    while [[ $password != "$password2" ]]; do
-        password=$(whiptail --backtitle "$BACKTITLE" --passwordbox "${passphrase_invalid_message}Please enter the admin password:" --fb 10 50 3>&1 1>&2 2>&3)
-        password2=$(whiptail --backtitle "$BACKTITLE" --passwordbox "Please repeat the admin password:" --fb 10 50 3>&1 1>&2 2>&3)
-        passphrase_invalid_message="Passwords do not match! "
+    while true; do
+        hostname=$(whiptail --backtitle "${BACKTITLE}" --title "Hostname" --fb \
+            --inputbox "Name for this machine on the network:" 0 60 "${hostname}" \
+            3>&1 1>&2 2>&3) || return 0
+        if error=$(validate_hostname "${hostname}"); then
+            break
+        fi
+        ui_error "Invalid Hostname" "${error}"
     done
 
-    msg+="Hostname      : ${hostname}\n"
-    msg+="User          : ${user}\n\n"
+    while true; do
+        user=$(whiptail --backtitle "${BACKTITLE}" --title "Admin User" --fb \
+            --inputbox "Username for the admin account.\n\nThis account gets sudo rights via the wheel group." 0 60 "${user}" \
+            3>&1 1>&2 2>&3) || return 0
+        if error=$(validate_username "${user}"); then
+            break
+        fi
+        ui_error "Invalid Username" "${error}"
+    done
+
+    local invalid_message=""
+
+    while true; do
+        password=$(whiptail --backtitle "${BACKTITLE}" --title "Password" --fb \
+            --passwordbox "${invalid_message}Password for '${user}'.\n\nThe root account gets this same password." 0 60 \
+            3>&1 1>&2 2>&3) || return 0
+        password2=$(whiptail --backtitle "${BACKTITLE}" --title "Confirm Password" --fb \
+            --passwordbox "Repeat the password:" 0 60 3>&1 1>&2 2>&3) || return 0
+
+        if [[ -z "${password}" ]]; then
+            # Never let a cancelled prompt turn into an empty root password
+            invalid_message="Password cannot be empty! "
+        elif [[ "${password}" != "${password2}" ]]; then
+            invalid_message="Passwords do not match! "
+        else
+            break
+        fi
+    done
+
+    USER_SUMMARY="${user} @ ${hostname}"
 }
 
 checks() {
+    local summary destroyed
+
     if yesno "RAID" "Is a RAID Array being used?"; then
         USE_RAID=1
-        msg+="Use RAID?     : ${USE_RAID}\n\n"
     fi
 
-    if ! yesno "Are these values correct?" "${msg}"; then
-        mainmenu "MOUNT"
+    # Only record the intent here; the actual mkfs runs in performinstall so
+    # that it stays covered by `set -e`
+    if [[ -n "${bootdev}" ]] && yesno "Format the EFI partition?" \
+"Format ${bootdev} as FAT32?
+
+Say NO if you are dual-booting and this partition already holds
+another operating system's bootloader - formatting would erase it.
+
+Say YES for a fresh disk."; then
+        FORMAT_BOOT=1
     fi
 
-    if [[ -n "${bootdev}" ]] && yesno "### WARNING ###" "Do you want to format ${bootdev}? \n\nTHIS COULD ERASE EXISITING OPERATING SYSTEM BOOTLOADERS"; then
-        mkfs.fat -F 32 "${bootdev}"
+    # The point of no return. Spell out precisely what gets destroyed.
+    destroyed="  ${rootdev}  - reformatted as Btrfs\n"
+    [[ ${FORMAT_BOOT} -eq 1 ]] && destroyed+="  ${bootdev}  - reformatted as FAT32\n"
+    [[ -n "${swapdev}" ]] && destroyed+="  ${swapdev}  - reformatted as swap\n"
+
+    summary="The following will be PERMANENTLY ERASED:\n\n"
+    summary+="${destroyed}"
+    summary+="\nInstall layout:\n\n"
+    summary+="  Hostname      : ${hostname}\n"
+    summary+="  Admin user    : ${user}\n"
+    summary+="  Boot (EFI)    : $(dev_desc "${bootdev}")\n"
+    summary+="  Swap          : $(dev_desc "${swapdev}")\n"
+    summary+="  Root (Btrfs)  : $(dev_desc "${rootdev}")\n"
+    summary+="  Encryption    : $([[ ${USE_CRYPT} -eq 1 ]] && echo "LUKS2 + LVM, detached header" || echo "none")\n"
+    summary+="  Secure Boot   : $([[ ${USE_SECUREBOOT} -eq 1 ]] && echo "sbctl keys, signed UKI" || echo "not configured")\n"
+    summary+="  TPM2 unlock   : $([[ ${USE_TPM} -eq 1 ]] && echo "yes, enrol after first boot" || echo "no")\n"
+    summary+="  RAID          : $([[ ${USE_RAID} -eq 1 ]] && echo "yes" || echo "no")\n"
+    summary+="  Power profile : $([[ ${TLP} -eq 1 ]] && echo "laptop (TLP)" || echo "desktop")\n"
+    summary+="  Mirrors       : ${MIRROR_COUNTRY}\n"
+    summary+="\nThis is the last chance to go back."
+
+    if ! yesno "### FINAL CONFIRMATION ###" "${summary}"; then
+        return 1
     fi
+
+    return 0
 }
 
 add_package() {
@@ -295,17 +830,32 @@ add_package() {
 }
 
 performinstall() {
+    INSTALL_ABORTED=0
+
     if [[ $AUTO -ne 1 ]]; then
-        checks
+        # `checks` is interactive only, so suppressing set -e inside the
+        # condition is harmless here
+        if ! checks; then
+            INSTALL_ABORTED=1
+            return 0
+        fi
+    fi
+
+    if [[ $FORMAT_BOOT -eq 1 ]]; then
+        banner "Formatting ${bootdev} as FAT32"
+        mkfs.fat -F 32 "${bootdev}"
     fi
 
     timedatectl set-ntp true
 
     # Setup the partitions
+    banner "Creating the Btrfs filesystem on ${rootdev}"
     wipefs -a "${rootdev}"
     mkfs.btrfs -f "${rootdev}"
 
     if [[ -n "${swapdev}" ]]; then
+        echo
+        echo "Enabling swap on ${swapdev}..."
         mkswap "${swapdev}"
         swapon "${swapdev}"
     fi
@@ -367,8 +917,25 @@ performinstall() {
         add_package "lvm2"
     fi
 
+    if [[ $USE_SECUREBOOT -eq 1 ]]; then
+        add_package "sbctl"
+    fi
+
+    # tpm2-tss is what systemd-cryptenroll and the sd-encrypt initramfs hook
+    # actually talk to the chip through. Added when the disk is encrypted, so
+    # TPM unlock can be set up later without a reinstall, and whenever TPM
+    # unlock has been chosen outright.
+    if [[ $USE_CRYPT -eq 1 || $USE_TPM -eq 1 ]]; then
+        add_package "tpm2-tss"
+        add_package "tpm2-tools"
+    fi
+
     # do the install!
-    pacstrap /mnt $(grep -v '^$' /tmp/packages)
+    local pkgs=()
+    mapfile -t pkgs < <(grep -v '^[[:space:]]*$' /tmp/packages)
+
+    banner "Installing ${#pkgs[@]} packages - this is the long part"
+    pacstrap /mnt "${pkgs[@]}"
 
     genfstab -U /mnt >> /mnt/etc/fstab
 }
@@ -381,6 +948,8 @@ exists_in_list() {
 }
 
 configuration() {
+    banner "Configuring the new system"
+
     # Set Cloudfare as our DNS
     cat << EOT > /mnt/etc/resolv.conf
 options timeout:1
@@ -407,19 +976,19 @@ EOT
     echo "127.0.1.1 ${hostname}.localdomain  ${hostname}" >> /mnt/etc/hosts
 
     # make a copy of the host file to be used later in the AdAway service
-    arch-chroot /mnt cp /etc/hosts /etc/hosts.base
+    cp /mnt/etc/hosts /mnt/etc/hosts.base
 
-    echo "Updating pacman mirrors to awesomeness..."
-    # Update pacman mirror list
-    arch-chroot /mnt reflector --verbose -c "$MIRROR_COUNTRY" -l 25 --age 12 -p https --sort rate --save /etc/pacman.d/mirrorlist
+    # No reflector run here: pacstrap already seeded the target with the
+    # live environment's mirrorlist, which updatemirrors() built with the
+    # exact same flags. reflector.timer keeps it fresh from now on.
 
     echo "Setting up spacetime continuum..."
     # Set date time
-    arch-chroot /mnt ln -sf /usr/share/zoneinfo/Europe/London /etc/localtime
+    ln -sf /usr/share/zoneinfo/Europe/London /mnt/etc/localtime
     arch-chroot /mnt hwclock --systohc
 
     # Set locale to en_US.UTF-8 UTF-8
-    arch-chroot /mnt sed -i '/en_GB.UTF-8 UTF-8/s/^#//g' /etc/locale.gen
+    sed -i '/en_GB.UTF-8 UTF-8/s/^#//g' /mnt/etc/locale.gen
     arch-chroot /mnt locale-gen
     echo "LANG=en_GB.UTF-8" >> /mnt/etc/locale.conf
 
@@ -440,12 +1009,13 @@ case \$( /usr/bin/tty ) in
 esac
 EOT
     # performance and secuirty tweaks
+    mkdir -p /mnt/etc/sysctl.d
     if [[ $TLP -eq 1 ]]; then
-        arch-chroot /mnt curl -sL "$BASE_URL/configs/system/sysctl/99-performance-laptop.conf" \
-            -o /etc/sysctl.d/99-performance.conf
+        curl -sL "$BASE_URL/configs/system/sysctl/99-performance-laptop.conf" \
+            -o /mnt/etc/sysctl.d/99-performance.conf
     else
-        arch-chroot /mnt curl -sL "$BASE_URL/configs/system/sysctl/99-performance-desktop.conf" \
-            -o /etc/sysctl.d/99-performance.conf
+        curl -sL "$BASE_URL/configs/system/sysctl/99-performance-desktop.conf" \
+            -o /mnt/etc/sysctl.d/99-performance.conf
     fi
 
     echo "tcp_bbr" > /mnt/etc/modules-load.d/bbr.conf
@@ -519,39 +1089,42 @@ EOT
     sed -i "s|^HOOKS=.*$|HOOKS=${HOOKS}|" /mnt/etc/mkinitcpio.conf
 
     # Bluetooth config
-    arch-chroot /mnt sed -i 's/^#DiscoverableTimeout = 0/DiscoverableTimeout = 0/' /etc/bluetooth/main.conf
-    arch-chroot /mnt sed -i 's/^#AutoEnable=true/AutoEnable=true/' /etc/bluetooth/main.conf
-    arch-chroot /mnt sed -i 's/^#FastConnectable=.*$/FastConnectable=true/' /etc/bluetooth/main.conf
-    arch-chroot /mnt sed -i 's/^#ReconnectIntervals=.*$/ReconnectIntervals=5/' /etc/bluetooth/main.conf
+    sed -i \
+        -e 's/^#DiscoverableTimeout = 0/DiscoverableTimeout = 0/' \
+        -e 's/^#AutoEnable=true/AutoEnable=true/' \
+        -e 's/^#FastConnectable=.*$/FastConnectable=true/' \
+        -e 's/^#ReconnectIntervals=.*$/ReconnectIntervals=5/' \
+        /mnt/etc/bluetooth/main.conf
 
     # BBC Micro console font :)
-    arch-chroot /mnt curl -sL "$BASE_URL/fonts/acorn/console/bedstead-10.psf.gz" \
-        -o /usr/share/kbd/consolefonts/bedstead-10.psf.gz
-    arch-chroot /mnt curl -sL "$BASE_URL/fonts/acorn/console/bedstead-20.psf.gz" \
-        -o /usr/share/kbd/consolefonts/bedstead-20.psf.gz
-    arch-chroot /mnt curl -sL "$BASE_URL/fonts/acorn/console/acorn.psf.gz" \
-        -o /usr/share/kbd/consolefonts/acorn.psf.gz
+    curl -sL "$BASE_URL/fonts/acorn/console/bedstead-10.psf.gz" \
+        -o /mnt/usr/share/kbd/consolefonts/bedstead-10.psf.gz
+    curl -sL "$BASE_URL/fonts/acorn/console/bedstead-20.psf.gz" \
+        -o /mnt/usr/share/kbd/consolefonts/bedstead-20.psf.gz
+    curl -sL "$BASE_URL/fonts/acorn/console/acorn.psf.gz" \
+        -o /mnt/usr/share/kbd/consolefonts/acorn.psf.gz
     echo "FONT=bedstead-10" >> /mnt/etc/vconsole.conf
 
-    # Enable services
-    echo "Enabling services..."
-    arch-chroot /mnt systemctl enable NetworkManager.service
-    arch-chroot /mnt systemctl enable bluetooth.service
-    arch-chroot /mnt systemctl enable cups.socket
-    arch-chroot /mnt systemctl enable reflector.timer
-    arch-chroot /mnt systemctl enable fstrim.timer
-    arch-chroot /mnt systemctl enable sshd
+    # Collect the unit changes and apply them in a single chroot each
+    local enable_units=(
+        NetworkManager.service
+        bluetooth.service
+        cups.socket
+        reflector.timer
+        fstrim.timer
+        sshd
+    )
+    local mask_units=(systemd-random-seed)
 
     if [[ $TLP -eq 1 ]]; then
-        arch-chroot /mnt systemctl enable tlp.service
-        arch-chroot /mnt systemctl enable NetworkManager-dispatcher.service
-        arch-chroot /mnt systemctl mask systemd-rfkill.service systemd-rfkill.socket
+        enable_units+=(tlp.service NetworkManager-dispatcher.service)
+        mask_units+=(systemd-rfkill.service systemd-rfkill.socket)
     fi
 
     if [[ $USE_CRYPT -eq 1 ]]; then
-        arch-chroot /mnt systemctl enable lvm2-monitor
+        enable_units+=(lvm2-monitor)
     else
-        arch-chroot /mnt systemctl mask lvm2-monitor
+        mask_units+=(lvm2-monitor)
     fi
 
     if [[ $MAC -eq 1 ]]; then
@@ -562,23 +1135,35 @@ EOT
         echo "options hid_apple fnmode=1" > /mnt/etc/modprobe.d/hid_apple.conf
     fi
 
-    arch-chroot /mnt systemctl mask systemd-random-seed
+    # Enable services
+    echo "Enabling services..."
+    arch-chroot /mnt systemctl enable "${enable_units[@]}"
+    arch-chroot /mnt systemctl mask "${mask_units[@]}"
 }
 
 installbootloader() {
+    local luksopts="header=/boot/header.img"
+
+    # Only advertise a TPM2 device when the tooling to use one is installed,
+    # otherwise systemd-cryptsetup probes for a chip it cannot talk to and
+    # logs a failure on every boot before falling back to the passphrase.
+    if [[ $USE_TPM -eq 1 ]]; then
+        luksopts+=",tpm2-device=auto"
+    fi
+
     if [[ $USE_CRYPT -eq 1 ]]; then
         cp header.img /mnt/boot/
 
-        arch-chroot /mnt sed -i 's/FILES=()/FILES=(\/boot\/header.img)/' /etc/mkinitcpio.conf
-        
-        local options="rd.luks.name=$CRYPTHEADERUUID=cryptlvm \
-rd.luks.options=$CRYPTHEADERUUID=header=/boot/header.img,tpm2-device=auto \
+        sed -i 's/FILES=()/FILES=(\/boot\/header.img)/' /mnt/etc/mkinitcpio.conf
+
+        local cmdline="rd.luks.name=$CRYPTHEADERUUID=cryptlvm \
+rd.luks.options=$CRYPTHEADERUUID=$luksopts \
 rd.luks.data=$CRYPTHEADERUUID=$realrootdev \
 root=/dev/vg1/root rw rootflags=subvol=@ \
 resume=$swapdev quiet loglevel=3 systemd.show_status=auto \
 rd.udev.log_level=3 nowatchdog mitigations=off"
     else
-        local options="root=UUID=$ROOTUUID rw rootflags=subvol=@ \
+        local cmdline="root=UUID=$ROOTUUID rw rootflags=subvol=@ \
 resume=$swapdev quiet loglevel=3 systemd.show_status=auto \
 rd.udev.log_level=3 nowatchdog mitigations=off"
     fi
@@ -589,12 +1174,12 @@ rd.udev.log_level=3 nowatchdog mitigations=off"
         mkdir -p /mnt/etc/kernel/
     fi
 
-    echo "$options" > /mnt/etc/kernel/cmdline
+    echo "$cmdline" > /mnt/etc/kernel/cmdline
 
-    arch-chroot /mnt sed -i \
+    sed -i \
         -e 's/^#default_options=/default_options=/' \
         -e 's|^#default_uki=".*"|default_uki="/efi/EFI/Linux/arch-linux-zen.efi"|' \
-        /etc/mkinitcpio.d/linux-zen.preset
+        /mnt/etc/mkinitcpio.d/linux-zen.preset
 
     # Split disk and partition
     local disk="${bootdev%[0-9]*}"
@@ -608,203 +1193,831 @@ rd.udev.log_level=3 nowatchdog mitigations=off"
         --loader '\EFI\Linux\arch-linux-zen.efi'
 
     # ### Make the Boot files ###
-    arch-chroot /mnt mkdir -p /efi/EFI/Linux
+    mkdir -p /mnt/efi/EFI/Linux
+    banner "Building the unified kernel image"
     arch-chroot /mnt mkinitcpio -P
 
-    # TPM and secure boot instructions
-    # ---------------------------------
-    # put firmware in setup and disable secure boot before enrolling keys
-    # boot system normally
-    # install sbctl
-    # create keys with sbctl create-keys
-    # enroll keys in firmware with sbctl enroll-keys -m 
-    # test and reboot system to verify secure boot works
-    # enroll TPM2.0 with systemd-cryptenroll --tpm2-device=auto --tpm2-pcrs=7 --tpm2-with-pin=yes /boot/header.img
-    # recreate UKI with mkinitcpio -P to include the TPM2.0 key 
-    # reboot and verify that the system can boot with secure boot enabled and that the TPM2.0 key is being used for authentication
-    # remove the passphrase from the LUKS header with cryptsetup luksKillSlot -- make sure you reomve to correct key slot! 
+    setup_secureboot
+}
+
+# Secure Boot cannot be completed in one pass: enrolling keys needs the
+# firmware in Setup Mode, and binding the TPM to PCR 7 is only safe once
+# Secure Boot is actually active (PCR 7 measures that state, so enrolling
+# beforehand both breaks on enable and binds to an untrusted state).
+#
+# What is safe to do now, and is done here:
+#   - create the keys
+#   - sign the UKI, and register it so future rebuilds stay signed
+#   - enroll the keys if the firmware is already in Setup Mode
+#
+# The rest is handed to /usr/local/bin/secureboot on the installed system.
+setup_secureboot() {
+    if [[ ${USE_SECUREBOOT} -ne 1 ]]; then
+        return 0
+    fi
+
+    banner "Setting up Secure Boot"
+
+    # Keys live in /var/lib/sbctl. Harmless if Secure Boot is never enabled.
+    arch-chroot /mnt sbctl create-keys
+
+    # sbctl ships a pacman hook that re-signs on package upgrades, but it does
+    # not fire for a manual `mkinitcpio -P`. This post hook covers that case,
+    # so a hand-rebuilt UKI can never end up unsigned and unbootable.
+    mkdir -p /mnt/etc/initcpio/post
+    cat << 'EOT' > /mnt/etc/initcpio/post/10-uki-sbctl-sign
+#!/usr/bin/env bash
+# Sign the unified kernel image as soon as mkinitcpio produces it.
+uki="$3"
+[[ -n "${uki}" ]] || exit 0
+command -v sbctl > /dev/null 2>&1 || exit 0
+sbctl sign "${uki}"
+EOT
+    chmod +x /mnt/etc/initcpio/post/10-uki-sbctl-sign
+
+    # -s records the path in sbctl's database so the pacman hook re-signs it
+    arch-chroot /mnt sbctl sign -s /efi/EFI/Linux/arch-linux-zen.efi
+
+    install_secureboot_helper
+
+    # Setup Mode means the firmware has no Platform Key, which is the only
+    # state in which keys can be enrolled without visiting the firmware menu.
+    if arch-chroot /mnt sbctl status 2>/dev/null | grep -qi 'setup mode.*enabled'; then
+        SECUREBOOT_SETUP_MODE=1
+    else
+        SECUREBOOT_SETUP_MODE=0
+    fi
+
+    [[ ${AUTO} -eq 1 ]] && return 0
+
+    if [[ ${SECUREBOOT_SETUP_MODE} -eq 1 ]]; then
+        if yesno "Enroll Secure Boot Keys?" \
+"The firmware is in Setup Mode, so the keys can be enrolled now.
+
+Microsoft's certificates will be included (-m). That is almost
+always what you want: without them some firmware refuses to
+initialise its own option ROMs, which can leave an unusable
+GPU or network card.
+
+Enroll now?"; then
+            # Not fatal: a firmware that rejects enrollment should not kill
+            # an otherwise finished install
+            if arch-chroot /mnt sbctl enroll-keys -m; then
+                ui_msg "Keys Enrolled" \
+"Secure Boot keys are enrolled and the UKI is signed.
+
+After rebooting, turn Secure Boot ON in your firmware, then run:
+
+    secureboot status
+
+to confirm it is active."
+            else
+                ui_error "Enrollment Failed" \
+"sbctl could not enroll the keys. The install is otherwise fine.
+
+Run 'secureboot enroll-keys' on the installed system to retry."
+            fi
+        fi
+    else
+        ui_msg "Secure Boot Prepared" \
+"The UKI is signed and keys are created, but the firmware is not
+in Setup Mode, so they cannot be enrolled from here.
+
+To finish after rebooting:
+
+  1. Enter your firmware setup (usually Del or F2 at power on).
+  2. Clear the existing Secure Boot keys / Platform Key. This is
+     often 'Erase all Secure Boot settings' or 'Reset to Setup
+     Mode'.
+  3. Boot the installed system and run:  secureboot enroll-keys
+  4. Reboot, turn Secure Boot ON, then run:  secureboot status
+
+Run 'secureboot' with no arguments at any time to see where you
+are in that process."
+    fi
+}
+
+# Writes /usr/local/bin/secureboot on the target: a guided, checked version
+# of what used to be a block of comments. Embedded rather than fetched from
+# BASE_URL so a 404 can never leave the boot chain half-configured.
+install_secureboot_helper() {
+    mkdir -p /mnt/usr/local/bin
+
+    cat << 'EOT' > /mnt/usr/local/bin/secureboot
+#!/usr/bin/env bash
+#
+# Secure Boot / TPM2 helper.
+#
+# Secure Boot has to be finished across two reboots, because:
+#   - keys can only be enrolled while the firmware is in Setup Mode
+#   - PCR 7 measures the Secure Boot state, so the TPM must be enrolled
+#     only once Secure Boot is actually ON, or the binding breaks the
+#     moment you enable it (and binds to an untrusted state meanwhile)
+#
+# Run with no arguments to see where you are.
+
+set -o pipefail
+
+UKI="/efi/EFI/Linux/arch-linux-zen.efi"
+HEADER="/boot/header.img"
+EFI_GUID="8be4df61-93ca-11d2-aa0d-00e098032b8c"
+
+# NOTE ON THE DETACHED HEADER
+# systemd-cryptenroll has no --header option (unlike cryptsetup). The header
+# file is therefore passed as the DEVICE argument directly. That works because
+# every keyslot and token lives inside the LUKS2 header, so enrolment never
+# needs to touch the data device at all.
+#
+# Verified against a header built the same way install builds it
+# (luksFormat --offset 32768 --header): both `cryptsetup luksAddKey
+# header.img` and `systemd-cryptenroll header.img --recovery-key` succeed, and
+# the resulting dump shows the new keyslot plus a systemd-recovery token.
+#
+# Do not "fix" these calls by adding --header (no such option) or by passing
+# the data device (the keyslots are not there).
+
+need_root() {
+    if [[ ${EUID} -ne 0 ]]; then
+        echo "This must be run as root: sudo secureboot $*" >&2
+        exit 1
+    fi
+}
+
+# Reads a UEFI global boolean variable. Byte 4 is the value; bytes 0-3 are
+# the attribute header. Avoids parsing tool output, which changes between
+# releases.
+efivar_bool() {
+    local path="/sys/firmware/efi/efivars/$1-${EFI_GUID}"
+    [[ -f "${path}" ]] || return 1
+    od -An -t u1 -j 4 -N 1 "${path}" 2>/dev/null | tr -d '[:space:]'
+}
+
+secureboot_active() { [[ "$(efivar_bool SecureBoot)" == "1" ]]; }
+setup_mode_active() { [[ "$(efivar_bool SetupMode)" == "1" ]]; }
+encrypted_install() { [[ -f "${HEADER}" ]]; }
+tpm_present()       { [[ -e /sys/class/tpm/tpm0 ]]; }
+
+tpm_enrolled() {
+    encrypted_install || return 1
+    cryptsetup luksDump "${HEADER}" 2>/dev/null | grep -q 'systemd-tpm2'
+}
+
+# Reports what an existing TPM enrolment is bound to. The LUKS2 token
+# records the mask, so this says why unlocking might have stopped working
+# after a firmware update.
+tpm_binding() {
+    local pcrs
+    pcrs=$(cryptsetup luksDump "${HEADER}" 2>/dev/null \
+        | awk '/tpm2-hash-pcrs:/ {print $2; exit}')
+    if [[ -z "${pcrs}" ]]; then
+        printf 'no PCRs (PIN only - survives updates)'
+    else
+        printf 'PCR %s (rebind needed after firmware/dbx changes)' "${pcrs}"
+    fi
+}
+
+# The encrypted data device, read back out of the kernel cmdline that
+# install generated. Used to print a copy-pasteable rescue command.
+luks_data_device() {
+    local f
+    for f in /etc/kernel/cmdline /proc/cmdline; do
+        [[ -r "${f}" ]] || continue
+        grep -o 'rd\.luks\.data=[^ ]*' "${f}" 2>/dev/null \
+            | head -1 | sed 's/.*=//' | grep . && return 0
+    done
+    printf '/dev/sdXY'
+}
+
+uki_signed() {
+    [[ -f "${UKI}" ]] || return 1
+    sbctl verify 2>/dev/null | grep -F "${UKI}" | grep -qi 'signed'
+}
+
+mark() { if "$@"; then printf '  [OK]  '; else printf '  [--]  '; fi; }
+
+cmd_status() {
+    echo
+    echo "Secure Boot status"
+    echo "------------------"
+    mark secureboot_active; echo "Secure Boot active"
+    mark setup_mode_active; echo "Firmware in Setup Mode"
+    mark uki_signed;        echo "Unified kernel image signed"
+    mark tpm_present;       echo "TPM2 chip present"
+    if encrypted_install; then
+        mark tpm_enrolled;  echo "TPM2 enrolled for disk unlock"
+        if tpm_enrolled; then
+            echo "        bound to: $(tpm_binding)"
+        fi
+    else
+        echo "  [n/a] Disk is not encrypted - TPM unlock does not apply"
+    fi
+    echo
+
+    # Tell the user the single next action, rather than a wall of steps
+    if ! uki_signed; then
+        echo "Next: the UKI is not signed. Run 'secureboot sign'."
+    elif setup_mode_active; then
+        echo "Next: firmware is in Setup Mode. Run 'secureboot enroll-keys'."
+    elif ! secureboot_active; then
+        echo "Next: reboot, turn Secure Boot ON in your firmware, and run"
+        echo "      'secureboot status' again to confirm."
+        if encrypted_install && tpm_present && ! tpm_enrolled; then
+            echo
+            echo "      You can also run 'secureboot enroll-tpm' now and pick"
+            echo "      option 1 (no PCR binding) - that does not depend on"
+            echo "      Secure Boot being active."
+        fi
+    elif encrypted_install && tpm_present && ! tpm_enrolled; then
+        echo "Next: Secure Boot is active. Run 'secureboot enroll-tpm' to"
+        echo "      unlock the disk with the TPM instead of typing the"
+        echo "      passphrase at every boot."
+    else
+        echo "Nothing to do - Secure Boot is fully configured."
+    fi
+    echo
+}
+
+cmd_sign() {
+    need_root sign
+    sbctl sign -s "${UKI}"
+    echo "Signed ${UKI}"
+}
+
+cmd_enroll_keys() {
+    need_root enroll-keys
+
+    if ! setup_mode_active; then
+        cat <<'MSG' >&2
+
+The firmware is not in Setup Mode, so keys cannot be enrolled.
+
+Reboot into your firmware setup and clear the existing Secure Boot
+keys. Depending on vendor this is called:
+
+  - "Erase all Secure Boot settings"
+  - "Reset to Setup Mode"
+  - "Delete Platform Key (PK)"
+
+Then boot back here and run this command again.
+
+MSG
+        exit 1
+    fi
+
+    # -m includes Microsoft's certificates. Without them some firmware will
+    # not initialise its own option ROMs, which can disable a GPU or NIC.
+    sbctl enroll-keys -m
+    echo
+    echo "Keys enrolled. Reboot and turn Secure Boot ON in your firmware,"
+    echo "then run 'secureboot status' to confirm it took effect."
+}
+
+cmd_enroll_tpm() {
+    need_root enroll-tpm
+
+    encrypted_install || { echo "This system is not encrypted - nothing to enroll." >&2; exit 1; }
+    tpm_present || { echo "No TPM2 chip found at /sys/class/tpm/tpm0." >&2; exit 1; }
+
+    # Policy decision first, so every choice is made before anything is
+    # written to the LUKS header.
+    local pcrmask pcrdesc
+    cat <<'MSG'
+
+How should the TPM enrolment be bound?
+
+  1) No PCR binding (recommended)
+     The TPM releases the key whenever the correct PIN is given.
+     Survives kernel, firmware and Secure Boot policy updates, so
+     it needs no maintenance. The PIN is enforced by the TPM itself,
+     with hardware lockout after repeated wrong guesses.
+
+     This is systemd's own default since v258, which dropped PCR 7
+     binding precisely because fwupd-managed Secure Boot policy
+     updates kept breaking it.
+
+  2) Bind to PCR 7 (Secure Boot state)
+     Additionally requires that the machine booted a binary signed
+     by your key with Secure Boot on. Stronger, but a firmware or
+     dbx update changes PCR 7 and the TPM stops unlocking until you
+     re-run this command. Kernel updates are fine either way.
+
+MSG
+    read -r -p "Choice [1]: " reply
+    case "${reply}" in
+        2)  pcrmask="7"
+            pcrdesc="PCR 7 (Secure Boot state)"
+            ;;
+        ""|1)
+            pcrmask=""
+            pcrdesc="no PCRs (PIN only)"
+            ;;
+        *)  echo "Not a valid choice. Aborted." >&2
+            exit 1
+            ;;
+    esac
+
+    # Only meaningful for the PCR 7 choice. Binding to PCR 7 while Secure
+    # Boot is off records an untrusted measurement, and the value changes
+    # the moment Secure Boot is switched on, so the TPM stops matching.
+    # With no PCR binding none of that applies, and PIN-only enrolment is
+    # perfectly valid on a machine that never enables Secure Boot.
+    if [[ -n "${pcrmask}" ]] && ! secureboot_active; then
+        cat <<'MSG' >&2
+
+Secure Boot is not active, so binding to PCR 7 would be both
+insecure and useless:
+
+  - PCR 7 measures the Secure Boot state. Binding to it while
+    Secure Boot is off means any unsigned boot device could unlock
+    the disk.
+  - When you later enable Secure Boot, PCR 7 changes and the TPM
+    stops being able to unlock it anyway.
+
+Either enable Secure Boot first, or choose option 1 (no PCR
+binding), which does not depend on Secure Boot at all.
+
+MSG
+        exit 1
+    fi
+
+    cat <<'MSG'
+
+Before enrolling the TPM, a recovery key will be added to the LUKS
+header. It is shown on screen and also written to a file so you can
+copy it somewhere safe without transcribing it by hand.
+
+You need it if the TPM ever refuses to unlock - after a cleared TPM,
+a replaced mainboard, or (with PCR 7 binding) a firmware update.
+Without it, such a change can lock you out permanently.
+
+MSG
+    read -r -p "Continue? [y/N] " reply
+    [[ "${reply}" =~ ^[Yy]$ ]] || { echo "Aborted."; exit 0; }
+
+    local recovery
+    recovery=$(systemd-cryptenroll "${HEADER}" --recovery-key) || {
+        echo "Failed to create a recovery key - nothing was changed." >&2
+        exit 1
+    }
+
+    # /boot sits on the encrypted root here (only /efi is the ESP), so the
+    # file is protected at rest. It is still only a transfer staging point:
+    # a recovery key stored on the volume it unlocks is useless in the very
+    # situation it exists for. It gets removed once you confirm.
+    local keyfile="/boot/recovery.key"
+    local umask_old
+    umask_old=$(umask)
+    umask 077
+    # No trailing newline. cryptsetup --key-file reads the file as raw bytes,
+    # so a stray "\n" becomes part of the passphrase and the unlock fails.
+    printf '%s' "${recovery}" > "${keyfile}"
+    umask "${umask_old}"
+    chmod 600 "${keyfile}"
+
+    echo
+    echo "=============================================================="
+    echo "  RECOVERY KEY - copy this somewhere off this machine now."
+    echo "=============================================================="
+    echo
+    echo "    ${recovery}"
+    echo
+    echo "  This is a normal LUKS keyslot, not a special mode: if the TPM"
+    echo "  ever stops unlocking, type this at the usual boot passphrase"
+    echo "  prompt instead of your passphrase. It keeps working even if"
+    echo "  the passphrase slot is later removed."
+    echo
+    echo "  Also written to: ${keyfile}"
+    echo
+    echo "  Copy BOTH of these off the machine:"
+    echo "      ${keyfile}"
+    echo "      ${HEADER}      <- the detached LUKS header"
+    echo
+    echo "  for example:"
+    echo "      cp ${keyfile} ${HEADER} /run/media/<user>/<usb-stick>/"
+    echo
+    echo "  To unlock from rescue media later, without typing anything:"
+    echo "      cryptsetup open --header header.img \\"
+    echo "          --key-file recovery.key $(luks_data_device) cryptlvm"
+    echo
+    echo "  The key file deliberately has no trailing newline - cryptsetup"
+    echo "  reads it as raw bytes, and a stray newline would break it."
+    echo
+    echo "  You need the header too: the on-disk copy lives inside the"
+    echo "  encrypted volume, so it is unreachable in the situation you"
+    echo "  would need it. (Boot works because it is also embedded in the"
+    echo "  UKI on the ESP.)"
+    echo
+    echo "  The key file is deleted when you confirm below."
+    echo "=============================================================="
+    echo
+    read -r -p "Type SAVED once you have copied it: " confirm
+    if [[ "${confirm}" != "SAVED" ]]; then
+        echo >&2
+        echo "Not confirmed. The recovery key is still valid and ${keyfile}" >&2
+        echo "has been left in place - move it off this machine, then delete it:" >&2
+        echo "    sudo rm ${keyfile}" >&2
+        exit 1
+    fi
+
+    rm -f "${keyfile}"
+    echo "Removed ${keyfile}."
+    # Note: no shred. /boot is btrfs with compression and copy-on-write, so
+    # overwriting in place does not reliably destroy the old extents. The
+    # real protection is that the whole volume is encrypted.
+    cat <<'MSG'
+
+If a snapper timeline snapshot or a boot-backup run happened while the
+file existed, a copy may survive in /.snapshots or /.bootbackup. Both
+live on the same encrypted volume, so this is tidiness rather than
+exposure, but you can check with:
+
+    sudo grep -rl . /.bootbackup --include=recovery.key 2>/dev/null
+
+MSG
+
+    echo
+    echo "Enrolling the TPM2 chip, bound to ${pcrdesc}."
+    echo "You will be asked for a PIN, and then for the existing LUKS"
+    echo "passphrase to authorise the change."
+    echo
+    # The mask is always passed explicitly: systemd only changed its default
+    # to empty in v258, so relying on the default would silently bind to
+    # PCR 7 on anything older.
+    systemd-cryptenroll "${HEADER}" \
+        --tpm2-device=auto \
+        --tpm2-pcrs="${pcrmask}" \
+        --tpm2-with-pin=yes
+
+    # The UKI embeds the cmdline policy, so rebuild and re-sign. The
+    # mkinitcpio post hook signs it automatically.
+    mkinitcpio -P
+
+    cat <<MSG
+
+TPM2 enrolled, bound to ${pcrdesc}.
+
+Reboot and check that the disk unlocks with the TPM PIN rather than
+the full passphrase.
+MSG
+
+    if [[ -n "${pcrmask}" ]]; then
+        cat <<'MSG'
+
+Because this is bound to PCR 7, a firmware update, a dbx update
+pushed by fwupd, or turning Secure Boot off will stop the TPM
+unlocking. That is not a failure - enter your passphrase, then run
+'secureboot enroll-tpm' again to rebind. Kernel updates are fine.
+MSG
+    fi
+
+    cat <<'MSG'
+
+The original passphrase still works, and is your fallback. Only
+consider removing it once you have confirmed TPM unlock works over
+several reboots - and never remove it unless you still hold the
+recovery key:
+
+    cryptsetup luksDump /boot/header.img      # identify the slot
+    cryptsetup luksKillSlot /boot/header.img N
+
+Removing the wrong slot, or the last usable one, makes the disk
+permanently unrecoverable.
+
+MSG
+}
+
+case "${1:-status}" in
+    status)       cmd_status ;;
+    sign)         cmd_sign ;;
+    enroll-keys)  cmd_enroll_keys ;;
+    enroll-tpm)   cmd_enroll_tpm ;;
+    -h|--help|help)
+        cat <<'MSG'
+Usage: secureboot [command]
+
+  status        Show Secure Boot / TPM state and the next step (default)
+  sign          Re-sign the unified kernel image
+  enroll-keys   Enroll sbctl keys (needs firmware in Setup Mode)
+  enroll-tpm    Enroll the TPM2 for disk unlock (needs Secure Boot ON)
+MSG
+        ;;
+    *)
+        echo "Unknown command: $1" >&2
+        echo "Try 'secureboot --help'." >&2
+        exit 1
+        ;;
+esac
+EOT
+
+    chmod +x /mnt/usr/local/bin/secureboot
 }
 
 setupuser() {
     arch-chroot /mnt useradd -m -G wheel "${user}"
-    arch-chroot /mnt sed -i 's/# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
-    echo "Defaults insults" >> /mnt/etc/sudoers
-    echo "${user} ALL=(ALL) NOPASSWD: /usr/bin/mount" >> /mnt/etc/sudoers
-    echo "${user} ALL=(ALL) NOPASSWD: /usr/bin/umount" >> /mnt/etc/sudoers
-    echo "${user} ALL=(ALL) NOPASSWD: /usr/bin/sed" >> /mnt/etc/sudoers
+    sed -i 's/# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /mnt/etc/sudoers
+    {
+        echo "Defaults insults"
+        echo "${user} ALL=(ALL) NOPASSWD: /usr/bin/mount"
+        echo "${user} ALL=(ALL) NOPASSWD: /usr/bin/umount"
+        echo "${user} ALL=(ALL) NOPASSWD: /usr/bin/sed"
+    } >> /mnt/etc/sudoers
 
     # Set root password
     echo "Setting user and root password..."
-    echo "${user}:${password}" | arch-chroot /mnt chpasswd
-    echo "root:${password}" | arch-chroot /mnt chpasswd
+    printf '%s:%s\nroot:%s\n' "${user}" "${password}" "${password}" | arch-chroot /mnt chpasswd
 
     # config files
     echo "Getting some config files..."
-    arch-chroot /mnt curl -sL "$BASE_URL/configs/home/.Xresources-Dark" -o /home/"${user}"/.Xresources
-    arch-chroot /mnt curl -sL "$BASE_URL/configs/home/.bashrc" -o /home/"${user}"/.bashrc
+    curl -sL "$BASE_URL/configs/home/.bashrc" -o /mnt/home/"${user}"/.bashrc
 
     # add a dummy file to let bashrc know to run post-install on first login
-    arch-chroot /mnt touch /home/"${user}"/newbie
+    touch /mnt/home/"${user}"/newbie
 
     # awesome tty login
-    arch-chroot /mnt curl -sL "$BASE_URL/configs/system/issue" -o /etc/issue
+    curl -sL "$BASE_URL/configs/system/issue" -o /mnt/etc/issue
 
     # set custom pacman.conf
-    arch-chroot /mnt mv /etc/pacman.conf /etc/pacman.conf.bak
-    arch-chroot /mnt curl -sL "$BASE_URL/configs/system/pacman.conf" -o /etc/pacman.conf
+    mv /mnt/etc/pacman.conf /mnt/etc/pacman.conf.bak
+    curl -sL "$BASE_URL/configs/system/pacman.conf" -o /mnt/etc/pacman.conf
 
     # Copy post-install file to /home/$user
+    # NOTE: these three anchors must stay single-line and unindented in post-install
     echo "Copy post-install file to /home/${user}..."
-    arch-chroot /mnt curl -sL "$BASE_URL/post-install" -o /home/"${user}"/post-install
-    arch-chroot /mnt sed -i "s|^rootdev=.*$|rootdev=${rootdev}|" /home/"${user}"/post-install
-    arch-chroot /mnt sed -i "s|^USE_CRYPT=.*$|USE_CRYPT=${USE_CRYPT}|" /home/"${user}"/post-install
-    arch-chroot /mnt sed -i "s|^USE_RAID=.*$|USE_RAID=${USE_RAID}|" /home/"${user}"/post-install
-    arch-chroot /mnt sed -i "s|^TLP=.*$|TLP=${TLP}|" /home/"${user}"/post-install
-    arch-chroot /mnt sed -i "s|^MAC=.*$|MAC=${MAC}|" /home/"${user}"/post-install
-    arch-chroot /mnt chmod a+x /home/"${user}"/post-install
+    curl -sL "$BASE_URL/post-install" -o /mnt/home/"${user}"/post-install
+    sed -i \
+        -e "s|^rootdev=.*$|rootdev=${rootdev}|" \
+        -e "s|^TLP=.*$|TLP=${TLP}|" \
+        -e "s|^MAC=.*$|MAC=${MAC}|" \
+        /mnt/home/"${user}"/post-install
+    chmod a+x /mnt/home/"${user}"/post-install
 
     # Add shell-option to ~/.inputrc to enable case-insensitive tab completion
-    if [[ ! -a /mnt/home/"${user}"/.inputrc ]]; then
+    if [[ ! -e /mnt/home/"${user}"/.inputrc ]]; then
+        # SC2016: '$include' is a readline directive and must stay literal,
+        # it is not a shell variable
+        # shellcheck disable=SC2016
         echo '$include /etc/inputrc' > /mnt/home/"${user}"/.inputrc
     fi
     echo 'set completion-ignore-case On' >> /mnt/home/"${user}"/.inputrc
 
     # remove last login message on console login
-    arch-chroot /mnt touch /home/"${user}"/.hushlogin
+    touch /mnt/home/"${user}"/.hushlogin
 
-    # own that stuff!
+    # own that stuff! (in the chroot, so the names resolve against the target)
     arch-chroot /mnt chown -R "${user}:${user}" /home/"${user}"/
 }
 
 finish() {
-    whiptail --backtitle "$BACKTITLE" --msgbox --title "Congratulations" \
-        "Install Complete\n\nReturn to main menu and select 'Finsh and Reboot'" --fb 0 78
+    local crypt_note=""
+    if [[ ${USE_CRYPT} -eq 1 ]]; then
+        crypt_note="
+
+IMPORTANT - encrypted install:
+  The detached LUKS header is at /boot/header.img on the new
+  system. Back it up somewhere off this machine. Without it the
+  disk cannot be unlocked, even with the correct passphrase."
+    fi
+
+    ui_msg "Install Complete" \
+"Arch Linux has been installed on ${rootdev}.
+
+What happens next:
+
+  1. Choose FINISH in the menu to reboot.
+  2. Remove the USB stick when the machine restarts.
+  3. Log in as '${user}'.
+  4. The post-install script starts automatically on first login
+     and sets up your desktop environment.${crypt_note}"
 }
 
 rebootpc() {
-    if yesno "Reboot?" ""; then
-        clear
-        umount -a
-        reboot
+    if [[ ${INSTALL_DONE} -ne 1 ]]; then
+        if ! yesno "Reboot Now?" "The install has not been run yet.\n\nReboot anyway?"; then
+            return 0
+        fi
+    elif ! yesno "Reboot Now?" "Reboot into the new system?\n\nRemove the USB stick once the machine restarts."; then
+        return 0
     fi
+
+    banner "Unmounting filesystems and rebooting"
+    umount -a || true
+    reboot
 }
 
 #   ============ initialisation functions ==============
 #
 #   ====================================================
 
-wifi_connect() {
-    local SSID=""
-    local PASSPHRASE=""
-
-    # Helper function to wait with retries
-    wait_with_retries() {
-        local condition="$1"
-        local max_retries="$2"
-        local delay="$3"
-        local retries=0
-
-        while ! eval "$condition"; do
-            # echo "Attempt $((retries + 1)) of $max_retries..."
-            sleep "$delay"
-            ((retries++))
-
-            if ((retries >= max_retries)); then
-                return 1
-            fi
-        done
+# Echoes the first wireless interface. Never assume "wlan0": the ISO does not
+# disable predictable naming, so it is usually wlp2s0/wlp3s0 etc.
+wifi_interface() {
+    local path
+    for path in /sys/class/net/*/wireless; do
+        [[ -e "${path}" ]] || continue
+        path="${path%/wireless}"
+        printf '%s\n' "${path##*/}"
         return 0
-    }
+    done
+    return 1
+}
 
-    # Scan for networks
-    NETWORKS=$(iwctl station wlan0 scan > /dev/null 2>&1 && sleep 2 && iwctl station wlan0 get-networks | awk '(NR > 5) {print $1}')
-    if [[ -z $NETWORKS ]]; then
-        tput clear # Reset the terminal before showing a dialog
-        whiptail --backtitle "$BACKTITLE" --msgbox "No networks found. Please try again." 10 60
+# Echoes the Wi-Fi stack to drive: "nmcli" or "iwd".
+# The custom archlive ISO enables NetworkManager; the official Arch ISO
+# enables iwd. Driving the one that is actually running is the whole point.
+wifi_backend() {
+    if systemctl is-active --quiet NetworkManager.service; then
+        printf 'nmcli\n'
+    elif systemctl is-active --quiet iwd.service; then
+        printf 'iwd\n'
+    elif systemctl start iwd.service > /dev/null 2>&1; then
+        sleep 2
+        printf 'iwd\n'
+    else
         return 1
     fi
+}
 
-    # Prepare menu options
-    MENU=()
-    while IFS= read -r NETWORK; do
-        MENU+=("$NETWORK" "Available")
-    done <<< "$NETWORKS"
+# Lists SSIDs one per line. Must cope with spaces in SSIDs, the ">" marker
+# iwctl puts on the active network, and iwctl's colour escapes.
+wifi_scan() {
+    local backend="$1" iface="$2"
 
-    # Display network selection menu
-    SSID=$(whiptail --backtitle "$BACKTITLE" --title "Select Wi-Fi Network" --menu "Available Networks:" 20 60 10 "${MENU[@]}" 3>&1 1>&2 2>&3)
-    if [[ -z $SSID ]]; then
-        tput clear
-        whiptail --backtitle "$BACKTITLE" --msgbox "No network selected. Exiting." 10 60
-        return 1
-    fi
+    case "${backend}" in
+        nmcli)
+            nmcli device wifi rescan ifname "${iface}" > /dev/null 2>&1 || true
+            sleep 2
+            # -t escapes ":" inside SSIDs as "\:"
+            nmcli -t -f SSID device wifi list ifname "${iface}" 2>/dev/null \
+                | sed -e 's/\\:/:/g' -e '/^$/d' \
+                | awk '!seen[$0]++'
+            ;;
+        iwd)
+            iwctl station "${iface}" scan > /dev/null 2>&1 || true
+            sleep 2
+            iwctl station "${iface}" get-networks 2>/dev/null \
+                | sed -e 's/\x1b\[[0-9;]*m//g' \
+                | tail -n +5 \
+                | sed -e 's/^[[:space:]]*>\?[[:space:]]*//' \
+                      -e 's/[[:space:]]\{2,\}\(psk\|open\|wep\|8021x\)[[:space:]].*$//' \
+                      -e 's/[[:space:]]*$//' \
+                | sed -e '/^$/d'
+            ;;
+    esac
+}
 
-    # Prompt for passphrase
-    PASSPHRASE=$(whiptail --backtitle "$BACKTITLE" --passwordbox "Enter passphrase for $SSID:" 10 60 3>&1 1>&2 2>&3)
-    if [[ -z $PASSPHRASE ]]; then
-        tput clear
-        whiptail --backtitle "$BACKTITLE" --msgbox "Passphrase cannot be empty. Exiting." 10 60
-        return 1
-    fi
+# Associates with a network. Prints whatever the backend said so the caller
+# can show a real error ("Secrets were required", "Operation timed out", ...)
+# instead of a generic failure, and returns non-zero if it did not connect.
+wifi_join() {
+    local backend="$1" iface="$2" ssid="$3" passphrase="$4"
+    local output state waited=0
 
-    # Initialize gauge progress at 0%
-    (
-        echo 0
-        sleep 0.5
+    case "${backend}" in
+        nmcli)
+            # systemd-networkd is enabled alongside NetworkManager on the
+            # custom ISO, which can leave the device unmanaged
+            nmcli device set "${iface}" managed yes > /dev/null 2>&1 || true
 
-        # Step 1: Attempting to connect
-        echo "10"
-        echo "Attempting to connect to $SSID..."
+            if [[ -n "${passphrase}" ]]; then
+                output=$(nmcli device wifi connect "${ssid}" password "${passphrase}" ifname "${iface}" 2>&1)
+            else
+                output=$(nmcli device wifi connect "${ssid}" ifname "${iface}" 2>&1)
+            fi || {
+                printf '%s\n' "${output}"
+                return 1
+            }
+            printf '%s\n' "${output}"
+            return 0
+            ;;
+        iwd)
+            if [[ -n "${passphrase}" ]]; then
+                output=$(iwctl --passphrase "${passphrase}" station "${iface}" connect "${ssid}" 2>&1) || true
+            else
+                output=$(iwctl station "${iface}" connect "${ssid}" 2>&1) || true
+            fi
+
+            # iwctl frequently exits 0 even when association failed, so the
+            # station state is the only trustworthy signal. Note that a
+            # substring test for "connected" also matches "disconnected".
+            while ((waited < 20)); do
+                state=$(iwctl station "${iface}" show 2>/dev/null \
+                    | sed -e 's/\x1b\[[0-9;]*m//g' \
+                    | awk '/^[[:space:]]*State/ {print $2; exit}')
+                if [[ "${state}" == "connected" ]]; then
+                    return 0
+                fi
+                sleep 1
+                waited=$((waited + 1))
+            done
+
+            printf '%s\n' "${output:-Timed out waiting for ${iface} to associate with ${ssid}.}"
+            return 1
+            ;;
+    esac
+}
+
+# Waits for DHCP to actually hand out an address
+wifi_wait_ip() {
+    local iface="$1" waited=0
+
+    while ((waited < 30)); do
+        if ip -4 addr show "${iface}" 2>/dev/null | grep -q 'inet '; then
+            return 0
+        fi
         sleep 1
-        iwctl --passphrase "$PASSPHRASE" station wlan0 connect "$SSID" > /dev/null
-        if ! wait_with_retries "iwctl station wlan0 show | grep -q 'connected'" 10 2; then
-            echo "100"
-            echo "Failed to connect to $SSID."
-            sleep 1
-            tput clear
-            whiptail --msgbox "Failed to connect to $SSID after 10 attempts.\n\nPlease check your credentials." 10 60
-            exit 1
+        waited=$((waited + 1))
+    done
+    return 1
+}
+
+# Tests what the installer actually needs - DNS plus HTTPS to the asset host -
+# rather than ICMP, which plenty of networks drop even when online
+internet_up() {
+    curl -fsS --max-time 10 -o /dev/null "$BASE_URL/version"
+}
+
+wifi_connect() {
+    local iface backend ssid passphrase ssids error line
+    local menu=()
+
+    if ! iface=$(wifi_interface); then
+        whiptail --backtitle "$BACKTITLE" --title "No Wi-Fi Adapter" --fb --msgbox \
+            "No wireless interface was found.\n\nPlug in an ethernet cable and try again." 10 60
+        return 1
+    fi
+
+    if ! backend=$(wifi_backend); then
+        whiptail --backtitle "$BACKTITLE" --title "No Wi-Fi Backend" --fb --msgbox \
+            "Neither NetworkManager nor iwd could be started.\n\nCannot configure Wi-Fi." 10 60
+        return 1
+    fi
+
+    rfkill unblock wifi > /dev/null 2>&1 || true
+    ip link set "${iface}" up > /dev/null 2>&1 || true
+
+    while true; do
+        clear
+        echo "Scanning for networks on ${iface} (${backend})..."
+        ssids=$(wifi_scan "${backend}" "${iface}") || true
+
+        if [[ -z "${ssids}" ]]; then
+            if yesno "No Networks Found" "Nothing was found on ${iface}.\n\nScan again?"; then
+                continue
+            fi
+            return 1
         fi
 
-        # Step 2: Verify IP address
-        echo "50"
-        echo "Checking for IP address..."
-        sleep 1
-        if ! wait_with_retries "[[ -n \$(ip -4 addr show wlan0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}') ]]" 10 2; then
-            echo "100"
-            echo "Failed to obtain an IP address."
-            sleep 1
-            tput clear
-            whiptail --msgbox "Failed to obtain an IP address. Please check your network configuration." 10 60
-            exit 1
+        menu=()
+        while IFS= read -r line; do
+            [[ -n "${line}" ]] && menu+=("${line}" "")
+        done <<< "${ssids}"
+
+        ssid=$(whiptail --backtitle "$BACKTITLE" --title "Select Wi-Fi Network (${iface})" \
+            --menu "" --fb --cancel-button "Cancel" 20 60 10 \
+            "${menu[@]}" 3>&1 1>&2 2>&3) || return 1
+
+        # An empty passphrase is valid - it means an open network
+        passphrase=$(whiptail --backtitle "$BACKTITLE" --title "Passphrase" --fb \
+            --passwordbox "Passphrase for ${ssid}\n\nLeave empty for an open network:" 10 60 \
+            3>&1 1>&2 2>&3) || continue
+
+        clear
+        echo "Connecting to ${ssid}..."
+
+        error=""
+        if error=$(wifi_join "${backend}" "${iface}" "${ssid}" "${passphrase}"); then
+            if wifi_wait_ip "${iface}"; then
+                # A wrong clock breaks TLS to GitHub and the mirrors
+                timedatectl set-ntp true > /dev/null 2>&1 || true
+
+                if internet_up; then
+                    clear
+                    whiptail --backtitle "$BACKTITLE" --title "Connected" --fb --msgbox \
+                        "Connected to ${ssid} on ${iface}." 10 60
+                    return 0
+                fi
+                error="Connected to ${ssid}, but could not reach ${BASE_URL}.\n\nA captive portal or DNS problem is likely."
+            else
+                error="Associated with ${ssid} but DHCP did not provide an address."
+            fi
         fi
 
-        echo "75"
-        echo "Syncing time and date..."
-        timedatectl > /dev/null
-        sleep 3
-
-        # Step 3: Connection successful
-        echo "100"
-        echo "Successfully connected to $SSID!"
-        sleep 1
-    ) | whiptail --title "Connecting to WiFi" --gauge "Please wait while we connect to $SSID..." 10 60 0
-
-    # Ensure terminal is reset after messages
-    clear
-
-    whiptail --backtitle "$BACKTITLE" --msgbox "Successfully connected to $SSID!\n\nPress OK to continue" 10 60
-
-    return 0
+        clear
+        if ! yesno "Wi-Fi Failed" "${error:-Could not connect to ${ssid}.}\n\nTry again?"; then
+            return 1
+        fi
+    done
 }
 
 check_connection() {
-    if ! ping -q -w1 -c1 google.com &> /dev/null; then
-        whiptail --backtitle "$BACKTITLE" --msgbox --title "No Network Connection" \
-            "You need to be connected to the Internet.\n\nClick OK to begin Wi-Fi setup" 10 60
-        wifi_connect
-        return $?
+    if internet_up; then
+        return 0
     fi
-    return 0
+
+    whiptail --backtitle "$BACKTITLE" --title "No Network Connection" --fb --msgbox \
+        "You need to be connected to the Internet.\n\nClick OK to begin Wi-Fi setup" 10 60
+
+    wifi_connect
 }
 
 dependencies() {
@@ -881,10 +2094,15 @@ EOF
 while getopts ":chm:s" option; do
     case $option in
         c) # clean
-            swapoff -a
-            rm /tmp/packages
-            umount -A /mnt/boot /mnt &> /dev/null || true
+            echo "Resetting install state..."
+            swapoff -a || true
+            rm -f /tmp/packages
+            umount -R /mnt &> /dev/null || true
+            cryptsetup close cryptlvm &> /dev/null || true
+            echo
             lsblk
+            echo
+            echo "Reset complete. Run ./install to start again."
             exit
             ;;
         h) # display Help
@@ -910,13 +2128,24 @@ while getopts ":chm:s" option; do
     esac
 done
 
+# Report failures in a dialog instead of dumping to a dead console.
+# Must come after the option parsing so that -h and -c stay plain CLI.
+trap 'installer_failed "$?" "${LINENO}" "${BASH_COMMAND}"' ERR
+
+preflight
+
 check_connection || {
-    echo "Connection failed. Exiting."
+    clear
+    echo
+    echo "No internet connection - nothing has been written to disk."
+    echo "Re-run ./install to try again (no need to reboot)."
     exit 1
 }
 self_update
 
-[[ ! -f /tmp/packages ]] && initialise
+if [[ ! -f /tmp/packages ]]; then
+    initialise
+fi
 
 if [[ $AUTO -eq 1 ]]; then
     silent_install

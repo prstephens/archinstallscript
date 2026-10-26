@@ -13,8 +13,6 @@ BACKTITLE="Arch Installer v"$VERSION
 BASE_URL="https://raw.githubusercontent.com/prstephens/archinstallscript/master/"
 
 rootdev=/root/dev # changed on the fly during install
-USE_CRYPT=0       # changed on the fly during install
-USE_RAID=0        # changed on the fly during install
 TLP=0             # changed on the fly during install
 MAC=0             # changed on the fly during install
 
@@ -39,10 +37,9 @@ mainmenu() {
         options+=("ZRAM" "Use ZRAM as the swap (defaults to half your memory)")
         options+=("QEMU" "QEMU/KVM")
 
-        sel=$(whiptail --backtitle "${BACKTITLE}" --fb --title "Arch Linux Post Installer" --menu "" --cancel-button "Exit" --default-item "." 20 78 0 \
+        if sel=$(whiptail --backtitle "${BACKTITLE}" --fb --title "Arch Linux Post Installer" --menu "" --cancel-button "Exit" --default-item "." 20 78 0 \
                 "${options[@]}" \
-                3>&1 1>&2 2>&3)
-        if [ "$?" = "0" ]; then
+                3>&1 1>&2 2>&3); then
                 case ${sel} in
                 "GNOME")
                         install_gnome
@@ -97,17 +94,17 @@ install_fonts() {
         echo "Installing fonts..."
         yay -S --noconfirm --needed apple-fonts ttf-cascadia-code-nerd ttf-croscore ttf-google-sans
 
-        [[ ! -d $HOME/.local/share/fonts ]] && mkdir -p $HOME/.local/share/fonts
-        curl -sL $BASE_URL/fonts/HelveticaNeueLt.ttf -o $HOME/.local/share/fonts/HelveticaNeueLt.ttf
-        curl -sL $BASE_URL/fonts/acorn/bedstead.otf -o $HOME/.local/share/fonts/bedstead.otf
+        [[ ! -d "$HOME"/.local/share/fonts ]] && mkdir -p "$HOME"/.local/share/fonts
+        curl -sL "$BASE_URL"/fonts/HelveticaNeueLt.ttf -o "$HOME"/.local/share/fonts/HelveticaNeueLt.ttf
+        curl -sL "$BASE_URL"/fonts/acorn/bedstead.otf -o "$HOME"/.local/share/fonts/bedstead.otf
 
         echo "Windows fonts..."
         #yay -S ttf-ms-win11-auto
         install_windows_11_fonts
 
         # disable all bitmap font rendering
-        [[ ! -d $HOME/.config/fontconfig/conf.d ]] && mkdir -p $HOME/.config/fontconfig/conf.d
-        cat <<EOT >$HOME/.config/fontconfig/conf.d/20-no-embedded.conf
+        [[ ! -d "$HOME"/.config/fontconfig/conf.d ]] && mkdir -p "$HOME"/.config/fontconfig/conf.d
+        cat <<EOT >"$HOME"/.config/fontconfig/conf.d/20-no-embedded.conf
 <?xml version="1.0"?>
 <!DOCTYPE fontconfig SYSTEM "urn:fontconfig:fonts.dtd">
 <fontconfig>
@@ -167,7 +164,7 @@ install_gnome() {
         # if we are a laptop, add the hibernate option in the power menu
         if [[ "$TLP" -eq 1 ]]; then
                 git clone --depth 1 https://github.com/arelange/gnome-shell-extension-hibernate-status.git /tmp/gnome-shell-extension-hibernate-status
-                cp -r /tmp/gnome-shell-extension-hibernate-status $HOME/.local/share/gnome-shell/extensions/hibernate-status\@dromi
+                cp -r /tmp/gnome-shell-extension-hibernate-status "$HOME"/.local/share/gnome-shell/extensions/hibernate-status\@dromi
                 gnome-extensions enable hibernate-status@dromi
         fi
 
@@ -181,7 +178,7 @@ install_gnome() {
         sudo pacman -Rs --noconfirm epiphany gnome-music showtime gnome-connections gnome-text-editor gnome-tour gnome-console gnome-user-docs yelp gnome-maps decibels
 
         
-        cat <<EOT >>$HOME/.bash_profile
+        cat <<EOT >>"$HOME"/.bash_profile
 if [ "$XDG_SESSION_TYPE" = "wayland" ]; then
     export MOZ_ENABLE_WAYLAND=1
 fi
@@ -191,7 +188,7 @@ EOT
         sudo systemctl enable gdm
 
         # create a snapshot
-        for i in $(seq 2 50); do sudo snapper delete $i; done
+        for i in $(seq 2 50); do sudo snapper delete "$i"; done
         sudo snapper -c root create --description "### FRESH INSTALL - Including Gnome ###" # ID 2
 
         # Change Google Drive name in Nautilus sidebar
@@ -213,15 +210,15 @@ install_ufw() {
 
 apply_xcreensaver() {
         # xscreensaver settings - 10 min timeout - GL matrix
-        curl -sL $BASE_URL/configs/home/.xscreensaver -o $HOME/.xscreensaver
-        if [ ! -d $HOME/.config/autostart/ ]; then mkdir $HOME/.config/autostart; fi
-        curl -sL $BASE_URL/configs/home/xscreensaver.desktop -o $HOME/.config/autostart/xscreensaver.desktop
+        curl -sL "$BASE_URL"/configs/home/.xscreensaver -o "$HOME"/.xscreensaver
+        if [ ! -d "$HOME"/.config/autostart/ ]; then mkdir "$HOME"/.config/autostart; fi
+        curl -sL "$BASE_URL"/configs/home/xscreensaver.desktop -o "$HOME"/.config/autostart/xscreensaver.desktop
 }
 
 install_dash_to_dock() {
         # add dash to dock extension
         git clone --depth 1 https://github.com/prstephens/dash-to-dock.git /tmp/dash-to-dock
-        cd /tmp/dash-to-dock
+        cd /tmp/dash-to-dock || return 1
 
         make
         make install
@@ -260,8 +257,8 @@ install_gnome_mac() {
         install_apps
 
         # copy some custom "apps"
-        if [ ! -d $HOME/.local/share/applications/ ]; then mkdir $HOME/.local/share/applications; fi
-        curl -sL $BASE_URL/scripts/maps.desktop -o  $HOME/.local/share/applications/maps.desktop
+        if [ ! -d "$HOME"/.local/share/applications/ ]; then mkdir "$HOME"/.local/share/applications; fi
+        curl -sL "$BASE_URL"/scripts/maps.desktop -o  "$HOME"/.local/share/applications/maps.desktop
 
         # Remove 'Utilities' folder in app grid so all apps are in view
         gsettings set org.gnome.desktop.app-folders folder-children "['YaST']"
@@ -277,22 +274,22 @@ install_gnome_mac() {
 
         # blur my shell
         git clone --depth 1 https://github.com/aunetx/blur-my-shell /tmp/blur-my-shell
-        cd /tmp/blur-my-shell
+        cd /tmp/blur-my-shell || return 1
         make install
 
         # panel corners
         git clone --depth 1 https://github.com/aunetx/panel-corners.git /tmp/panel-corners
-        cd /tmp/panel-corners
+        cd /tmp/panel-corners || return 1
         make install
 
         # logo menu
         git clone --depth 1 https://github.com/Aryan20/Logomenu.git /tmp/logo-menu
-        cd /tmp/logo-menu
+        cd /tmp/logo-menu || return 1
         make install
 
         # kiwi
         git clone --depth 1 https://github.com/kem-a/kiwi-kemma.git /tmp/kiwi
-        cp -r /tmp/kiwi $HOME/.local/share/gnome-shell/extensions/kiwi@kemma
+        cp -r /tmp/kiwi "$HOME"/.local/share/gnome-shell/extensions/kiwi@kemma
 
         # get the tahoe theme for gnome-terminal
         curl -sL $BASE_URL/configs/gnome-terminal-profile-tahoe.dconf -o /tmp/gnome-terminal-profile-tahoe.dconf
@@ -369,7 +366,7 @@ install_tahoe() {
                 [tahoe-dawn.png]="macos/tahoe-dawn.png"
                 [tahoe-dusk.png]="macos/tahoe-dusk.png"
                 [tahoe-night.png]="macos/tahoe-night.png"
-                [goldengate-light.png]="macos/goldengat-light.png"
+                [goldengate-light.png]="macos/goldengate-light.png"
                 [goldengate-dark.png]="macos/goldengate-dark.png"
                 [goldengate.jpg]="macos/goldengate.jpg"
                 )
@@ -386,11 +383,11 @@ install_tahoe() {
                 3>&1 1>&2 2>&3)
 
         git clone --depth 1 https://github.com/prstephens/MacTahoe-gtk-theme.git /tmp/MacTahoe-gtk-theme
-        cd /tmp/MacTahoe-gtk-theme
+        cd /tmp/MacTahoe-gtk-theme || return 1
 
-        ./install.sh -l -c $theme -b -l
+        ./install.sh -l -c "$theme" -b -l
 
-        gsettings set org.gnome.desktop.background picture-uri file:////$HOME/.local/share/backgrounds/tahoe-dawn.png
+        gsettings set org.gnome.desktop.background picture-uri file:////"$HOME"/.local/share/backgrounds/tahoe-dawn.png
         
         sudo ./tweaks.sh -g 
         ./tweaks.sh -f default
@@ -401,13 +398,13 @@ install_tahoe() {
         /tmp/MacTahoe-icon-theme/install.sh
         
         git clone --depth 1 https://github.com/prstephens/WhiteSur-cursors.git /tmp/WhiteSur-cursors
-        cd /tmp/WhiteSur-cursors
+        cd /tmp/WhiteSur-cursors || return 1
         ./install.sh
 
         # MacOS calendar icon fix
-        [[ ! -d $HOME/.local/share/gnome-shell/extensions ]] && mkdir -p $HOME/.local/share/gnome-shell/extensions
+        [[ ! -d "$HOME"/.local/share/gnome-shell/extensions ]] && mkdir -p "$HOME"/.local/share/gnome-shell/extensions
         git clone --depth 1 https://github.com/prstephens/mac-dynamic-calendar.git /tmp/mac-dynamic-calendar
-        cp -R /tmp/mac-dynamic-calendar/dynamic-calendar-and-clocks-icons\@fcusr.github.com $HOME/.local/share/gnome-shell/extensions
+        cp -R /tmp/mac-dynamic-calendar/dynamic-calendar-and-clocks-icons\@fcusr.github.com "$HOME"/.local/share/gnome-shell/extensions
         curl -sL $BASE_URL/configs/extensions/mac-dynamic-calendar-settings -o /tmp/mac-dynamic-calendar-settings
         dconf load /org/gnome/shell/extensions/dynamic-calendar-and-clocks-icons/ </tmp/mac-dynamic-calendar-settings
         gnome-extensions enable dynamic-calendar-and-clocks-icons@fcusr.github.com
@@ -415,7 +412,7 @@ install_tahoe() {
         apply_tahoe
 
         # gnome-terminal padding add to ~/.config/gtk-3.0/gtk.css
-        cat <<EOT >>$HOME/.config/gtk-3.0/gtk.css
+        cat <<EOT >>"$HOME"/.config/gtk-3.0/gtk.css
 
 VteTerminal,
 TerminalScreen,
@@ -435,10 +432,10 @@ EOT
 }
 
 apply_tahoe(){
-        gsettings set org.gnome.desktop.interface gtk-theme MacTahoe-${theme^}
+        gsettings set org.gnome.desktop.interface gtk-theme MacTahoe-"${theme^}"
         gsettings set org.gnome.desktop.interface cursor-theme WhiteSur-cursors
-        gsettings set org.gnome.shell.extensions.user-theme name MacTahoe-${theme^}
-        gsettings set org.gnome.desktop.interface icon-theme MacTahoe-$theme
+        gsettings set org.gnome.shell.extensions.user-theme name MacTahoe-"${theme^}"
+        gsettings set org.gnome.desktop.interface icon-theme MacTahoe-"$theme"
 
         gsettings set org.gnome.desktop.interface font-name "SF Pro Display Regular 11"
         gsettings set org.gnome.desktop.interface document-font-name "SF Pro Display Regular 11"
@@ -480,15 +477,15 @@ install_xfce() {
 
 install_xp() {
         yay -S --noconfirm --needed xfce-winxp-tc-git
-        git clone --depth 1 https://github.com/prstephens/Windows-XP.git $HOME/.icons/Windows-XP
+        git clone --depth 1 https://github.com/prstephens/Windows-XP.git "$HOME"/.icons/Windows-XP
         git clone --depth 1 https://github.com/prstephens/xp-wallpapers.git /tmp/xp-wallpapers
         sudo cp -R /tmp/xp-wallpapers /usr/share/backgrounds/
 }
 
 install_hyde() {
         
-        git clone --depth 1 https://github.com/prstephens/HyDE.git $HOME/HyDE
-        cd $HOME/HyDE/Scripts
+        git clone --depth 1 https://github.com/prstephens/HyDE.git "$HOME"/HyDE
+        cd "$HOME"/HyDE/Scripts || return 1
         ./install.sh -n
         ./install.sh
 }
@@ -517,7 +514,7 @@ apply_xp_theme() {
 
         xfconf-query -c keyboard-layout -p /Default/XkbLayout -s "gb"
 
-        xfconf-query -c xfce4-desktop -p $(xfconf-query -c xfce4-desktop -l | grep "workspace0/last-image") -s /usr/share/backgrounds/xp-wallpapers/Bliss.jpg
+        xfconf-query -c xfce4-desktop -p "$(xfconf-query -c xfce4-desktop -l | grep "workspace0/last-image")" -s /usr/share/backgrounds/xp-wallpapers/Bliss.jpg
 
         apply_plymouth_xp
 }
@@ -525,8 +522,8 @@ apply_xp_theme() {
 install_profile-sync-daemon() {
         sudo pacman -S --noconfirm --needed profile-sync-daemon
         psd
-        sed -i 's/^#BROWSERS=.*$/BROWSERS=(google-chrome firefox)/' $HOME/.config/psd/psd.conf
-        sed -i 's/^#USE_OVERLAYFS=.*$/USE_OVERLAYFS="yes"/' $HOME/.config/psd/psd.conf
+        sed -i 's/^#BROWSERS=.*$/BROWSERS=(google-chrome firefox)/' "$HOME"/.config/psd/psd.conf
+        sed -i 's/^#USE_OVERLAYFS=.*$/USE_OVERLAYFS="yes"/' "$HOME"/.config/psd/psd.conf
         echo "$USER ALL=(ALL) NOPASSWD: /usr/bin/psd-overlay-helper" | sudo tee -a /etc/sudoers
         systemctl --user enable --now psd.service
 }
@@ -546,8 +543,8 @@ update_icons(){
         sudo sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/MacTahoe/apps/scalable/org.gnome.Software.Generic.svg|" /usr/share/applications/com.mattjakeman.ExtensionManager.desktop
         sudo sed -i "s|^Icon=.*|Icon=internet-chat|" /usr/share/applications/elecwhat.desktop
 
-        curl -sL $BASE_URL/icons/launchpad.svg -o $HOME/.local/share/gnome-shell/extensions/kiwi@kemma/icons/launchpad.svg
-        curl -sL $BASE_URL/icons/file-manager.svg -o $HOME/.local/share/icons/MacTahoe/apps/scalable/file-manager.svg
+        curl -sL "$BASE_URL"/icons/launchpad.svg -o "$HOME"/.local/share/gnome-shell/extensions/kiwi@kemma/icons/launchpad.svg
+        curl -sL "$BASE_URL"/icons/file-manager.svg -o "$HOME"/.local/share/icons/MacTahoe/apps/scalable/file-manager.svg
 }
 
 install_apps() {
@@ -572,7 +569,7 @@ install_qemu() {
         sudo mkinitcpio -P
         sudo grub-mkconfig -o /boot/grub/grub.cfg
 
-        sudo usermod -a -G libvirt $USER
+        sudo usermod -a -G libvirt "$USER"
 
         sudo bash -c 'sudo cat <<EOT >> /etc/libvirt/qemu.conf
 nvram = [
@@ -612,7 +609,7 @@ EOT
 
 install_chicago95() {
         git clone --depth 1 https://github.com/grassmunk/Chicago95.git /tmp/chicargo95
-        cd /tmp/chicargo95
+        cd /tmp/chicargo95 || return 1
         sudo cp -r Plymouth/Chicago95 /usr/share/plymouth/themes/
         apply_plymouth_chicago
 
@@ -658,7 +655,7 @@ EOT'
 }
 
 setup_zram() {
-        ram=$(expr $(grep MemTotal /proc/meminfo | awk '{print $2}') / 1000 / 1000 / 2)
+        ram=$(( $(grep MemTotal /proc/meminfo | awk '{print $2}') / 1000 / 1000 / 2 ))
 
         sudo tee -a /usr/local/bin/zram_start >/dev/null <<'EOT'
 #!/bin/bash
@@ -701,12 +698,13 @@ setup_cloudflare_warp() {
         sudo systemctl enable --now warp-svc.service
 }
 
-create_luks_recovery_key() {
-    # create a LUKS recovery key and store this offline
-    dd if=/dev/urandom bs=32 count=1 status=none | base64 | sudo tee /recovery.key > /dev/null
-    sudo chmod 600 /recovery.key
-    sudo cryptsetup luksAddKey "$rootdev" /recovery.key --header /boot/header.img
-}
+# Recovery keys are handled by 'secureboot enroll-tpm' on the installed
+# system, which generates one with systemd-cryptenroll, displays it once
+# and requires confirmation before enrolling the TPM.
+#
+# The previous version of this function wrote the key to /recovery.key on
+# the encrypted root itself, which is unreadable in exactly the situation
+# a recovery key exists for, and left a usable secret on disk.
 
 initialise() {
         whiptail --backtitle "$BACKTITLE" --msgbox --title "Welcome!" "Welcome to Arch Linux\n\nWe will now initialise the system" 0 78
@@ -728,10 +726,10 @@ initialise() {
         sudo sed -i 's/^COMPRESSLZ4.*/COMPRESSLZ4=(lz4 -q --best)/' /etc/makepkg.conf
 
         # install yay
-        git clone --depth 1 https://aur.archlinux.org/yay-bin.git $HOME/yay
-        cd $HOME/yay
+        git clone --depth 1 https://aur.archlinux.org/yay-bin.git "$HOME"/yay
+        cd "$HOME"/yay || return 1
         makepkg -si
-        cd
+        cd || return 1
 
         # remove annoying yay questions
         yay --save --answerdiff None --answerclean None --removemake --batchinstall --devel --builddir /tmp/yay
@@ -745,7 +743,7 @@ initialise() {
         sudo mount -a
         sudo chmod 750 /.snapshots
         sudo chmod a+rx /.snapshots
-        sudo chown :$USER /.snapshots
+        sudo chown :"$USER" /.snapshots
 
         sudo sed -i "s|^ALLOW_USERS=.*$|ALLOW_USERS=\"$USER\"|" /etc/snapper/configs/root
         sudo sed -i 's/^TIMELINE_LIMIT_HOURLY=.*$/TIMELINE_LIMIT_HOURLY="5"/' /etc/snapper/configs/root
@@ -786,12 +784,13 @@ EOT
                 curl -sL $BASE_URL/configs/MacbookAir_Color_LCD.icc -o /tmp/MacbookAir_Color_LCD.icc
         fi
 
-        # install sbctl for secure boot support
-        sudo sbctl create-keys
-        sudo mkinitcpio -P
+        # Secure Boot keys are created and the UKI signed during install.
+        # Run 'secureboot status' to see what is left to do (enrolling keys
+        # needs the firmware in Setup Mode; TPM enrolment needs Secure Boot
+        # already active).
 
         # create a snapshot
-        for i in $(seq 1 50); do sudo snapper delete $i; done
+        for i in $(seq 1 50); do sudo snapper delete "$i"; done
         sudo snapper -c root create --description "### FRESH INSTALL - Base ###" #ID 1
 
         sudo mkdir /.bootbackup
@@ -830,9 +829,9 @@ self_update() {
         curl -sL $BASE_URL/version -o /tmp/version
         value=$(</tmp/version)
         if (("$VERSION" < "$value")); then
-                curl -sL $BASE_URL/post-install -o $HOME/post-install
-                chmod +x $HOME/post-install
-                exec $HOME/post-install
+                curl -sL "$BASE_URL"/post-install -o "$HOME"/post-install
+                chmod +x "$HOME"/post-install
+                exec "$HOME"/post-install
                 exit 1
         fi
 }
