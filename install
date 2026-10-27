@@ -35,6 +35,16 @@ DISK_PARTITIONED=0 # set once cfdisk has been run, to drive the menu state
 INSTALL_DONE=0     # set once the install has completed, to drive the menu state
 SECUREBOOT_SETUP_MODE=0 # set when the firmware allows key enrollment from here
 
+# Name of the temporary plain-dm mapping used by the WIPE DEVICE step. Nothing
+# else in Arch creates this name, so one found at startup is always a leftover
+# from a wipe that was cut short, and is safe to close.
+WIPE_NAME="to_be_wiped"
+
+# How long to wait for a sanitize to finish before giving up on it. Crypto
+# erase is near instant and block erase is seconds to minutes, so an hour is
+# only there to stop a wedged drive hanging the installer forever.
+SANITIZE_TIMEOUT=3600
+
 # Status markers. Deliberately ASCII: the live console uses a PSF font
 # (bedstead-20) that has no glyph for U+2713, so a tick would render as junk.
 MARK_DONE="[*]"
@@ -204,6 +214,14 @@ preflight() {
         command -v "${cmd}" > /dev/null 2>&1 || problems+=("${cmd} is not installed")
     done
 
+    # A wipe that was cut short leaves its mapping behind, holding the disk
+    # open so that cfdisk, mkfs and even a second wipe all fail. The name is
+    # ours alone, so clear it here rather than making the user work it out.
+    if [[ -e "/dev/mapper/${WIPE_NAME}" ]]; then
+        release_wipe_mapping \
+            || problems+=("A cancelled wipe left /dev/mapper/${WIPE_NAME} open and it could not be closed - run 'cryptsetup close ${WIPE_NAME}'")
+    fi
+
     # The bootloader path is UKI + efibootmgr, which cannot work on BIOS
     [[ -d /sys/firmware/efi ]] || problems+=("This system is not booted in UEFI mode - the UKI bootloader will not work")
 
@@ -222,9 +240,12 @@ show_help() {
 "Work down the menu. Steps marked ${MARK_DONE} are done, ${MARK_TODO} are
 outstanding, and ${MARK_SKIP} were skipped as optional.
 
-  WIPE DEVICE   Optional. Overwrites a disk with random data first.
-                Slow, and only needed if you are disposing of the disk
-                or want old data genuinely gone.
+  WIPE DEVICE   Optional, and only needed if you are disposing of the
+                disk or want old data genuinely gone. SSDs and NVMe
+                drives are told to erase themselves, which takes
+                seconds and reaches the spare blocks that overwriting
+                cannot. Hard disks fall back to being overwritten
+                with random data, which is slow.
 
   PARTITION     Opens cfdisk. Create a GPT label with:
                   1) EFI System  - 512M or larger
@@ -438,18 +459,271 @@ preparedisk() {
     local wipedevice
     wipedevice=$(selectdisk "Choose device to be wiped") || return 0
 
-    if yesno "### WARNING ###" "Securely wipe ${wipedevice} ($(dev_size "${wipedevice}"))?\n\nTHIS CANNOT BE UNDONE. ALL DATA WILL BE PERMANENTLY LOST!\n\nThis writes zeroes through an encrypted mapping across the whole\ndevice. On a large spinning disk it can take many hours. You can\nstop it with Ctrl-C and return to the menu."; then
-        banner "Wiping ${wipedevice} - press Ctrl-C to stop"
-        # Open the device with cryptsetup
-        if cryptsetup open --type plain -d /dev/urandom "${wipedevice}" to_be_wiped; then
-            # Securely wipe the device
-            dd if=/dev/zero of=/dev/mapper/to_be_wiped status=progress || :
-            cryptsetup close to_be_wiped
-            ui_msg "Wipe Complete" "${wipedevice} has been wiped."
-        else
-            ui_error "Wipe Failed" "Could not open ${wipedevice} for wiping.\n\nIt may be mounted or in use by LVM or RAID."
+    # Flash cannot be erased by overwriting it. Wear levelling and
+    # over-provisioning keep copies in blocks the controller never exposes, so
+    # only the drive itself can reach them - which is what sanitize asks it to
+    # do. An unreadable ROTA is treated as rotating, since the overwrite path
+    # that choice selects works on any device.
+    if disk_is_rotational "${wipedevice}"; then
+        wipe_overwrite "${wipedevice}"
+    else
+        wipe_secure_erase "${wipedevice}"
+    fi
+}
+
+# Secure erase for SSDs and NVMe. Sanitize is the only operation that reaches
+# the over-provisioned and remapped blocks an overwrite can never see, it
+# survives a power cut by resuming on the next boot, and unlike the older ATA
+# security-erase route it is not blocked by the BIOS freeze lock.
+#
+# Crypto erase discards the drive's internal media key; block erase then clears
+# the NAND itself. Either alone counts as a purge, but a controller whose
+# crypto erase is poorly implemented still ends up with erased cells if both
+# are run, and both take seconds - so there is no reason to pick one.
+wipe_secure_erase() {
+    local wipedevice="$1" completed=""
+
+    yesno "### WARNING ###" "Securely erase ${wipedevice} ($(dev_size "${wipedevice}"))?\n\nTHIS CANNOT BE UNDONE. ALL DATA WILL BE PERMANENTLY LOST!\n\nThe drive is told to erase itself: a cryptographic erase to throw\naway its internal key, then a block erase of the flash. Together\nthey reach the spare and remapped blocks that overwriting cannot,\nand usually finish in seconds rather than hours." || return 0
+
+    banner "Securely erasing ${wipedevice}"
+
+    if [[ "${wipedevice}" == /dev/nvme* ]]; then
+        nvme_sanitize "${wipedevice}" crypto && completed+="  - cryptographic erase\n"
+        nvme_sanitize "${wipedevice}" block  && completed+="  - block erase\n"
+    else
+        ata_sanitize "${wipedevice}" crypto && completed+="  - cryptographic erase\n"
+        ata_sanitize "${wipedevice}" block  && completed+="  - block erase\n"
+    fi
+
+    if [[ -z "${completed}" ]]; then
+        if yesno "Secure Erase Unavailable" "${wipedevice} would not accept either sanitize operation.\n\nThe drive is too old for the SANITIZE feature set, or its\ncontroller does not expose it.\n\nOverwrite it with random data instead? On flash that is slower\nand cannot reach the spare blocks, so it is genuinely weaker\nthan a sanitize - but it is the best remaining option."; then
+            wipe_overwrite "${wipedevice}"
+        fi
+        return 0
+    fi
+
+    # The partition table went with everything else, so let the kernel notice
+    # before cfdisk is pointed at the disk.
+    blockdev --rereadpt "${wipedevice}" 2> /dev/null || true
+
+    ui_msg "Secure Erase Complete" "${wipedevice} has been securely erased by the drive itself.\n\nCompleted:\n${completed}"
+}
+
+# Issues one sanitize action against an NVMe drive and waits for it to finish.
+# Support is probed by simply trying it: an unsupported action comes back as
+# Invalid Field in Command, which is far more reliable than parsing SANICAP out
+# of id-ctrl, whose wording shifts between nvme-cli releases.
+nvme_sanitize() {
+    local dev="$1" action="$2" ctrl sanact label
+
+    case "${action}" in
+        crypto) sanact=0x04; label="Cryptographic erase" ;;
+        block)  sanact=0x02; label="Block erase" ;;
+        *)      return 1 ;;
+    esac
+
+    # sanitize and its log are controller-level commands, but selectdisk hands
+    # us the namespace block device.
+    if [[ "${dev}" =~ ^(/dev/nvme[0-9]+)n[0-9]+$ ]]; then
+        ctrl="${BASH_REMATCH[1]}"
+    else
+        ctrl="${dev}"
+    fi
+
+    echo "${label}: starting on ${ctrl}"
+    if ! nvme sanitize "${ctrl}" -a "${sanact}"; then
+        echo "${label}: not supported by this drive, skipping"
+        echo
+        return 1
+    fi
+
+    nvme_sanitize_wait "${ctrl}" "${label}"
+}
+
+# SSTAT bits 2:0 hold the state: 1 and 4 are success, 2 is still running and 3
+# is a failure. SPROG is progress as a fraction of 65535. If the log cannot be
+# read or parsed the operation is taken as done, because `nvme sanitize` itself
+# already returned success.
+nvme_sanitize_wait() {
+    local ctrl="$1" label="$2" log sstat sprog elapsed=0
+
+    while ((elapsed < SANITIZE_TIMEOUT)); do
+        sleep 2
+        elapsed=$((elapsed + 2))
+
+        log=$(nvme sanitize-log "${ctrl}" 2>/dev/null) || break
+        [[ "${log}" =~ SSTAT[^0-9]*(0x[0-9a-fA-F]+|[0-9]+) ]] || break
+        sstat="${BASH_REMATCH[1]}"
+
+        case $(( sstat & 0x7 )) in
+            2)
+                if [[ "${log}" =~ SPROG[^0-9]*([0-9]+) ]]; then
+                    sprog="${BASH_REMATCH[1]}"
+                    echo "${label}: $(( sprog * 100 / 65535 ))% complete"
+                fi
+                ;;
+            3)
+                echo "${label}: the drive reported a failure"
+                echo
+                return 1
+                ;;
+            *)
+                break
+                ;;
+        esac
+    done
+
+    echo "${label}: complete"
+    echo
+    return 0
+}
+
+# Same thing for a SATA SSD. hdparm reports the feature set up front here, so
+# unlike NVMe the capability can be checked without issuing anything.
+ata_sanitize() {
+    local dev="$1" action="$2" flag label status
+
+    case "${action}" in
+        crypto) flag="--sanitize-crypto-scramble"; label="Cryptographic erase" ;;
+        block)  flag="--sanitize-block-erase";     label="Block erase" ;;
+        *)      return 1 ;;
+    esac
+
+    status=$(hdparm --sanitize-status "${dev}" 2>&1) || status=""
+    if [[ -z "${status}" || "${status}" == *"not supported"* ]]; then
+        echo "${label}: the SANITIZE feature set is not supported, skipping"
+        echo
+        return 1
+    fi
+
+    echo "${label}: starting on ${dev}"
+    if ! hdparm --yes-i-know-what-i-am-doing "${flag}" "${dev}"; then
+        echo "${label}: the drive refused the command, skipping"
+        echo
+        return 1
+    fi
+
+    ata_sanitize_wait "${dev}" "${label}"
+}
+
+# hdparm runs sanitize in the background, so poll until the drive leaves the
+# in-progress state and report what it says about the outcome.
+ata_sanitize_wait() {
+    local dev="$1" label="$2" status elapsed=0
+
+    while ((elapsed < SANITIZE_TIMEOUT)); do
+        sleep 2
+        elapsed=$((elapsed + 2))
+
+        status=$(hdparm --sanitize-status "${dev}" 2>&1) || break
+        [[ "${status}" == *"Sanitize Idle"* ]] || continue
+
+        if [[ "${status}" == *"Completed Without Error"* ]]; then
+            echo "${label}: complete"
+            echo
+            return 0
+        fi
+
+        echo "${label}: the drive reported a failure"
+        echo
+        return 1
+    done
+
+    echo "${label}: gave up waiting after ${SANITIZE_TIMEOUT}s"
+    echo
+    return 1
+}
+
+# Zeroes written through a throwaway random key, so the disk ends up full of
+# data indistinguishable from real encrypted data rather than obvious zeroes.
+wipe_overwrite() {
+    local wipedevice="$1"
+    local target="/dev/mapper/${WIPE_NAME}"
+    local opened=0 interrupted=0 rc=0
+    local size full_mib tail_sectors
+
+    yesno "### WARNING ###" "Securely wipe ${wipedevice} ($(dev_size "${wipedevice}"))?\n\nTHIS CANNOT BE UNDONE. ALL DATA WILL BE PERMANENTLY LOST!\n\nThis writes zeroes through an encrypted mapping across the whole\ndevice. On a large spinning disk it can take many hours. You can\nstop it with Ctrl-C and return to the menu." || return 0
+
+    # Read the size before anything is opened: a failure here under set -e
+    # would otherwise abort the installer with the mapping still in place.
+    # A plain mapping is exactly as big as the device beneath it.
+    if ! size=$(blockdev --getsize64 "${wipedevice}") || [[ -z "${size}" ]]; then
+        ui_error "Wipe Failed" "Could not read the size of ${wipedevice}."
+        return 0
+    fi
+    full_mib=$(( size / 1048576 ))
+    tail_sectors=$(( (size % 1048576) / 512 ))
+
+    banner "Wiping ${wipedevice} - press Ctrl-C to stop"
+
+    # Ctrl-C is delivered to the whole foreground process group, so without a
+    # handler bash dies alongside dd and never reaches the close below. That
+    # left /dev/mapper/${WIPE_NAME} holding the disk open, and every later
+    # attempt to touch it - including a fresh run of this installer - failed
+    # with "device is busy". The trap fires once dd has gone, so the mapping
+    # is released whether the wipe finished or was cancelled.
+    trap 'interrupted=1' INT
+    if cryptsetup open --type plain -d /dev/urandom "${wipedevice}" "${WIPE_NAME}"; then
+        opened=1
+
+        # bs=1M because dd's 512-byte default turns every block into its own
+        # syscall and dm-crypt operation, and an explicit count because the
+        # alternative is running into ENOSPC. Without the count dd always
+        # exits non-zero, the failure has to be swallowed, and that swallows
+        # the I/O errors from a dying disk along with it.
+        dd if=/dev/zero of="${target}" bs=1M count="${full_mib}" \
+            oflag=direct status=progress || rc=$?
+
+        # Whole-MiB writes leave a short tail, and the GPT backup header sits
+        # in it. Sector aligned rather than page aligned, so O_DIRECT is
+        # dropped here instead of fought with.
+        if ((rc == 0 && tail_sectors > 0)); then
+            dd if=/dev/zero of="${target}" bs=512 count="${tail_sectors}" \
+                seek=$(( full_mib * 2048 )) conv=fsync status=none || rc=$?
         fi
     fi
+    trap - INT
+
+    if ((opened == 0)); then
+        ui_error "Wipe Failed" "Could not open ${wipedevice} for wiping.\n\nIt may be mounted, or in use by LVM, RAID or a previous run of\nthis installer."
+        return 0
+    fi
+
+    if ! release_wipe_mapping; then
+        ui_error "Wipe Incomplete" "${wipedevice} was written to, but /dev/mapper/${WIPE_NAME} could not\nbe closed, so the disk is still held open.\n\nClose it by hand before carrying on:\n\n  cryptsetup close ${WIPE_NAME}"
+        return 0
+    fi
+
+    if ((interrupted == 1)); then
+        ui_msg "Wipe Cancelled" "The wipe of ${wipedevice} was stopped before it finished.\n\nPart of the disk is now overwritten and the rest still holds its\noriginal data. Partitioning and installing work as normal from\nhere - only a full pass guarantees the old data is gone."
+    elif ((rc != 0)); then
+        ui_error "Wipe Failed" "The wipe of ${wipedevice} stopped early with exit code ${rc}.\n\nThe disk was not fully overwritten. This usually means the drive\nis failing or was unplugged - check the messages above."
+    else
+        ui_msg "Wipe Complete" "${wipedevice} has been wiped."
+    fi
+}
+
+# Rotating disk or flash? Anything that cannot be read is treated as rotating,
+# because the overwrite path that choice selects works on any device.
+disk_is_rotational() {
+    local rota
+    rota=$(lsblk -d -n -o ROTA "$1" 2>/dev/null | tr -d '[:space:]') || rota=""
+    [[ "${rota}" != "0" ]]
+}
+
+# Closes the WIPE DEVICE mapping. The kernel can keep the device open for a
+# moment after dd exits, so a single close right after a Ctrl-C often reports
+# "device is busy" even though nothing is wrong - give it a few tries.
+release_wipe_mapping() {
+    local attempt
+    [[ -e "/dev/mapper/${WIPE_NAME}" ]] || return 0
+
+    for ((attempt = 0; attempt < 5; attempt++)); do
+        cryptsetup close "${WIPE_NAME}" 2>/dev/null && return 0
+        sleep 1
+    done
+
+    return 1
 }
 
 diskpartcfdisk() {
@@ -483,12 +757,25 @@ Nothing is written until you choose [Write] inside cfdisk."
 selectdisk() {
     # Fetch disk list excluding loop and RAM devices
     local options=()
-    local item
+    local item live
+
+    live=$(live_disk)
 
     # Populate menu options
     while IFS= read -r item; do
+        # The USB stick running the installer is an ordinary /dev/sdX and
+        # would otherwise sit in this list next to the real target. Wiping or
+        # repartitioning it kills the running session.
+        if [[ -n "${live}" && "${item%% *}" == "${live}" ]]; then
+            continue
+        fi
         options+=("${item}" "")
     done < <(lsblk -d -p -n -l -o NAME,SIZE -e 7,11)
+
+    if ((${#options[@]} == 0)); then
+        ui_error "No Disks Found" "No usable disk was found.\n\nThe only device present is the one the installer booted from."
+        return 1
+    fi
 
     # Display selection menu
     local result
@@ -496,6 +783,23 @@ selectdisk() {
         "${options[@]}" 3>&1 1>&2 2>&3) || return 1
 
     echo "${result%% *}" # Return selected disk
+}
+
+# Whole disk holding the live medium, or empty if it cannot be worked out.
+# archiso mounts the boot partition at /run/archiso/bootmnt; with copytoram
+# that mount is gone, and so is the risk, so an empty answer is correct.
+live_disk() {
+    local src parent
+
+    src=$(findmnt -n -o SOURCE /run/archiso/bootmnt 2>/dev/null) || return 0
+    [[ -b "${src}" ]] || return 0
+
+    parent=$(lsblk -n -o PKNAME "${src}" 2>/dev/null | head -n1) || parent=""
+    if [[ -n "${parent}" ]]; then
+        printf '/dev/%s' "${parent}"
+    else
+        printf '%s' "${src}"
+    fi
 }
 
 enablelvm() {
@@ -2099,6 +2403,7 @@ while getopts ":chm:s" option; do
             rm -f /tmp/packages
             umount -R /mnt &> /dev/null || true
             cryptsetup close cryptlvm &> /dev/null || true
+            cryptsetup close "${WIPE_NAME}" &> /dev/null || true
             echo
             lsblk
             echo
