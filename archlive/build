@@ -1,9 +1,11 @@
 #!/bin/bash
 
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+
 sudo rm -rdf work
 sudo rm -rdf out
 sudo rm airootfs/root/install
-cp ~/dev/archinstallscript/install airootfs/root/install
+cp "$SCRIPT_DIR/../install" airootfs/root/install
 sync
 export XZ_OPT="--threads=0"
 sudo mkarchiso -v . 
