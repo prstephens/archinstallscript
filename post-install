@@ -21,68 +21,347 @@ theme="light"
 set -o pipefail
 #set -x #toggle for debug. Will print all commands.
 
-# --------------------------------------------------------
+# Status markers shown against each menu entry. Deliberately ASCII, to match
+# the installer and because the console font has no glyph for a tick.
+MARK_DONE="[*]"
+MARK_TODO="[ ]"
+MARK_NEXT="[>]"
+
+#   ============ UI HELPERS ========
+#
+#   Consistent dialogs, matching the
+#   installer
+#
+#   ================================
+
+ui_msg() {
+        whiptail --backtitle "${BACKTITLE}" --title "$1" --fb --msgbox "$2" 0 78
+}
+
+ui_error() {
+        whiptail --backtitle "${BACKTITLE}" --title "$1" --fb --msgbox "$2" 0 78
+}
+
+yesno() {
+        local title="$1"
+        local message="$2"
+        whiptail --backtitle "${BACKTITLE}" --title "${title}" --fb --yesno "${message}" --defaultno 0 78
+}
+
+# Clears the screen and prints a banner before a long-running command.
+# pacman, yay and makepkg deliberately run on the raw console rather than
+# behind a --gauge: hiding a failed AUR build behind a spinner is what makes
+# it impossible to diagnose.
+banner() {
+        clear
+        echo "=============================================================================="
+        echo "  $1"
+        echo "=============================================================================="
+        echo
+}
+
+preflight() {
+        # whiptail drives every prompt here. On the installed system it is only
+        # a transitive dependency, so it can legitimately be absent.
+        if ! command -v whiptail >/dev/null 2>&1; then
+                echo "whiptail is missing. Installing libnewt..." >&2
+                sudo pacman -Sy --noconfirm libnewt || {
+                        echo "Could not install libnewt - cannot show the menu." >&2
+                        exit 1
+                }
+        fi
+
+        if ! ping -q -w1 -c1 google.com >/dev/null 2>&1; then
+                ui_error "No Network Connection" \
+                        "You need to be connected to the Internet.\n\nEverything here is downloaded as it runs, so nothing can be installed without it."
+                exit 1
+        fi
+}
+
+#   ============ STATE =============
+#
+#   The menu reports what is actually on
+#   the system rather than what this run
+#   has done, so the markers stay right
+#   across a reboot and a second run
+#
+#   ================================
+
+has_pkg() {
+        pacman -Qq "$1" >/dev/null 2>&1
+}
+
+# Names the installed desktop, or prints nothing. First match wins, and the
+# themed variants are checked before the plain one they are built on.
+desktop_installed() {
+        if has_pkg gnome-shell; then
+                if [[ -d "$HOME"/.themes/MacTahoe-Light || -d "$HOME"/.themes/MacTahoe-Dark ]]; then
+                        printf 'GNOME, with the Mac OS theme'
+                else
+                        printf 'GNOME'
+                fi
+        elif has_pkg xfwm4; then
+                if has_pkg xfce-winxp-tc-git; then
+                        printf 'XFCE, themed as Windows XP'
+                elif [[ -d /usr/share/plymouth/themes/Chicago95 ]]; then
+                        printf 'XFCE, themed as Windows 95'
+                else
+                        printf 'XFCE'
+                fi
+        elif has_pkg plasma-desktop; then
+                printf 'KDE Plasma'
+        elif has_pkg hyprland; then
+                printf 'Hyprland, with the HyDE configs'
+        fi
+}
+
+# Names the screensaver that is set up, or prints nothing
+screensaver_installed() {
+        if has_pkg wscreensavers; then
+                printf 'GLMatrix, on Wayland'
+        elif [[ -f "$HOME"/.xscreensaver ]]; then
+                printf 'GLMatrix, on X11'
+        fi
+}
+
+# Renders the status marker for each menu entry
+step_mark() {
+        case "$1" in
+                desktop)
+                        [[ -n "$(desktop_installed)" ]] && printf '%s' "${MARK_DONE}" || printf '%s' "${MARK_NEXT}"
+                        ;;
+                apps)
+                        has_pkg google-chrome && printf '%s' "${MARK_DONE}" || printf '%s' "${MARK_TODO}"
+                        ;;
+                screensaver)
+                        [[ -n "$(screensaver_installed)" ]] && printf '%s' "${MARK_DONE}" || printf '%s' "${MARK_TODO}"
+                        ;;
+                adaway)
+                        [[ -f /usr/bin/adaway ]] && printf '%s' "${MARK_DONE}" || printf '%s' "${MARK_TODO}"
+                        ;;
+                warp)
+                        has_pkg cloudflare-warp-bin && printf '%s' "${MARK_DONE}" || printf '%s' "${MARK_TODO}"
+                        ;;
+                zram)
+                        [[ -f /etc/systemd/zram-generator.conf ]] && printf '%s' "${MARK_DONE}" || printf '%s' "${MARK_TODO}"
+                        ;;
+                qemu)
+                        has_pkg virt-manager && printf '%s' "${MARK_DONE}" || printf '%s' "${MARK_TODO}"
+                        ;;
+        esac
+}
+
+show_help() {
+        ui_msg "How This Menu Works" \
+"Work down the menu. Entries marked ${MARK_DONE} are already on the system,
+${MARK_TODO} are outstanding, and ${MARK_NEXT} is the one to do next.
+
+The markers are read from the system itself rather than from what this run
+has done, so they stay correct if you reboot and come back.
+
+  DESKTOP       Pick one desktop. Each choice also pulls in the base
+                packages, fonts, firewall and screensaver, so this is
+                the only entry that really needs running.
+
+  APPLICATIONS  Browser, office, media, photos and a few extras.
+
+  SCREENSAVER   GLMatrix on a 10 minute timeout. Wayland desktops get
+                wscreensavers, XFCE gets xscreensaver. DESKTOP already
+                picks the right one, so this is only to redo or change it.
+
+  ADAWAY        Blocks ads for everything on the machine by rewriting
+                /etc/hosts, refreshed weekly by a systemd timer.
+
+  WARP          Cloudflare WARP, which is a free VPN of sorts.
+
+  ZRAM          Compressed swap in RAM, sized to half your memory, put in
+                front of the swap partition rather than replacing it so
+                that hibernation still works.
+
+  QEMU          QEMU/KVM with PCI passthrough. Rebuilds the initramfs
+                and the GRUB config.
+
+Everything here is downloaded as it runs, so all of it needs a network.
+
+This menu opens on its own only on your first login. Quitting is safe, and
+you can bring it back at any time by running ./post-install."
+}
 
 mainmenu() {
-        options=()
-        options+=("GNOME" "Vanilla GNOME install")
-        options+=("GNOME MAC OS" "Install GNOME with Mac OS theme")
-        options+=("PLASMA" "Install KDE Plasma")
-        options+=("CHICAGO95" "Install Windows 95 theme with XFCE")
-        options+=("WINDOWS XP" "Install XFCE with the iconic Windows XP theme")
-        options+=("HYDE" "Install Hyprland and configs which will blow your mind!")
-        options+=("APPLICATIONS" "Install some useful Applications")
-        options+=("ADAWAY" "Setup a service to update hosts files and block ads")
-        options+=("WARP" "Setup Cloudfare WARP (Poor man VPN)")
-        options+=("ZRAM" "Use ZRAM as the swap (defaults to half your memory)")
-        options+=("QEMU" "QEMU/KVM")
+        local nextitem="${1:-.}" # Default to "." if no argument is provided
+        local sel options desktop saver
 
-        if sel=$(whiptail --backtitle "${BACKTITLE}" --fb --title "Arch Linux Post Installer" --menu "" --cancel-button "Exit" --default-item "." 20 78 0 \
-                "${options[@]}" \
-                3>&1 1>&2 2>&3); then
-                case ${sel} in
-                "GNOME")
-                        install_gnome
-                        ;;
-                "GNOME MAC OS")
-                        install_gnome
-                        install_gnome_mac
-                        ;;
-                "PLASMA")
-                        install_plasma
-                        ;;
-                "CHICAGO95")
-                        install_xfce
-                        install_chicago95
-                        ;;
-                "WINDOWS XP")
-                        install_xfce
-                        install_xp
-                        apply_xp_theme
-                        ;;
-                "HYDE")
-                        install_hyde
+        while true; do
+                # Rebuilt every pass so the markers and summaries stay current
+                desktop="$(desktop_installed)"
+                saver="$(screensaver_installed)"
+
+                options=(
+                        "DESKTOP"      "$(step_mark desktop)  ${desktop:-Pick a desktop - start here}"
+                        "APPLICATIONS" "$(step_mark apps)  Browser, office, media and photo apps"
+                        "SCREENSAVER"  "$(step_mark screensaver)  ${saver:-GLMatrix, on a 10 minute timeout}"
+                        "ADAWAY"       "$(step_mark adaway)  Block ads everywhere, refreshed weekly"
+                        "WARP"         "$(step_mark warp)  Cloudflare WARP (poor man's VPN)"
+                        "ZRAM"         "$(step_mark zram)  Compressed swap in RAM, half your memory"
+                        "QEMU"         "$(step_mark qemu)  QEMU/KVM virtualisation"
+                        ""             ""
+                        "HELP"         "     What each step does"
+                        "FINISH"       "     Reboot into the finished system"
+                )
+
+                # Exit must not drop straight out. This menu normally only opens on
+                # first login, so an accidental Esc is expensive.
+                if ! sel=$(whiptail --backtitle "${BACKTITLE}" --title "Arch Linux Post Installer" --menu "" \
+                        --fb --cancel-button "Exit" --default-item "${nextitem}" 0 78 0 "${options[@]}" \
+                        3>&1 1>&2 2>&3); then
+                        if yesno "Quit?" "Leave the post installer?\n\nNothing already installed is undone. This menu will not open again on its own, but you can run ./post-install whenever you like."; then
+                                clear
+                                return 0
+                        fi
+                        continue
+                fi
+
+                case "${sel}" in
+                "DESKTOP")
+                        desktopmenu
+                        nextitem="APPLICATIONS"
                         ;;
                 "APPLICATIONS")
                         install_apps
+                        nextitem="SCREENSAVER"
+                        ;;
+                "SCREENSAVER")
+                        screensavermenu
+                        nextitem="ADAWAY"
                         ;;
                 "ADAWAY")
                         setup_adaway
+                        nextitem="WARP"
                         ;;
                 "WARP")
                         setup_cloudflare_warp
+                        nextitem="ZRAM"
                         ;;
                 "ZRAM")
                         setup_zram
+                        nextitem="QEMU"
                         ;;
                 "QEMU")
                         install_qemu
+                        nextitem="FINISH"
+                        ;;
+                "HELP")
+                        show_help
+                        nextitem="HELP"
+                        ;;
+                "FINISH")
+                        finish
+                        nextitem="FINISH"
                         ;;
                 esac
-                mainmenu
-        else
-                clear
+        done
+}
+
+desktopmenu() {
+        local sel options
+
+        options=(
+                "GNOME"        "Vanilla GNOME"
+                "GNOME MAC OS" "GNOME with the Mac OS theme, icons and wallpapers"
+                "PLASMA"       "KDE Plasma"
+                "CHICAGO95"    "XFCE themed as Windows 95"
+                "WINDOWS XP"   "XFCE with the iconic Windows XP theme"
+                "HYDE"         "Hyprland and configs which will blow your mind!"
+        )
+
+        if ! sel=$(whiptail --backtitle "${BACKTITLE}" --title "Choose A Desktop" --menu \
+                "\nEach choice also installs the base packages, fonts, firewall and screensaver.\n" \
+                --fb --cancel-button "Back" --default-item "." 0 78 0 "${options[@]}" \
+                3>&1 1>&2 2>&3); then
+                return 0
         fi
+
+        # Installing a second desktop over the top mostly works, but it appends to
+        # ~/.bash_profile again and re-runs the theme installers, so make it a
+        # deliberate choice rather than a stray keypress.
+        if [[ -n "$(desktop_installed)" ]]; then
+                if ! yesno "Desktop Already Installed" \
+                        "$(desktop_installed) is already installed.\n\nInstall ${sel} over the top?"; then
+                        return 0
+                fi
+        fi
+
+        case "${sel}" in
+        "GNOME")
+                install_gnome
+                ;;
+        "GNOME MAC OS")
+                install_gnome
+                install_gnome_mac
+                ;;
+        "PLASMA")
+                install_plasma
+                ;;
+        "CHICAGO95")
+                install_xfce
+                install_chicago95
+                ;;
+        "WINDOWS XP")
+                install_xfce
+                install_xp
+                apply_xp_theme
+                ;;
+        "HYDE")
+                install_hyde
+                ;;
+        esac
+}
+
+# DESKTOP already sets the right one up. This is only to redo it, or to switch
+# between the Wayland and X11 versions by hand.
+screensavermenu() {
+        local sel
+
+        if ! sel=$(whiptail --backtitle "${BACKTITLE}" --title "Screensaver" --menu \
+                "\nGLMatrix on a 10 minute timeout.\n" \
+                --fb --cancel-button "Back" --default-item "." 0 78 0 \
+                "WAYLAND" "wscreensavers - GNOME, Plasma and Hyprland" \
+                "X11"     "xscreensaver - XFCE" \
+                3>&1 1>&2 2>&3); then
+                return 0
+        fi
+
+        case "${sel}" in
+        "WAYLAND")
+                apply_wscreensavers
+                ;;
+        "X11")
+                apply_xscreensavers
+                ;;
+        esac
+}
+
+finish() {
+        local desktop
+        desktop="$(desktop_installed)"
+
+        if [[ -z "${desktop}" ]]; then
+                if ! yesno "No Desktop Installed" \
+                        "No desktop has been installed, so there is nothing to reboot into yet.\n\nReboot anyway?"; then
+                        return 0
+                fi
+        elif ! yesno "Reboot Now?" \
+                "${desktop} is installed and its display manager is enabled.\n\nReboot into it now?"; then
+                return 0
+        fi
+
+        # ~/.bashrc removes ~/newbie after post-install returns. Rebooting from
+        # here never gets back to it, so clear it now or this menu reopens on
+        # every login until the file is deleted by hand.
+        rm -f "$HOME"/newbie
+
+        banner "Rebooting..."
+        sudo reboot
 }
 
 install_base_packages() {
@@ -91,7 +370,7 @@ install_base_packages() {
 }
 
 install_fonts() {
-        echo "Installing fonts..."
+        banner "Installing fonts..."
         yay -S --noconfirm --needed apple-fonts ttf-cascadia-code-nerd ttf-croscore ttf-google-sans
 
         [[ ! -d "$HOME"/.local/share/fonts ]] && mkdir -p "$HOME"/.local/share/fonts
@@ -133,9 +412,7 @@ install_windows_11_fonts() {
 }
 
 install_gnome() {
-        clear
-
-        echo "Installing Gnome.."
+        banner "Installing GNOME..."
 
         install_base_packages
 
@@ -144,7 +421,7 @@ install_gnome() {
 
         install_fonts
 
-        apply_xcreensaver
+        apply_wscreensavers
 
         # add arch updater extension
         yay -S --noconfirm --needed gnome-shell-extension-arch-update
@@ -208,11 +485,48 @@ install_ufw() {
         sudo ufw enable
 }
 
-apply_xcreensaver() {
+apply_xscreensavers() {
         # xscreensaver settings - 10 min timeout - GL matrix
+        # X11 sessions only, so XFCE (Chicago95 / Windows XP). GNOME and Plasma are
+        # Wayland only now and use apply_wscreensavers instead.
         curl -sL "$BASE_URL"/configs/home/.xscreensaver -o "$HOME"/.xscreensaver
         if [ ! -d "$HOME"/.config/autostart/ ]; then mkdir "$HOME"/.config/autostart; fi
         curl -sL "$BASE_URL"/configs/home/xscreensaver.desktop -o "$HOME"/.config/autostart/xscreensaver.desktop
+}
+
+apply_wscreensavers() {
+        # Wayland equivalent of apply_xscreensavers - 10 min timeout - GL matrix.
+        # Used by GNOME, Plasma and Hyde. The xscreensaver package stays installed in
+        # install_base_packages because this runs its real hack binaries from
+        # /usr/lib/xscreensaver, it just drives them over wlr-layer-shell instead.
+        yay -S --noconfirm --needed wscreensavers jq
+
+        [[ ! -d "$HOME"/.config/wscreensavers ]] && mkdir -p "$HOME"/.config/wscreensavers
+
+        # wscreensavers marshals its entire config struct back to disk on every change,
+        # so the real file is huge - every saver's parameters, the enabled pool, the
+        # per-monitor assignments. Patch the handful of keys we care about rather than
+        # overwriting it, or re-running this from the menu wipes all of that. A key that
+        # is absent is not a problem: the file is unmarshalled over DefaultConfig(), so
+        # anything we leave out keeps the package default.
+        #
+        # preferNativeOverX11 MUST stay false. While it is true, wscreensavers rewrites
+        # any "xss_<name>" id back to its own WebGL2 reimplementation on every config
+        # load and save, so selecting the real /usr/lib/xscreensaver/glmatrix never
+        # sticks and the blurry in-browser port is what actually runs.
+        local cfg="$HOME"/.config/wscreensavers/config.json
+        [[ -f "$cfg" ]] || echo '{}' >"$cfg"
+        jq '.mode = "single"
+                | .selectedSaver = "xss_glmatrix"
+                | .preferNativeOverX11 = false
+                | .idleTimeoutMinutes = 10
+                | .lockEnabled = false
+                | .xssMaxStreamDim = 3840' "$cfg" >"$cfg".new && mv "$cfg".new "$cfg"
+
+        # suppress the donation reminder on every start
+        echo '{"supported": true, "isLifetime": true}' >"$HOME"/.config/wscreensavers/support.json
+
+        systemctl --user enable wscreensavers.service
 }
 
 install_dash_to_dock() {
@@ -454,7 +768,7 @@ install_plasma() {
         install_base_packages
         sudo pacman -S --noconfirm --needed plasma-meta kde-system-meta kvantum sddm konsole
         sudo systemctl enable sddm.service
-        apply_xcreensaver
+        apply_wscreensavers
         install_fonts
         install_ufw
 }
@@ -467,7 +781,7 @@ install_xfce() {
                 yay -S --noconfirm --needed xfce4-power-manager
         fi
 
-        apply_xcreensaver
+        apply_xscreensavers
         install_fonts
         install_plymouth
         install_ufw
@@ -488,6 +802,10 @@ install_hyde() {
         cd "$HOME"/HyDE/Scripts || return 1
         ./install.sh -n
         ./install.sh
+
+        # install_base_packages is not called here, but the wscreensavers package
+        # depends on xscreensaver so the hack binaries come in with it
+        apply_wscreensavers
 }
 
 apply_xp_theme() {
@@ -548,18 +866,16 @@ update_icons(){
 }
 
 install_apps() {
-        clear
+        banner "Installing applications..."
 
-        echo "Installing apps..."
         yay -S --noconfirm --needed spotify-launcher google-chrome libreoffice-still gimp vlc vlc-plugins-all geary etcher-bin gnome-photos gnome-notes endeavour elecwhat-bin
 
         update_icons
 }
 
 install_qemu() {
-        clear
+        banner "Installing QEMU/KVM..."
 
-        echo "Installing QEMU/KVM"
         sudo pacman -S --noconfirm --needed libvirt virt-manager edk2-ovmf qemu iptables-nft dnsmasq dmidecode swtpm
 
         # Enable Virtualization Technology for Directed I/O in grub config as boot param
@@ -655,42 +971,51 @@ EOT'
 }
 
 setup_zram() {
-        ram=$(( $(grep MemTotal /proc/meminfo | awk '{print $2}') / 1000 / 1000 / 2 ))
+        banner "Setting up ZRAM swap..."
 
-        sudo tee -a /usr/local/bin/zram_start >/dev/null <<'EOT'
-#!/bin/bash
-sudo bash -c "echo 0 > /sys/module/zswap/parameters/enabled"
-sudo swapoff --all
-sudo modprobe zram num_devices=1
-sudo bash -c "echo zstd > /sys/block/zram0/comp_algorithm"
-sudo bash -c "echo ZRAM_SIZE > /sys/block/zram0/disksize"
-sudo mkswap --label zram0 /dev/zram0
-sudo swapon --priority 32767 /dev/zram0
+        sudo pacman -S --noconfirm --needed zram-generator
+
+        # zram-generator creates and starts systemd-zram-setup@zram0.service by
+        # itself, so there is no unit to write or enable here.
+        #
+        # The 4096 cap matters on the QEMU desktop: reserving 1G hugepages takes
+        # RAM out of the normal allocator, so an uncapped "ram / 2" sized against
+        # the full 16G would be far too large for the ~6G the host is left with.
+        #
+        # The swap partition is deliberately left alone. swap-priority 100 puts
+        # zram in front of it, so the disk is only touched once zram is full, and
+        # hibernation keeps working: install bakes resume=<swapdev> into
+        # /etc/kernel/cmdline and the kernel cannot hibernate to zram.
+        sudo tee /etc/systemd/zram-generator.conf >/dev/null <<'EOT'
+[zram0]
+zram-size = min(ram / 2, 4096)
+compression-algorithm = zstd
+swap-priority = 100
+fs-type = swap
 EOT
 
-        sudo sed -i "s|ZRAM_SIZE|${ram}G|" /usr/local/bin/zram_start
-        sudo chmod +x /usr/local/bin/zram_start
-
-        sudo tee -a /etc/systemd/system/zram-swap.service >/dev/null <<'EOT'
-[Unit]
-Description=Configure zram swap device
-After=local-fs.target
-
-[Service]
-Type=oneshot
-ExecStart=/usr/local/bin/zram_start
-#ExecStop=/usr/local/bin/zram_stop
-RemainAfterExit=yes
-
-[Install]
-WantedBy=multi-user.target
+        # The kernel defaults are tuned for swap on a spinning disk. zram is
+        # orders of magnitude faster, so without these it barely gets used.
+        sudo tee /etc/sysctl.d/99-vm-zram-parameters.conf >/dev/null <<'EOT'
+vm.swappiness = 180
+vm.watermark_boost_factor = 0
+vm.watermark_scale_factor = 125
+vm.page-cluster = 0
 EOT
 
-        sudo systemctl enable zram-swap.service
+        # zswap sits in front of zram and compresses pages before they ever reach
+        # it, which leaves zram mostly unused. Turning it off at runtime is too
+        # late, it has to be off from boot.
+        if ! grep -q 'zswap.enabled=0' /etc/kernel/cmdline; then
+                sudo sed -i 's/$/ zswap.enabled=0/' /etc/kernel/cmdline
+                sudo mkinitcpio -P
+        fi
 
-        sudo sed -i '/swap/s/^/#/' /etc/fstab
+        sudo systemctl daemon-reload
+        sudo sysctl --system >/dev/null
+        sudo systemctl start systemd-zram-setup@zram0.service
 
-        whiptail --backtitle "$BACKTITLE" --msgbox --title "ZRAM" "To enable ZRAM please reboot" 0 78
+        ui_msg "ZRAM" "ZRAM swap is active now, and comes up on its own at every boot.\n\nIt is sized at half your memory and sits in front of the swap partition, which is left enabled so that hibernation still works.\n\nCheck it with 'zramctl' and 'swapon --show'. The zswap change only takes effect after a reboot."
 }
 
 setup_cloudflare_warp() {
@@ -707,7 +1032,9 @@ setup_cloudflare_warp() {
 # a recovery key exists for, and left a usable secret on disk.
 
 initialise() {
-        whiptail --backtitle "$BACKTITLE" --msgbox --title "Welcome!" "Welcome to Arch Linux\n\nWe will now initialise the system" 0 78
+        ui_msg "Welcome!" "Welcome to Arch Linux\n\nWe will now initialise the system. This installs yay, sets up snapper and takes the first snapshot, so it runs once and takes a few minutes."
+
+        banner "Initialising the system..."
 
         # optimise yay when building packages
         sudo sed -i 's/^#MAKEFLAGS="-j2"/MAKEFLAGS="-j$(nproc)"/' /etc/makepkg.conf
@@ -818,13 +1145,6 @@ EOT
         sudo /usr/bin/boot-backup
 }
 
-checkconnection() {
-        if [[ $(ping -q -w1 -c1 google.com &>/dev/null && echo online || echo offline) == "offline" ]]; then
-                whiptail --backtitle "$BACKTITLE" --msgbox --title "No Network Connection" "You need to be connected to the Internet.\n\nInstallation stopped." --fb 0 78
-                exit
-        fi
-}
-
 self_update() {
         curl -sL $BASE_URL/version -o /tmp/version
         value=$(</tmp/version)
@@ -838,7 +1158,7 @@ self_update() {
 
 # --------------------------------------------------------
 
-checkconnection
+preflight
 self_update
 
 [[ ! -d $HOME/.config/yay ]] && initialise

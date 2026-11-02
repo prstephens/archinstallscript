@@ -26,7 +26,7 @@ sigma=30
 style-dialogs=2
 
 [applications]
-blacklist=['firefox', 'gjs', 'google-chrome', 'virt-manager', 'vlc']
+blacklist=['firefox', 'gjs', 'google-chrome', 'virt-manager', 'vlc', '*wscreensaver*']
 blur=true
 blur-on-overview=false
 brightness=1.0
